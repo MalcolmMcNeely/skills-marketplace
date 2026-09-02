@@ -109,7 +109,7 @@ Seven layers, cheapest first.
 | 2. Referential integrity and budget | xUnit | Free | Every PR | Yes |
 | 3. Firing accuracy | Our harness, modelled on `run_eval.py` | ~60 calls per engine | PRs touching a description | Yes |
 | 3b. Cross-stack firing | Same harness, asserting the **set** that fired | ~9 calls per pair | PRs touching a description | Yes |
-| 4. Contract assertions | Same harness, regex and trace checks | ~3 calls per case | PRs touching a body | Yes |
+| 4. Contract assertions | Same harness, invoking the skill **by name** | 5 calls per case | PRs touching a body | Yes |
 | 5. Admission delta | `skill-creator` Benchmark | High | New engines only | Yes, once |
 | 6. Version comparison | `skill-creator` Improve mode, blind A/B | High | On request, by the author | No |
 | 7. Human review | A second person, plus fixed scenario scripts | Minutes | Every PR | Yes |
@@ -130,11 +130,19 @@ Ablation answers admission, not regression. It compares the skill against nothin
 
 Tier 3 asserts the **set** of skills a query fires, not one skill, and runs with the whole catalogue installed. A cross-stack task has two right answers at once, so a per-skill assertion cannot see it. Write three cases for every two technologies that meet in a real repository: one naming both, one naming neither, one naming only the first. The middle case is the valuable one and the one nobody writes. Add these from the start, because a case scored against a single skill keeps no record of what else fired. The harness must also check the run's exit code before scoring it, or it will read its own timeouts as negative results.
 
-**Set the should-fire threshold from measured behaviour, not from an expectation of 100%.** A well-specified, unambiguous cross-stack request loaded the right skills in only 10 runs of 15, and no description wording tested removed the misses. A failing run fired nothing rather than the wrong thing. A gate demanding a perfect trigger rate will fail on healthy skills; calibrate it against a baseline measured on skills known to be good.
+**Set the should-fire threshold from measured behaviour, not from an expectation of 100%.** A well-specified, unambiguous cross-stack request loaded the right skills in only 10 runs of 15, and no description wording tested removed the misses. A failing run fired nothing rather than the wrong thing. A gate demanding a perfect trigger rate will fail on healthy skills. Calibrate against a baseline measured on the frozen good fixture, then set the bar as the highest value a good skill clears 95% of the time. At a good rate of 0.67 over 60 runs that puts the gate near 0.57, with a 4% false-fail rate and 82% power to catch a drop to 0.50. Recompute it on any model, CLI or catalogue change. [Scoring](scoring.md) carries the formula.
 
-Case counts: about twenty queries per engine for firing, split evenly between should-fire and near-miss should-not-fire, at three runs each. Two or three cases per contract for outcome. Borrow a should-not-fire prompt from another stack. An author should not be the only reviewer of their own skill.
+**Layer 4 invokes the skill by name.** Put `/skill-name` in the prompt rather than hoping the description matches. By-name invocation loaded the skill in 7 runs of 7, against 10 of 15 for natural language, and emits the same `Skill` tool call the harness already parses. Layer 3 then owns the description and layer 4 owns the body, with neither depending on the other. Without this, every contract result carries a hidden firing failure inside it.
 
-Budget per full pass, at twelve engines: roughly 720 single-turn invocations for firing, which die at the first tool call, and roughly 216 full agent runs for outcome. Those are different orders of cost and should run on different triggers. Narrow by changed skill on pull requests, full suite on merge and overnight.
+**Score runs into verdicts, not numbers, and throw away the broken ones.** A run counts only if it exited 0 **and** emitted `"subtype":"success"`. Allowlist that; do not denylist failures. A forced budget abort exits 1 with `"subtype":"error_max_budget_usd"` and no `Skill` call, which a naive parser reads as "the skill declined to fire". Anything else is void and gets resampled, with a cap. Hitting the cap is a layer 3 failure and must be reported as one.
+
+**Pool runs across the suite; do not score case by case.** Requiring every case to pass is unusable at any affordable run count: a skill firing at the measured 2 runs in 3 passes a ten-query suite under a per-query rule 5% of the time at three runs, and 42% at fifteen. Pool every valid run so granularity is 1/N, gate on the pooled rate, and keep per-case rates as diagnostics with a zero-floor guard.
+
+Case counts: about twenty queries per engine for firing, split evenly between should-fire and near-miss should-not-fire. Should-fire needs six runs each, should-not-fire three. Contract cases get five by-name runs, because three catch a break that happens 30% of the time only 66% of the time, and five catch it 83%. Roughly 90 runs per engine per pass. Borrow a should-not-fire prompt from another stack. An author should not be the only reviewer of their own skill.
+
+Budget per full pass, at twelve engines: a warm run measured about **$0.043** and 6 to 10 seconds, putting a twelve-engine nightly near **$43**. Narrow by changed skill on pull requests, full suite on merge and overnight.
+
+Fixtures load with `--plugin-dir <path>`, which loads a plugin for one session only and is repeatable. Good and broken fixtures therefore live as separate directories and never enter the shipped catalogue.
 
 Start layers 3 and 4 with the first engine, not before. Evals over an empty catalogue are theatre. Layers 1, 2 and 7 start now.
 
