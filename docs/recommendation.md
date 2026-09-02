@@ -89,7 +89,7 @@ This is the deterministic layer. Prefer it wherever the answer is already known.
 | Messaging patterns and conventions | Use when adding a Kafka producer or consumer in an event-driven service |
 | Database guidance | Use when writing EF Core queries or migrations against SQL Server |
 
-Two skills may fire on one request when the request genuinely spans both. That is correct and measured: a task naming EF Core and React fired exactly those two skills, three runs out of three, with ten decoys installed and none of them firing. What must not happen is two skills firing because their descriptions cover the same work. Test for the overlap, not for the co-firing.
+Two skills may fire on one request when the request genuinely spans both. That is correct and measured: a task naming EF Core and React fired exactly those two skills in six runs of seven, with ten decoys installed and not one of them firing in any run. What must not happen is two skills firing because their descriptions cover the same work. Test for the overlap, not for the co-firing.
 
 The layer that does the real work here is per-repo enablement, not description tuning. In a C#-only repository the React skill is not installed and cannot misfire however the request is phrased. Keep `enabledPlugins` tight per repo rather than shipping the whole catalogue everywhere.
 
