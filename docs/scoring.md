@@ -313,6 +313,8 @@ Extrapolating at `$0.04` a run:
 | One contract case | 5 | about `$0.20` | seconds |
 | Nightly, 12 engines | 1,080 | about `$43` | about 20 minutes |
 
+**Superseded for contract runs.** The `$0.043` above was measured on read-only probes made with `--disallowedTools Write Edit Bash NotebookEdit`. [baseline-test-first.md](baseline-test-first.md) later measured a run that writes two files and runs `dotnet test` at a median of `$0.302`, roughly seven times more. One contract case at five runs is therefore about `$1.50`, not `$0.20`. Firing runs are unaffected, because they can still be killed at the first tool call.
+
 That is the first real figure for the map's open question on nightly cost. It is model-specific. These runs used `claude-opus-5[1m]`, and `skill-creator` is explicit that the model must match production:
 
 > Use the model ID from your system prompt (the one powering the current session) so the triggering test matches what the user actually experiences.
