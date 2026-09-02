@@ -1,0 +1,7 @@
+{
+  "name": "core",
+  "version": "0.1.0",
+  "description": "Shared engineering skills every team gets by default. Empty until we write the first one.",
+  "author": { "name": "Malcolm McNeely" },
+  "license": "MIT"
+}

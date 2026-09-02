@@ -1,0 +1,14 @@
+{
+  "name": "skills-marketplace",
+  "owner": { "name": "Malcolm McNeely" },
+  "description": "Shared agent skills for every team: one catalogue, installed by policy, versioned in git.",
+  "plugins": [
+    {
+      "name": "core",
+      "source": "./plugins/core",
+      "version": "0.1.0",
+      "category": "development",
+      "description": "Shared engineering skills every team gets by default."
+    }
+  ]
+}
