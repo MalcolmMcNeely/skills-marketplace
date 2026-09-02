@@ -93,28 +93,39 @@ If two skills could plausibly fire on the same request, one is wrong.
 
 ## 3. Verification
 
-Four layers, cheapest first.
+"Eval" is not one thing. Firing accuracy and outcome quality are separate machines with separate costs. [Evals](evals.md) works this out in full; this is the plan that falls out of it.
+
+Seven layers, cheapest first.
 
 | Layer | Tool | Cost | Runs | Blocking |
 |---|---|---|---|---|
 | 1. Manifests | `claude plugin validate . --strict` | Free | Every PR | Yes |
-| 2. Referential integrity | xUnit | Free | Every PR | Yes |
-| 3. Trigger accuracy | `claude plugin eval` | Model calls | Changed skills, every PR | Yes |
-| 4. Does it help | `claude plugin eval --ablation` | Model calls | Merge and nightly | Yes |
+| 2. Referential integrity and budget | xUnit | Free | Every PR | Yes |
+| 3. Firing accuracy | Our harness, modelled on `run_eval.py` | ~60 calls per engine | PRs touching a description | Yes |
+| 4. Contract assertions | Same harness, regex and trace checks | ~3 calls per case | PRs touching a body | Yes |
+| 5. Admission delta | `skill-creator` Benchmark | High | New engines only | Yes, once |
+| 6. Version comparison | `skill-creator` Improve mode, blind A/B | High | On request, by the author | No |
+| 7. Human review | A second person, plus fixed scenario scripts | Minutes | Every PR | Yes |
+
+**Do not design around `claude plugin eval`.** It is gated on this account today and refuses even to scaffold. Its `--help` works, so the spec is readable, but every invocation exits 1 with "`plugin eval` is currently in early access". Nothing blocking can depend on it until the entitlement lands. When it does, it replaces our harness for layers 3 to 5.
 
 Layers 1 and 2 catch most real breakage for nothing. Build them first.
 
-Layer 2 ports the pattern from `Edict.AgenticTooling.Architecture.Tests`. Ours asserts that every `Call the Skill tool with "X"` resolves to a real skill, that every engine has at least one caller, that names carry the right prefix, and that nobody wrote `/name`.
+Layer 2 ports the pattern from `Edict.AgenticTooling.Architecture.Tests`. Two warnings the earlier draft of this plan got wrong. The composition idiom is **four different phrasings** across seven files, so extract every quoted skill name on a line mentioning the Skill tool rather than matching one string. And `/name` cannot be a blanket grep, because slash forms appear about sixty times as legitimate prose describing commands a developer types. Ban the slash form only in a delegation instruction.
 
-An LLM eval earns its cost only when no cheaper check can answer the question. Two qualify: does the skill fire when it should and stay quiet when it should not, and does it improve the output at all. Do not LLM-grade general output quality.
+Layer 2 also owns the budget: every description under 1024 characters, and the shipped total inside the listing budget.
 
-> **The rule.** An engine joins the catalogue only when an ablation run shows a positive delta. No delta, no engine.
+An LLM eval earns its cost only when no cheaper check can answer the question. Grade a skill's **contract**, meaning a format it mandates, a tool it requires, an action it forbids, a file that must exist. Do not LLM-grade general output quality. A skill with no contract is a human review problem, not an eval problem.
 
-Write cases in both directions, including a should-not-fire prompt borrowed from another stack. Anthropic asks for 3 to 5 cases per skill and says authors should not review their own work.
+> **The rule.** An engine joins the catalogue only when an ablation run shows a positive delta **net of token cost**. No delta, no engine.
 
-Budget: each case runs three times, ablation doubles it. Twelve engines at four cases is about 288 runs per full pass. Use `--case` on pull requests, full suite on merge and overnight.
+Ablation answers admission, not regression. It compares the skill against nothing, so it cannot tell you whether v2 beats v1. Both arms contain v2. Version comparison is layer 6 and lives in `skill-creator`'s Improve mode.
 
-Start evals with the first engine, not before. Evals over an empty catalogue are theatre.
+Case counts: about twenty queries per engine for firing, split evenly between should-fire and near-miss should-not-fire, at three runs each. Two or three cases per contract for outcome. Borrow a should-not-fire prompt from another stack. An author should not be the only reviewer of their own skill.
+
+Budget per full pass, at twelve engines: roughly 720 single-turn invocations for firing, which die at the first tool call, and roughly 216 full agent runs for outcome. Those are different orders of cost and should run on different triggers. Narrow by changed skill on pull requests, full suite on merge and overnight.
+
+Start layers 3 and 4 with the first engine, not before. Evals over an empty catalogue are theatre. Layers 1, 2 and 7 start now.
 
 ## 4. Updates
 

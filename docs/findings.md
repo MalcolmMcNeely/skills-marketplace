@@ -163,19 +163,21 @@ Nobody ships agent **skills** as a NuGet package or `dotnet tool`. MCP **servers
 | Tool | Status on this machine |
 |---|---|
 | `claude plugin validate [--strict]` | Available. Free, deterministic |
-| `claude plugin eval` | **Available.** Earlier research said it was early-access and gated per organisation, and it is, but this account has it |
-| `claude plugin eval init --bare` | Available. Scaffolds a case with no model calls |
+| `claude plugin eval` | **Gated.** Every invocation exits 1 with "`plugin eval` is currently in early access". Only `--help` works |
+| `claude plugin eval init --bare` | Gated, same message. No scaffold could be produced |
 | `skill-creator` | Present in the official marketplace, ready to install |
 
-`plugin eval` runs cases from `evals/<case>/prompt.md` plus `graders/*.md`, or `case.yaml`. Graders are `regex`, `tool_used`, `tool_order`, `file_exists`, `llm` and `baseline`. Each case runs three times by default. The LLM judge defaults to Haiku.
+**Corrected on 2 September 2026.** This section previously recorded `plugin eval` as available on this account. It is not. Whether that is a revocation, a rollout change or an error in the original record, we cannot tell. Nothing blocking may depend on it. [evals.md](evals.md) carries the full working out and the plan that replaces it.
 
-`--ablation with-without` runs a second arm with no plugin and reports the score delta. That is the only mechanism that answers whether a skill helps at all.
+`plugin eval` runs cases from `evals/<case>/prompt.md` plus `graders/*.md`, or `case.yaml`. Each case runs three times by default. The LLM judge defaults to Haiku. The six grader names recorded here earlier, `regex`, `tool_used`, `tool_order`, `file_exists`, `llm` and `baseline`, appear in no primary source we can now find, and with the CLI gated we cannot confirm them.
 
-`--threshold` exits 1 below a score, which makes it usable as a CI gate. `--case` and `--tag` narrow a run.
+`--ablation with-without` runs a second arm with no plugin and reports the score delta. It is **on by default**, not opt-in. It answers whether a skill beats nothing, which is an admission question. It cannot tell you whether v2 beats v1, because both arms contain v2. Version comparison lives in `skill-creator`'s Improve mode.
+
+`--threshold` exits 1 below a score. Its default is **1.0**, which against the default of three runs makes the out-of-the-box configuration unusable as a gate. `--case` and `--tag` narrow a run.
 
 `skill-creator` adds what `plugin eval` lacks: blind A/B between two versions tracked in `history.json`, and `improve_description.py`, which generates should-trigger and should-not-trigger prompts, measures the hit rate, and proposes description edits.
 
-Anthropic's published guidance asks for 3 to 5 cases per skill, covering should-fire, should-not-fire and one ambiguous case, and separately warns that skill authors should not review their own work.
+No primary source asks for "3 to 5 cases per skill". That claim was wrong. The real figures differ by half: roughly twenty queries for firing accuracy, two or three cases per contract for outcome quality. The rule that authors should not review their own work is a sound house rule, but the nearest primary text is about context contamination in a fresh session, not about peer review, so do not attribute it to Anthropic.
 
 ## Composition works, and here is the proof
 
