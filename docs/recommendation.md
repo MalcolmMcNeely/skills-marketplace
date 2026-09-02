@@ -89,7 +89,11 @@ This is the deterministic layer. Prefer it wherever the answer is already known.
 | Messaging patterns and conventions | Use when adding a Kafka producer or consumer in an event-driven service |
 | Database guidance | Use when writing EF Core queries or migrations against SQL Server |
 
-If two skills could plausibly fire on the same request, one is wrong.
+Two skills may fire on one request when the request genuinely spans both. That is correct and measured: a task naming EF Core and React fired exactly those two skills, three runs out of three, with ten decoys installed and none of them firing. What must not happen is two skills firing because their descriptions cover the same work. Test for the overlap, not for the co-firing.
+
+The layer that does the real work here is per-repo enablement, not description tuning. In a C#-only repository the React skill is not installed and cannot misfire however the request is phrased. Keep `enabledPlugins` tight per repo rather than shipping the whole catalogue everywhere.
+
+One measured risk to plan around. What fires is decided by how the developer phrases the task, not by how we design the catalogue. A short, vague request fired almost nothing. The same request with "do the whole thing end to end" appended fired up to eleven of twelve skills. Under-firing is the more common failure and the more dangerous one, because nobody notices a skill that did not fire. [Targeting](skill-targeting.md) has the full numbers.
 
 ## 3. Verification
 
@@ -102,6 +106,7 @@ Seven layers, cheapest first.
 | 1. Manifests | `claude plugin validate . --strict` | Free | Every PR | Yes |
 | 2. Referential integrity and budget | xUnit | Free | Every PR | Yes |
 | 3. Firing accuracy | Our harness, modelled on `run_eval.py` | ~60 calls per engine | PRs touching a description | Yes |
+| 3b. Cross-stack firing | Same harness, asserting the **set** that fired | ~9 calls per pair | PRs touching a description | Yes |
 | 4. Contract assertions | Same harness, regex and trace checks | ~3 calls per case | PRs touching a body | Yes |
 | 5. Admission delta | `skill-creator` Benchmark | High | New engines only | Yes, once |
 | 6. Version comparison | `skill-creator` Improve mode, blind A/B | High | On request, by the author | No |
@@ -120,6 +125,8 @@ An LLM eval earns its cost only when no cheaper check can answer the question. G
 > **The rule.** An engine joins the catalogue only when an ablation run shows a positive delta **net of token cost**. No delta, no engine.
 
 Ablation answers admission, not regression. It compares the skill against nothing, so it cannot tell you whether v2 beats v1. Both arms contain v2. Version comparison is layer 6 and lives in `skill-creator`'s Improve mode.
+
+Tier 3 asserts the **set** of skills a query fires, not one skill, and runs with the whole catalogue installed. A cross-stack task has two right answers at once, so a per-skill assertion cannot see it. Write three cases for every two technologies that meet in a real repository: one naming both, one naming neither, one naming only the first. The middle case is the valuable one and the one nobody writes. Add these from the start, because a case scored against a single skill keeps no record of what else fired. The harness must also check the run's exit code before scoring it, or it will read its own timeouts as negative results.
 
 Case counts: about twenty queries per engine for firing, split evenly between should-fire and near-miss should-not-fire, at three runs each. Two or three cases per contract for outcome. Borrow a should-not-fire prompt from another stack. An author should not be the only reviewer of their own skill.
 

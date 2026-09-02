@@ -9,6 +9,7 @@ Today each team writes its own skills. The copies drift, nobody knows which vers
 - [What we should build, and how](docs/recommendation.md). The plan. Start here.
 - [Findings](docs/findings.md). What the research turned up and what we verified.
 - [Evals](docs/evals.md). How to verify a skill change made things better, and where "eval" is the wrong word.
+- [Targeting](docs/skill-targeting.md). Measured: what fires when a task spans two technologies.
 - [Output styles](docs/output-styles.md). How to set one voice across the company, and what it costs.
 
 ## Two skill locations, and they are not the same thing
