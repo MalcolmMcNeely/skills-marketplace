@@ -8,6 +8,7 @@ Today each team writes its own skills. The copies drift, nobody knows which vers
 
 - [What we should build, and how](docs/recommendation.md). The plan. Start here.
 - [Findings](docs/findings.md). What the research turned up and what we verified.
+- [Output styles](docs/output-styles.md). How to set one voice across the company, and what it costs.
 
 ## Two skill locations, and they are not the same thing
 
