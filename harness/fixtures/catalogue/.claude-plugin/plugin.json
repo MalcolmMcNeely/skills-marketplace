@@ -1,0 +1,7 @@
+{
+  "name": "harness-fixture-catalogue",
+  "version": "0.0.0",
+  "description": "PROTOTYPE FIXTURE. Twelve description-only stubs for layer 3. Never shipped.",
+  "author": { "name": "skill harness" },
+  "license": "MIT"
+}

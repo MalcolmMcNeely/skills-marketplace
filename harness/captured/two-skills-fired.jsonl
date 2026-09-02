@@ -1,0 +1,5 @@
+{"type":"system","subtype":"init","cwd":"/fixture","model":"claude-opus-5[1m]","permissionMode":"default","output_style":"default","tools":["Skill","Write","Bash"]}
+{"type":"assistant","message":{"role":"assistant","content":[{"type":"tool_use","id":"t1","name":"Skill","input":{"skill":"csharp-new-class"}}]}}
+{"type":"assistant","message":{"role":"assistant","content":[{"type":"tool_use","id":"t2","name":"Skill","input":{"skill":"data-sql"}}]}}
+{"type":"assistant","message":{"role":"assistant","content":[{"type":"tool_use","id":"t3","name":"Skill","input":{"skill":"csharp-new-class"}}]}}
+{"type":"result","subtype":"success","is_error":false,"result":"done","total_cost_usd":0.041}

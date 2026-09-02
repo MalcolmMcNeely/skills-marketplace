@@ -1,0 +1,5 @@
+<Solution>
+  <Project Path="src/Harness/Harness.csproj" />
+  <Project Path="tests/Harness.Free.Tests/Harness.Free.Tests.csproj" />
+  <Project Path="tests/Harness.Model.Tests/Harness.Model.Tests.csproj" />
+</Solution>

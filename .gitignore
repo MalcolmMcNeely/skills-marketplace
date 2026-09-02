@@ -3,3 +3,7 @@
 
 # Agent worktrees. Transient, and each is its own git repo.
 .claude/worktrees/
+
+# .NET build output.
+bin/
+obj/

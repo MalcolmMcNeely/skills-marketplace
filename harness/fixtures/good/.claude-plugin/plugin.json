@@ -1,0 +1,7 @@
+{
+  "name": "harness-fixture-good",
+  "version": "0.0.0",
+  "description": "PROTOTYPE FIXTURE. Loaded with --plugin-dir for one session. Never shipped.",
+  "author": { "name": "skill harness" },
+  "license": "MIT"
+}
