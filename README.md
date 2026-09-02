@@ -61,3 +61,10 @@ Vendored from [mattpocock/skills](https://github.com/mattpocock/skills) by way o
 `unslop` came from [cursor/plugins](https://github.com/cursor/plugins), with its description rewritten so Claude Code can match it as a trigger.
 
 `code-review` and `setup-matt-pocock-skills` read `docs/agents/*.md` from the repo root. Those are per-repo config that `/setup-matt-pocock-skills` writes. Run it here if you need them.
+
+## Licence
+
+MIT. See [LICENSE](LICENSE).
+
+Both upstream sources are MIT too, so nothing constrains us. Their copyright
+notices are kept in [THIRD-PARTY-NOTICES.md](THIRD-PARTY-NOTICES.md).
