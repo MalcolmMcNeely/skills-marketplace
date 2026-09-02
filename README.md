@@ -12,6 +12,7 @@ Today each team writes its own skills. The copies drift, nobody knows which vers
 - [Scoring](docs/scoring.md). How a run becomes a verdict, and where the pass mark goes.
 - [Targeting](docs/skill-targeting.md). Measured: what fires when a task spans two technologies.
 - [MCP skill delivery](docs/mcp-skill-delivery.md). Measured: can an MCP server install a skill, and should it.
+- [Baseline test-first](docs/baseline-test-first.md). Measured: what Claude does with no skill installed, and which assertions actually discriminate.
 - [Output styles](docs/output-styles.md). How to set one voice across the company, and what it costs.
 
 ## Two skill locations, and they are not the same thing
