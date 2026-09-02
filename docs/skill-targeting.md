@@ -6,7 +6,7 @@ Written 2 September 2026 against Claude Code 2.1.248. The numbers below were mea
 
 ## The short version
 
-Both skills fire, reliably, and the split is right. A task naming EF Core and React fired exactly the C# skill and the React skill in six runs of seven, with ten decoy skills installed and not one of them firing in any run. The seventh fired nothing at all.
+Both skills fire, reliably, and the split is right. A task naming EF Core and React fired exactly the C# skill and the React skill, and no decoy fired in any of 44 runs across four description variants. But it only fired at all in about two runs of three. The rest fired nothing.
 
 The thing that decides what fires is **how the developer phrases the task**, not how we design the catalogue. That is the finding, and it is not the one we expected.
 
@@ -51,7 +51,7 @@ Runs used `claude -p` with `--output-format stream-json`, with `Write`, `Edit`, 
 
 ## Question 1: should the split be by technology?
 
-Yes, and the evidence is the precision result. With twelve skills installed, an explicit cross-stack prompt fired exactly two and left ten alone in six runs of seven. No decoy fired in any run, and the seventh run fired nothing rather than firing the wrong thing. Vue never fired on a React task. Technology-named skills with "use when" descriptions discriminate well.
+Yes, and the evidence is the precision result. With twelve skills installed, an explicit cross-stack prompt fired exactly two and left ten alone in 10 runs of 15. No decoy fired in any of the 44 explicit runs across all four variants. A run that failed fired nothing at all rather than firing the wrong thing. Vue never fired on a React task. Technology-named skills with "use when" descriptions discriminate well.
 
 Making skills language-agnostic does not fix the vague-prompt problem. It converts it into a permanent one. A skill that matches any task fires on every task and carries irrelevant content each time. Splitting is what buys the precision seen above.
 
@@ -70,7 +70,7 @@ Both. Reliably, when the request names the work.
 | 2 skills | Names EF Core and React | Both, 3 of 3 |
 | 2 skills | React only | React only, 2 of 2 |
 | 2 skills | EF Core only | C# only, 2 of 2 |
-| 12 skills | Names EF Core and React | Both and only both, 6 of 7. No decoys, ever |
+| 12 skills | Names EF Core and React | Both and only both, 10 of 15. No decoys in 44 runs |
 
 Co-invocation is not a workaround. It is the documented idiom, and this repository already depends on it: `.claude/skills/grill-with-docs/SKILL.md` is one line instructing the model to call the Skill tool twice. Auto-compaction also carries multiple invoked skills forward, sharing a 25,000 token budget, which only makes sense if several load at once.
 
@@ -117,58 +117,69 @@ Do not gate on the vague-prompt case yet. Across five runs the spread was 11, 5,
 
 ## The description experiment
 
-The open question from the first pass was whether tighter descriptions shrink the over-firing spread. They do, and the cost is worse than the cure.
+Does description wording change what fires? Yes, in one direction only, and the first pass at this got the answer wrong.
 
-Two variants of the same twelve skills. Only the `description` line changed; names, bodies and markers were identical.
+Four variants of the same twelve skills. Only the `description` line changed; names, bodies and markers were identical. Two factors, crossed.
 
-| Variant | Style | Example, `acme-web-react` |
-|---|---|---|
-| A | Intent, broad | Use when adding or changing a React component, hook or form in the web front end. |
-| B | Artefact, with exclusions | Use when editing a .tsx or .jsx file that defines a React component or hook. Not for Vue files, backend code or end to end tests. |
-
-Results. The explicit prompt names both technologies; a correct run fires exactly `acme-data-csharp` and `acme-web-react`.
-
-| Prompt | n | A | B |
+| Variant | Wording | Negative boundary | Example, `acme-web-react` |
 |---|---|---|---|
-| Explicit cross-stack | 7 | 6 correct, one fired nothing | 4 correct, three fired nothing |
-| Vague with breadth cue | 5 | 11, 5, 5, 5, 4 skills fired | 2, 2, 2, 0, 1 |
-| Vague, neutral | 3 | 0, 1, 0 | 0, 0, 1 |
+| A | Intent | No | Use when adding or changing a React component, hook or form in the web front end. |
+| B | Artefact | Yes | Use when editing a .tsx or .jsx file that defines a React component or hook. Not for Vue files, backend code or end to end tests. |
+| C | Intent | Yes | Use when adding or changing a React component, hook or form in the web front end. Not for Vue files, backend code or end to end tests. |
+| D | Artefact | No | Use when editing a .tsx or .jsx file that defines a React component or hook. |
 
-**Tightening works on over-firing.** On the breadth-cue prompt the mean fell from 6.0 skills to 1.4, and the eleven-skill run did not recur. That effect is large and not in doubt.
+"Intent" describes the moment of use. "Artefact" describes the file being edited. A negative boundary is a trailing "Not for X" sentence.
 
-**It costs recall where recall matters.** The explicit prompt is the well-specified case, the one a competent developer actually types. It went from 6 of 7 to 4 of 7. At this sample size that difference is suggestive, not significant, and it should not be quoted as a measured rate. The direction is consistent with the over-firing result: variant B fires less, everywhere.
+### Results
 
-**Neither variant fixes the neutral prompt.** Under-firing survived both, which confirms it is a property of the request rather than of the description.
+A run on the explicit prompt is correct when exactly `acme-data-csharp` and `acme-web-react` fired and no decoy did.
 
-The trade is bad. Buying precision on a prompt that says "do the whole thing end to end" by losing the prompt that names the work is the wrong way round, because under-firing is silent.
+| Variant | Explicit prompt, correct | Vague with breadth cue, mean skills fired |
+|---|---|---|
+| A. Intent, no boundary | 10 of 15 | **6.0** |
+| B. Artefact, boundary | 4 of 7 | 1.4 |
+| C. Intent, boundary | 12 of 15 | 1.2 |
+| D. Artefact, no boundary | 6 of 7 | 0.8 |
 
-### Why B lost, and the confound
+Per-run vague counts: A fired 11, 5, 5, 5, 4. B fired 2, 2, 2, 0, 1. C fired 0, 3, 2, 1, 0. D fired 1, 1, 0, 0, 2.
 
-Variant B changed two things at once, and the experiment cannot separate them:
+### What this shows
 
-1. It added negative boundaries, "Not for Vue files".
-2. It moved the trigger surface from **intent** to **artefact**: from "adding a React component" to "editing a .tsx or .jsx file".
+**Either change alone suppresses over-firing.** A is the only variant that over-fires, and it is the only one with neither change. Adding a negative boundary does it. Switching to artefact wording does it. Doing both does not add much. The effect is large and consistent, so it is safe to act on.
 
-The second is the likely cause. A developer writing "add the input to the React profile form" never mentions a file extension, so an artefact-shaped description has less to match against. That is exactly what [recommendation.md](recommendation.md) already warns about under "scope the description by when, not what". The experiment supports that rule by breaking it and getting worse.
+**Neither change costs recall, and the earlier claim that they did was wrong.** That claim rested on comparing A at 6 of 7 against B at 4 of 7. At fifteen runs A is 10 of 15, so the 6 of 7 was a small-sample fluke and the gap it implied does not exist. C, the variant this document previously advised against, scored highest of the two arms with fifteen runs.
 
-Which of the two changes did the damage is untested. Splitting them is the next experiment: one variant that adds only exclusions to the intent wording, one that changes only intent to artefact.
+**No difference in recall between variants is significant here.** 10 of 15 against 12 of 15 is well inside noise. The claim is only that C is not worse than A, not that it is better.
 
-**What to do meanwhile.** Keep intent-shaped descriptions. Do not add file extensions or negative boundaries to buy precision. Handle cross-stack noise with per-repo enablement, which costs no recall at all.
+**Decoys never fired.** Zero decoy invocations across all 44 explicit runs, in every variant. Whatever else is uncertain, the catalogue does not misfire on a well-specified request. That is the strongest single result in this document.
 
+**The real problem is not which variant wins.** Every variant missed the explicit prompt between 14% and 33% of the time. A well-specified, unambiguous, cross-stack request fails to load the right skills roughly a fifth to a third of the time, whatever the description says. That matters more than the choice between wordings, and no description edit tested here fixes it.
+
+### What to adopt
+
+Variant C. Keep intent wording, and add a trailing negative boundary naming the nearest technologies the skill is not for.
+
+It keeps the rule [recommendation.md](recommendation.md) already sets, "scope the description by when, not what", so nothing else in the plan has to change. It captures nearly all of the precision gain, cutting mean over-firing from 6.0 skills to 1.2. And it costs nothing measurable in recall.
+
+D scored well too and is worth a longer look, but adopting it would mean reversing the "when, not what" rule on seven runs of evidence. C gets the same benefit without that argument.
+
+**Design the trigger suite around the miss rate, not the wording.** A skill that loads two times in three on the request it was written for is the finding that should shape layer 3. Set the should-fire threshold from measured behaviour rather than from an expectation of 100%, and run enough repeats to see it.
 ## What this changed in the plan
 
-All four are applied in [recommendation.md](recommendation.md) as of this commit.
+All six are applied in [recommendation.md](recommendation.md) as of this commit.
 
 1. The "one is wrong" rule in section 2 is replaced by the overlap version above.
 2. Per-repo enablement is named as the answer to cross-stack noise, in place of description tuning.
-3. Section 3 gains a layer 3b: assert the set of skills a query fires, with cross-stack cases required for any two technologies that meet in a real repository.
-4. The harness must check a run's exit code before scoring it.
+3. Section 2 now requires a trailing negative boundary on every description, naming the nearest technologies the skill is not for.
+4. Section 3 gains a layer 3b: assert the set of skills a query fires, with cross-stack cases required for any two technologies that meet in a real repository.
+5. Section 3 sets the should-fire threshold from measured behaviour rather than from an expectation of 100%, because a well-specified request loaded the right skills only two times in three.
+6. The harness must check a run's exit code before scoring it.
 
 ## What we could not verify
 
 - **Whether this holds at catalogue scale.** Twelve skills is the engine cap, so it is the right number to test, but a developer with our catalogue plus their own project skills will exceed it. The listing budget is 1% of the context window and drops descriptions starting with the least-invoked skills, so behaviour past the cap is a different experiment.
-- **Which half of variant B caused the recall loss.** It changed the wording from intent to artefact and added negative boundaries in the same edit. The two need separating.
-- **Significance on the explicit prompt.** Seven runs per variant, 6 correct against 4. Too few to call. The over-firing effect, a mean of 6.0 skills against 1.4, is large enough to lean on; the recall difference is not.
-- **Whether a middle wording exists.** Neither variant fired reliably on a plainly worded request. Whether any description can is untested.
+- **Why any variant misses.** Every wording tested failed the explicit prompt between 14% and 33% of the time, firing nothing rather than the wrong thing. Nothing here explains the misses or shows a description that removes them.
+- **Significance on recall.** Fifteen runs for A and C, seven for B and D. No recall difference between variants is significant at those numbers. Only the over-firing effect, a mean of 6.0 against about 1.0, is large enough to lean on.
+- **Whether artefact wording is genuinely better.** Variant D scored highest on both measures but only over seven runs, and adopting it would reverse the plan's "when, not what" rule. It deserves a longer run before anyone acts on it.
 - **Whether the ordering of skills in the listing matters.** Not varied.
 - **How this interacts with `relevance` suggestions.** Nothing was installed through a marketplace here; all twelve were project skills.

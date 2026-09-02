@@ -89,7 +89,9 @@ This is the deterministic layer. Prefer it wherever the answer is already known.
 | Messaging patterns and conventions | Use when adding a Kafka producer or consumer in an event-driven service |
 | Database guidance | Use when writing EF Core queries or migrations against SQL Server |
 
-Two skills may fire on one request when the request genuinely spans both. That is correct and measured: a task naming EF Core and React fired exactly those two skills in six runs of seven, with ten decoys installed and not one of them firing in any run. What must not happen is two skills firing because their descriptions cover the same work. Test for the overlap, not for the co-firing.
+**End every description with a negative boundary** naming the nearest technologies it is not for: "Not for Vue files, backend code or end to end tests." This is measured, not stylistic. Without one, a request that signals breadth pulled in a mean of 6.0 skills out of 12. With one, 1.2. It costs nothing detectable in recall, and it keeps the intent wording this section already requires.
+
+Two skills may fire on one request when the request genuinely spans both. That is correct and measured: a task naming EF Core and React fired exactly those two skills in 10 runs of 15, with ten decoys installed and not one of them firing in any of 44 runs across four description variants. What must not happen is two skills firing because their descriptions cover the same work. Test for the overlap, not for the co-firing.
 
 The layer that does the real work here is per-repo enablement, not description tuning. In a C#-only repository the React skill is not installed and cannot misfire however the request is phrased. Keep `enabledPlugins` tight per repo rather than shipping the whole catalogue everywhere.
 
@@ -127,6 +129,8 @@ An LLM eval earns its cost only when no cheaper check can answer the question. G
 Ablation answers admission, not regression. It compares the skill against nothing, so it cannot tell you whether v2 beats v1. Both arms contain v2. Version comparison is layer 6 and lives in `skill-creator`'s Improve mode.
 
 Tier 3 asserts the **set** of skills a query fires, not one skill, and runs with the whole catalogue installed. A cross-stack task has two right answers at once, so a per-skill assertion cannot see it. Write three cases for every two technologies that meet in a real repository: one naming both, one naming neither, one naming only the first. The middle case is the valuable one and the one nobody writes. Add these from the start, because a case scored against a single skill keeps no record of what else fired. The harness must also check the run's exit code before scoring it, or it will read its own timeouts as negative results.
+
+**Set the should-fire threshold from measured behaviour, not from an expectation of 100%.** A well-specified, unambiguous cross-stack request loaded the right skills in only 10 runs of 15, and no description wording tested removed the misses. A failing run fired nothing rather than the wrong thing. A gate demanding a perfect trigger rate will fail on healthy skills; calibrate it against a baseline measured on skills known to be good.
 
 Case counts: about twenty queries per engine for firing, split evenly between should-fire and near-miss should-not-fire, at three runs each. Two or three cases per contract for outcome. Borrow a should-not-fire prompt from another stack. An author should not be the only reviewer of their own skill.
 
