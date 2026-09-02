@@ -63,7 +63,9 @@ This is the part that decides our design, so it is all verified against current 
 
 Enterprise managed settings, personal `~/.claude/skills/`, project `.claude/skills/`, plugin `skills/`, and claude.ai sync. Precedence runs enterprise, then personal, then project.
 
-**MCP is not a skill source.** An MCP server cannot deliver a `SKILL.md` to Claude Code. The feature request was closed as not planned. This single fact rules out the design most people reach for first.
+**MCP is not a skill source.** Claude Code will not consume a skill served as an MCP resource. The feature request was closed as not planned. This rules out the design most people reach for first.
+
+**Corrected on 2 September 2026.** The sentence here previously read "an MCP server cannot deliver a `SKILL.md` to Claude Code". That is too strong and it is wrong. A server cannot *serve* a skill as a resource, but it can *write the file* into `.claude/skills/`, and Claude Code picks it up mid-session with no restart, provided that directory already existed when the session started. Measured, and documented under "Live change detection". See [mcp-skill-delivery.md](mcp-skill-delivery.md), which also explains why we are still not building it.
 
 ### Frontmatter that matters
 
