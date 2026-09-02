@@ -1,2 +1,5 @@
 # Local Claude Code settings. Machine-specific, never shared.
 .claude/settings.local.json
+
+# Agent worktrees. Transient, and each is its own git repo.
+.claude/worktrees/
