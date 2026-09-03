@@ -1,0 +1,12 @@
+C:\Projects\skills-marketplace\harness\src\Harness\obj\Debug\net10.0\Harness.GeneratedMSBuildEditorConfig.editorconfig
+C:\Projects\skills-marketplace\harness\src\Harness\obj\Debug\net10.0\Harness.AssemblyInfoInputs.cache
+C:\Projects\skills-marketplace\harness\src\Harness\obj\Debug\net10.0\Harness.AssemblyInfo.cs
+C:\Projects\skills-marketplace\harness\src\Harness\obj\Debug\net10.0\Harness.csproj.CoreCompileInputs.cache
+C:\Projects\skills-marketplace\harness\src\Harness\obj\Debug\net10.0\Harness.sourcelink.json
+C:\Projects\skills-marketplace\harness\src\Harness\bin\Debug\net10.0\Harness.deps.json
+C:\Projects\skills-marketplace\harness\src\Harness\bin\Debug\net10.0\Harness.dll
+C:\Projects\skills-marketplace\harness\src\Harness\bin\Debug\net10.0\Harness.pdb
+C:\Projects\skills-marketplace\harness\src\Harness\obj\Debug\net10.0\Harness.dll
+C:\Projects\skills-marketplace\harness\src\Harness\obj\Debug\net10.0\refint\Harness.dll
+C:\Projects\skills-marketplace\harness\src\Harness\obj\Debug\net10.0\Harness.pdb
+C:\Projects\skills-marketplace\harness\src\Harness\obj\Debug\net10.0\ref\Harness.dll
