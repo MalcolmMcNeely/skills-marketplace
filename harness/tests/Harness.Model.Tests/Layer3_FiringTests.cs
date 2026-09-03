@@ -8,6 +8,10 @@ public class Layer3_FiringTests(ITestOutputHelper output)
 {
     private static readonly HarnessPaths Paths = new();
 
+    /// <summary>Suite-wide hard stop. Ten void runs cost $2.28 on this ticket before the resample cap fired.</summary>
+    private static decimal Ceiling =>
+        decimal.TryParse(Environment.GetEnvironmentVariable("SKILL_HARNESS_CEILING_USD"), out var c) ? c : 5.00m;
+
     [LiveFact]
     public async Task One_positive_case_end_to_end()
     {
@@ -16,8 +20,9 @@ public class Layer3_FiringTests(ITestOutputHelper output)
         var runner = new FiringRunner(Paths);
 
         var runs = int.TryParse(Environment.GetEnvironmentVariable("SKILL_HARNESS_RUNS"), out var n) ? n : c.Runs;
-        var sample = await Resampler.CollectAsync(runs, c.Cap, async ct =>
-            Scoring.ScoreFiring(await runner.RunAsync(c.Prompt, ct), c.Expect));
+        var ledger = new SpendLedger(Ceiling);
+        var sample = await Resampler.CollectAsync(runs, c.Cap,
+            async ct => Scoring.ScoreFiring(await runner.RunAsync(c.Prompt, ct), c.Expect), ledger);
 
         foreach (var s in sample.Scores)
             output.WriteLine($"{s.Verdict,-9} {s.Detail}  ${s.CostUsd:0.000}");

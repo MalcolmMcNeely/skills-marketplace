@@ -65,3 +65,24 @@ public class ScoringTests
         },
     };
 }
+
+public class SpendLedgerTests
+{
+    [Fact]
+    public async Task The_suite_stops_when_the_ceiling_is_passed()
+    {
+        var ledger = new SpendLedger(1.00m);
+        var attempts = 0;
+
+        // Every run is void, as ten real ones were on this ticket. Without a ledger the cap costs $2.28.
+        var sample = await Resampler.CollectAsync(wanted: 5, cap: 20, once: _ =>
+        {
+            attempts++;
+            return Task.FromResult(new RunScore(Verdict.Void, "exit=1 subtype=error_max_budget_usd", [], [], 0.23m));
+        }, ledger);
+
+        Assert.Equal("suite-budget-exhausted", sample.Failure);
+        Assert.Equal(5, attempts);                       // 5 x $0.23 = $1.15, so it stops on the 6th
+        Assert.True(ledger.Spent < 1.30m, ledger.Report());
+    }
+}

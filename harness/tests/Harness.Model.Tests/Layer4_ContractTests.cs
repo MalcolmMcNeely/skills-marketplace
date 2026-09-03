@@ -8,6 +8,10 @@ public class Layer4_ContractTests(ITestOutputHelper output)
 {
     private static readonly HarnessPaths Paths = new();
 
+    /// <summary>Suite-wide hard stop. Ten void runs cost $2.28 on this ticket before the resample cap fired.</summary>
+    private static decimal Ceiling =>
+        decimal.TryParse(Environment.GetEnvironmentVariable("SKILL_HARNESS_CEILING_USD"), out var c) ? c : 5.00m;
+
     [LiveFact]
     public async Task The_good_fixture_holds_its_contract()
     {
@@ -17,9 +21,10 @@ public class Layer4_ContractTests(ITestOutputHelper output)
         var runner = new ContractRunner(Paths);
 
         var runs = int.TryParse(Environment.GetEnvironmentVariable("SKILL_HARNESS_RUNS"), out var n) ? n : c.Runs;
-        var sample = await Resampler.CollectAsync(runs, c.Cap, async ct =>
-            Scoring.ScoreContract(await runner.RunAsync(suite.SkillUnderTest, c.Task, Paths.GoodPlugin, ct),
-                suite.SkillUnderTest, assertions));
+        var ledger = new SpendLedger(Ceiling);
+        var sample = await Resampler.CollectAsync(runs, c.Cap,
+            async ct => Scoring.ScoreContract(await runner.RunAsync(suite.SkillUnderTest, c.Task, Paths.GoodPlugin, ct),
+                suite.SkillUnderTest, assertions), ledger);
 
         foreach (var s in sample.Scores)
         {

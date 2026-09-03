@@ -17,7 +17,10 @@ public sealed class FiringRunner(HarnessPaths paths)
             // NOT restricted here: --allowedTools only auto-approves, and disallowing Write made the
             // model read the repo until it blew the budget. The stop rule does the saving instead.
             MaxBudgetUsd = 0.40m,   // MEASURED: 0.20 aborted mid-run and voided the sample.
-            StopMode = StopMode.FirstDecision,
+            // Runs to the end on purpose. Killing at the first decision truncates the fired SET, and
+            // #10 grades a positive case on an exact set match, so a second skill firing later would
+            // be invisible. A killed run also emits no result line, so it cannot report its own cost.
+            StopMode = StopMode.Completion,
             Timeout = TimeSpan.FromMinutes(3),
         }, ct);
 }
@@ -43,26 +46,29 @@ public sealed class ContractRunner(HarnessPaths paths)
 }
 
 /// <summary>Resample a case until it has enough VALID runs, or give up and say so.</summary>
-public sealed record Sample(IReadOnlyList<RunScore> Scores, bool CapHit)
+public sealed record Sample(IReadOnlyList<RunScore> Scores, bool CapHit, bool BudgetExhausted = false)
 {
     public int Valid => Scores.Count(s => s.Verdict != Verdict.Void);
     /// <summary>Hitting the cap is a LAYER 3 failure and must be reported as one, not as a contract break.</summary>
-    public string? Failure => CapHit ? "insufficient-firings" : null;
+    public string? Failure => BudgetExhausted ? "suite-budget-exhausted" : CapHit ? "insufficient-firings" : null;
 }
 
 public static class Resampler
 {
     public static async Task<Sample> CollectAsync(
-        int wanted, int cap, Func<CancellationToken, Task<RunScore>> once, CancellationToken ct = default)
+        int wanted, int cap, Func<CancellationToken, Task<RunScore>> once,
+        SpendLedger? ledger = null, CancellationToken ct = default)
     {
         var scores = new List<RunScore>();
         var valid = 0;
         var attempts = 0;
         while (valid < wanted && attempts < cap)
         {
+            if (ledger?.Exhausted == true) return new Sample(scores, CapHit: false, BudgetExhausted: true);
             attempts++;
             var score = await once(ct);
             scores.Add(score);
+            ledger?.Record(score);
             if (score.Verdict != Verdict.Void) valid++;
         }
         return new Sample(scores, valid < wanted);
