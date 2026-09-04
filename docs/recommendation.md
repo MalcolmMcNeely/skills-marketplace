@@ -107,9 +107,9 @@ Seven layers, cheapest first.
 |---|---|---|---|---|
 | 1. Manifests | `claude plugin validate . --strict` | Free | Every PR | Yes |
 | 2. Referential integrity and budget | xUnit | Free | Every PR | Yes |
-| 3. Firing accuracy | Our harness, modelled on `run_eval.py` | ~60 calls per engine | PRs touching a description | Yes |
-| 3b. Cross-stack firing | Same harness, asserting the **set** that fired | ~9 calls per pair | PRs touching a description | Yes |
-| 4. Contract assertions | Same harness, invoking the skill **by name** | 5 calls per case | PRs touching a body | Yes |
+| 3. Firing accuracy | Our harness, modelled on `run_eval.py` | 125 calls per engine, about `$24.50` | PRs touching a description | Undecided, see below |
+| 3b. Cross-stack firing | Same harness, asserting the **set** that fired | ~9 calls per pair | PRs touching a description | Undecided, see below |
+| 4. Contract assertions | Same harness, invoking the skill **by name** | 5 calls per case, about `$1.51` | PRs touching a body | Undecided, see below |
 | 5. Admission delta | `skill-creator` Benchmark | High | New engines only | Yes, once |
 | 6. Version comparison | `skill-creator` Improve mode, blind A/B | High | On request, by the author | No |
 | 7. Human review | A second person, plus fixed scenario scripts | Minutes | Every PR | Yes |
@@ -138,9 +138,11 @@ Tier 3 asserts the **set** of skills a query fires, not one skill, and runs with
 
 **Pool runs across the suite; do not score case by case.** Requiring every case to pass is unusable at any affordable run count: a skill firing at the measured 2 runs in 3 passes a ten-query suite under a per-query rule 5% of the time at three runs, and 42% at fifteen. Pool every valid run so granularity is 1/N, gate on the pooled rate, and keep per-case rates as diagnostics with a zero-floor guard.
 
-Case counts: about twenty queries per engine for firing, split evenly between should-fire and near-miss should-not-fire. Should-fire needs six runs each, should-not-fire three. Contract cases get five by-name runs, because three catch a break that happens 30% of the time only 66% of the time, and five catch it 83%. Roughly 90 runs per engine per pass. Borrow a should-not-fire prompt from another stack. An author should not be the only reviewer of their own skill.
+Case counts: twenty-three cases per engine for firing, being ten should-fire, ten near-miss should-not-fire and three ambiguous watch-list cases that are run but never gated. Should-fire needs six runs each, should-not-fire five, per [#10](https://github.com/MalcolmMcNeely/skills-marketplace/issues/10). The negative side moved from three runs to five because the earlier zero-in-44 result was measured against distant decoys and ours are deliberately close. Contract cases get five by-name runs, because three catch a break that happens 30% of the time only 66% of the time, and five catch it 83%. Roughly 125 runs per engine per pass. Borrow a should-not-fire prompt from another stack. An author should not be the only reviewer of their own skill.
 
-Budget per full pass, at twelve engines: a warm run measured about **$0.043** and 6 to 10 seconds, putting a twelve-engine nightly near **$43**. Narrow by changed skill on pull requests, full suite on merge and overnight.
+Budget per full pass, at twelve engines: a firing run measured about **$0.196** and roughly 40 seconds, so [#10](https://github.com/MalcolmMcNeely/skills-marketplace/issues/10)'s 125-run suite costs about **$24.50** per engine, putting a twelve-engine nightly nearer **$300** than $43. The earlier $0.043 was measured on read-only probes with writes disallowed, and does not apply to a run that creates files. [Harness skeleton](harness-skeleton.md) carries the measurement.
+
+**Where layer 3 runs is not settled.** At $24.50 a pass, blocking every description pull request needs a decision it has not had, and the pass mark it would enforce still rests on an uncalibrated 0.67 borrowed from a different pair of stub skills. [#11](https://github.com/MalcolmMcNeely/skills-marketplace/issues/11) ruled that policy out of scope until there is a real catalogue to act on. Until then the paying layers run on demand only, with `--max-budget-usd 0.60` per run and a suite ceiling of $50.
 
 Fixtures load with `--plugin-dir <path>`, which loads a plugin for one session only and is repeatable. Good and broken fixtures therefore live as separate directories and never enter the shipped catalogue.
 
