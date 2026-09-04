@@ -253,10 +253,11 @@ pause
 
 # ── 5 ─────────────────────────────────────────────────────────────────────
 stage "Prove CI can reach claude"
-say "workflow_dispatch only appears once the workflow file is on main."
-step "Merge the pull request that adds .github/workflows/$WORKFLOW."
-open_url "https://github.com/$REPO/pulls"
-pause "Merged?"
+say "workflow_dispatch only appears for workflows on the default branch."
+say "This one is already on main, so the button exists."
+if ! gh workflow list --repo "$REPO" | grep -q "$WORKFLOW"; then
+  warn "$WORKFLOW is not on main yet. Push it, then re-run this stage."
+fi
 
 if confirm "Dispatch the smoke run now? It costs a few cents."; then
   if gh workflow run "$WORKFLOW" --repo "$REPO" -f mode=smoke; then
