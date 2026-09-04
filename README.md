@@ -14,6 +14,7 @@ Today each team writes its own skills. The copies drift, nobody knows which vers
 - [MCP skill delivery](docs/mcp-skill-delivery.md). Measured: can an MCP server install a skill, and should it.
 - [Baseline test-first](docs/baseline-test-first.md). Measured: what Claude does with no skill installed, and which assertions actually discriminate.
 - [Harness skeleton](docs/harness-skeleton.md). Built and run: the shape the harness takes, and three plan assumptions a real run disproved.
+- [Running the paying layers](docs/running-the-paid-layers.md). Where layers 3 and 4 run, why there is no CI, and why every dollar on this map is notional.
 - [Output styles](docs/output-styles.md). How to set one voice across the company, and what it costs.
 
 ## Two skill locations, and they are not the same thing
