@@ -1,0 +1,4 @@
+# Shell scripts and CI workflows must keep LF, or bash and the runner choke on \r.
+*.sh text eol=lf
+*.yml text eol=lf
+*.yaml text eol=lf

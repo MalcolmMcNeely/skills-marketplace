@@ -1,0 +1,105 @@
+name: Paid harness (layers 3 and 4)
+
+# Dispatch only. #11: "Every paid run is then a measurement somebody asked for."
+# There is no nightly and no pull request trigger. Layers 1 and 2 are free and belong in
+# their own workflow, which lands when harness/ lands on main.
+on:
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: "smoke proves claude runs in CI. suite runs layers 3 and 4."
+        type: choice
+        options: [smoke, suite]
+        default: smoke
+      harness_ref:
+        description: "Branch holding harness/. Not on main yet."
+        default: prototype/harness-skeleton
+      model:
+        description: "Pin the model, or every cost figure measures a different thing."
+        default: claude-opus-5
+      runs_per_case:
+        description: "SKILL_HARNESS_RUNS. Blank lets the case file decide."
+        default: "1"
+      suite_ceiling_usd:
+        description: "SKILL_HARNESS_CEILING_USD, the harness hard stop."
+        default: "50"
+
+permissions:
+  contents: read
+
+# Two dispatches running at once would spend twice with one ledger each.
+concurrency:
+  group: paid-harness
+  cancel-in-progress: false
+
+env:
+  # Pinned on purpose. Every gate value this map produces is calibrated against one CLI
+  # version, and #8 measured behaviour that differs between them. Bumping this invalidates
+  # the calibration and #12 must be re-run.
+  CLAUDE_CODE_VERSION: "2.1.248"
+
+jobs:
+  run:
+    runs-on: ubuntu-24.04
+    # GitHub Actions has no dollar ceiling, only a clock. At the measured $0.196 and ~40s a
+    # run, 210 minutes is roughly $60. It sits above the harness ledger so the ledger reports
+    # first. The only true hard stop is the spend limit on the Anthropic workspace.
+    timeout-minutes: 210
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.harness_ref }}
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      - name: Install the pinned Claude Code
+        run: npm install -g "@anthropic-ai/claude-code@${CLAUDE_CODE_VERSION}"
+
+      - name: Fail if the installed version is not the pin
+        run: |
+          set -euo pipefail
+          installed="$(claude --version | awk '{print $1}')"
+          echo "installed: ${installed}  pinned: ${CLAUDE_CODE_VERSION}"
+          test "${installed}" = "${CLAUDE_CODE_VERSION}"
+
+      - name: Smoke - can CI reach claude at all
+        if: inputs.mode == 'smoke'
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          # Through env, not ${{ }} inside the script, so an input cannot inject shell.
+          MODEL: ${{ inputs.model }}
+        run: |
+          set -euo pipefail
+          test -n "${ANTHROPIC_API_KEY}" || { echo "secret ANTHROPIC_API_KEY is empty"; exit 1; }
+          mkdir -p "${RUNNER_TEMP}/smoke" && cd "${RUNNER_TEMP}/smoke"
+          claude -p "Reply with the single word ok and nothing else." \
+            --output-format stream-json --verbose \
+            --model "${MODEL}" \
+            --max-budget-usd 0.05 \
+            --settings '{"outputStyle":"default"}' \
+            > stream.jsonl
+          echo "--- result line ---"
+          grep '"type":"result"' stream.jsonl | tail -1
+          echo "--- cost, usd ---"
+          grep '"type":"result"' stream.jsonl | tail -1 | jq -r '.total_cost_usd'
+
+      - uses: actions/setup-dotnet@v4
+        if: inputs.mode == 'suite'
+        with:
+          dotnet-version: "10.0.x"
+
+      - name: Suite - layers 3 and 4
+        if: inputs.mode == 'suite'
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          SKILL_HARNESS_LIVE: "1"
+          SKILL_HARNESS_CEILING_USD: ${{ inputs.suite_ceiling_usd }}
+          SKILL_HARNESS_RUNS: ${{ inputs.runs_per_case }}
+          # The harness reads no env var for the per-run budget or the model. RunSpec hardcodes
+          # MaxBudgetUsd = 0.60, which is the ceiling #11 asked for, and leaves Model null, so
+          # the suite takes whatever model the CLI defaults to. The model input above therefore
+          # does NOT reach this path. #12 needs both made settable before its numbers can be
+          # compared with the laptop measurement.
+        run: dotnet test harness/tests/Harness.Model.Tests --logger "console;verbosity=detailed"
