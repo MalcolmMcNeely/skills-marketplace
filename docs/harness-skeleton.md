@@ -1,6 +1,6 @@
 # The harness skeleton, built and run
 
-Written 2 September 2026 against Claude Code 2.1.248, model `claude-opus-5[1m]`. Resolves [#8](https://github.com/MalcolmMcNeely/skills-marketplace/issues/8). The prototype it describes was built on the throwaway branch [`prototype/harness-skeleton`](https://github.com/MalcolmMcNeely/skills-marketplace/tree/prototype/harness-skeleton) and now lives under `harness/` on `main`. Builds on [scoring.md](scoring.md), [baseline-test-first.md](baseline-test-first.md) and the case suite in [#10](https://github.com/MalcolmMcNeely/skills-marketplace/issues/10).
+Written 2 September 2026 against Claude Code 2.1.248, model `claude-opus-5[1m]`. Resolves [#8](https://github.com/MalcolmMcNeely/skills-marketplace/issues/8). The prototype it describes lives under `harness/` on `main`. Builds on [scoring.md](scoring.md), [baseline-test-first.md](baseline-test-first.md) and the case suite in [#10](https://github.com/MalcolmMcNeely/skills-marketplace/issues/10).
 
 ## The short version
 
