@@ -1,0 +1,3 @@
+{"type":"system","subtype":"init","cwd":"/fixture","model":"claude-opus-5[1m]","permissionMode":"default","output_style":"default"}
+{"type":"assistant","message":{"role":"assistant","content":[{"type":"text","text":"I'll just write it."}]}}
+{"type":"result","subtype":"success","is_error":false,"result":"wrote the class","total_cost_usd":0.038}

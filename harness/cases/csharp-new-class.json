@@ -1,0 +1,49 @@
+{
+  "suite": "csharp-new-class",
+  "skillUnderTest": "csharp-new-class",
+  "pGood": 0.67,
+
+  "firing": {
+    "shouldFire": [
+      { "id": "P1",  "runs": 6, "expect": ["csharp-new-class"], "prompt": "Add a Discount class that applies a percentage discount to an order total." },
+      { "id": "P2",  "runs": 6, "expect": ["csharp-new-class"], "prompt": "Create a TaxCalculator in the core project that works out VAT for a line item, including reduced and zero rates." },
+      { "id": "P3",  "runs": 6, "expect": ["csharp-new-class"], "prompt": "We need an OrderValidator that rejects an order with no lines or a negative total. Add it to src/." },
+      { "id": "P4",  "runs": 6, "expect": ["csharp-new-class"], "prompt": "Add a CustomerAddress class with street, city and postcode, and a method that formats it for a shipping label." },
+      { "id": "P5",  "runs": 6, "expect": ["csharp-new-class"], "prompt": "I need a RetryPolicy class that decides whether an operation should be retried, based on attempt count and elapsed time." },
+      { "id": "P6",  "runs": 6, "expect": ["csharp-new-class"], "prompt": "Add a CurrencyConverter to the core library that converts between two currencies using a supplied rate table." },
+      { "id": "P7",  "runs": 6, "expect": ["csharp-new-class"], "prompt": "Write a PasswordStrengthChecker class that scores a password on length, character classes and common words." },
+      { "id": "P8",  "runs": 6, "expect": ["csharp-new-class"], "prompt": "Add an InventoryReservation class holding a product id, quantity and expiry, which can tell you if it has lapsed." },
+      { "id": "P9",  "runs": 6, "expect": ["csharp-new-class"], "prompt": "Create a CsvExporter in src/ that turns a list of orders into a CSV string." },
+      { "id": "P10", "runs": 6, "expect": ["csharp-new-class"], "prompt": "We want a PricingTier class that maps a customer's annual spend to a discount band." }
+    ],
+
+    "shouldNotFire": [
+      { "id": "N1",  "runs": 5, "boundary": "test files",      "prompt": "Add tests for the existing Discount class. It has no coverage." },
+      { "id": "N2",  "runs": 5, "boundary": "existing classes", "prompt": "The OrderValidator class is missing a check for duplicate line items. Add one." },
+      { "id": "N3",  "runs": 5, "boundary": "existing classes", "prompt": "Rename TaxCalculator.Compute to CalculateVat and update every caller." },
+      { "id": "N4",  "runs": 5, "boundary": "test files",      "prompt": "Write unit tests covering the edge cases in CurrencyConverter, including a zero rate." },
+      { "id": "N5",  "runs": 5, "boundary": "existing classes", "prompt": "The RetryPolicy class retries forever when elapsed time is zero. Fix the bug." },
+      { "id": "N6",  "runs": 5, "boundary": "non-C#",          "prompt": "Add a new PriceBadge Vue component that shows a discounted price." },
+      { "id": "N7",  "runs": 5, "boundary": "non-C#",          "prompt": "Add a Python class that batches nightly order exports to S3." },
+      { "id": "N8",  "runs": 5, "boundary": "existing classes", "prompt": "Move the Discount class into a new src/Pricing/ folder and fix the namespace." },
+      { "id": "N9",  "runs": 5, "boundary": "test files",      "prompt": "Add a new xUnit test project for the integration tests and wire it into the solution." },
+      { "id": "N10", "runs": 5, "boundary": "existing classes", "prompt": "Delete the unused LegacyPricing class and remove its references." }
+    ],
+
+    "watch": [
+      { "id": "W1", "runs": 5, "boundary": "new class AND test file", "prompt": "Add a new OrderServiceTests class covering the discount path." },
+      { "id": "W2", "runs": 5, "boundary": "record, not class",       "prompt": "Add a Money record with an amount and a currency code." },
+      { "id": "W3", "runs": 5, "boundary": "interface, not class",    "prompt": "Add an IDiscountPolicy interface that pricing strategies will implement." }
+    ]
+  },
+
+  "contract": [
+    {
+      "id": "C1",
+      "runs": 5,
+      "task": "Add a Discount class that applies a percentage discount to an order total.",
+      "assertions": "TestFirstFilesOnly",
+      "assertionArgs": { "className": "Discount" }
+    }
+  ]
+}
