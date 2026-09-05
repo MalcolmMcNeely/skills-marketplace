@@ -90,8 +90,8 @@ dotnet test harness/tests/Harness.Free.Tests                        # layers 1 a
 SKILL_HARNESS_LIVE=1 dotnet test harness/tests/Harness.Model.Tests  # layers 3 and 4.
 ```
 
-`harness/` is not on `main`. It lives on the throwaway branch
-`prototype/harness-skeleton`.
+`harness/` is on `main`. It was built on the throwaway branch
+`prototype/harness-skeleton`, which is kept as the primary source.
 
 ## What we could not verify
 

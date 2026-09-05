@@ -1,6 +1,6 @@
 # The harness skeleton, built and run
 
-Written 2 September 2026 against Claude Code 2.1.248, model `claude-opus-5[1m]`. Resolves [#8](https://github.com/MalcolmMcNeely/skills-marketplace/issues/8). The prototype it describes lives on the throwaway branch [`prototype/harness-skeleton`](https://github.com/MalcolmMcNeely/skills-marketplace/tree/prototype/harness-skeleton) and is not merged. Builds on [scoring.md](scoring.md), [baseline-test-first.md](baseline-test-first.md) and the case suite in [#10](https://github.com/MalcolmMcNeely/skills-marketplace/issues/10).
+Written 2 September 2026 against Claude Code 2.1.248, model `claude-opus-5[1m]`. Resolves [#8](https://github.com/MalcolmMcNeely/skills-marketplace/issues/8). The prototype it describes was built on the throwaway branch [`prototype/harness-skeleton`](https://github.com/MalcolmMcNeely/skills-marketplace/tree/prototype/harness-skeleton) and now lives under `harness/` on `main`. Builds on [scoring.md](scoring.md), [baseline-test-first.md](baseline-test-first.md) and the case suite in [#10](https://github.com/MalcolmMcNeely/skills-marketplace/issues/10).
 
 ## The short version
 
@@ -92,7 +92,7 @@ The runs were healthy. Their streams were not kept, so the evidence comes from t
 
 > Empty project ... Writing the test first per the rule.
 
-The other ran to completion. It wrote `tests/DiscountTests.cs` first, then `src/Discount.cs`, and never executed `dotnet test`. In both, the `slash_commands` field of the `init` line listed `harness-fixture-good:csharp-new-class`, so the plugin loaded. The CLI had expanded the slash command inline rather than routing it through the `Skill` tool. Both captures are committed on the prototype branch under `harness/captured/`, and a free test scores the complete one `Held` on both signal assertions.
+The other ran to completion. It wrote `tests/DiscountTests.cs` first, then `src/Discount.cs`, and never executed `dotnet test`. In both, the `slash_commands` field of the `init` line listed `harness-fixture-good:csharp-new-class`, so the plugin loaded. The CLI had expanded the slash command inline rather than routing it through the `Skill` tool. Both captures are committed under `harness/captured/`, and a free test scores the complete one `Held` on both signal assertions.
 
 | Shell the CLI was launched from | `Skill` tool calls |
 |---|---|
