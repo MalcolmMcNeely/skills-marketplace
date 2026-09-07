@@ -1,6 +1,6 @@
 # skills-marketplace
 
-A Claude Code plugin marketplace for sharing agent skills across teams. Today the repo holds research, a plan and a prototype harness. The shipped catalogue, `plugins/core/skills/`, is empty. Filling it is the work.
+A Claude Code plugin marketplace for sharing agent skills across teams. Today the repo holds research, a plan and a prototype harness. The shipped catalogue, `plugins/core/skills/`, has two skills in it: `skill-authoring` and `new-skill`. Filling it is the work.
 
 ## Two skill folders, and they are not the same thing
 

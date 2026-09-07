@@ -1,7 +1,7 @@
 {
   "name": "core",
   "version": "0.1.0",
-  "description": "Shared engineering skills every team gets by default. Empty until we write the first one.",
+  "description": "Shared engineering skills every team gets by default. Two so far: how to write a catalogue skill, and how to scaffold one.",
   "author": { "name": "Malcolm McNeely" },
   "license": "MIT"
 }
