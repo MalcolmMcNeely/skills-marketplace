@@ -5,6 +5,13 @@ public enum CreationRoute { Write, Bash, PowerShell }
 
 public sealed record FileCreation(string Path, int Ordinal, CreationRoute Route);
 
+/// <summary>
+/// One Skill tool_use, at its position in the stream. NOT deduplicated, because #12 output 6 asks
+/// where in the run each call happened: if csharp-new-class never fires after another skill has
+/// already fired, #11's FirstDecision stop rule is safe for negatives and can be switched on.
+/// </summary>
+public sealed record SkillCall(string Name, string RawName, int Ordinal);
+
 /// <summary>Everything the scorers are allowed to read out of one stream-json run.</summary>
 public sealed record Transcript
 {
@@ -18,6 +25,9 @@ public sealed record Transcript
 
     /// <summary>The same invocations exactly as the stream reported them. Diagnostic only.</summary>
     public required IReadOnlyList<string> FiredSkillsRaw { get; init; }
+
+    /// <summary>Every Skill call with its ordinal, in stream order, repeats included.</summary>
+    public required IReadOnlyList<SkillCall> SkillCalls { get; init; }
 
     /// <summary>First creation of each path, ordered by position in the stream.</summary>
     public required IReadOnlyList<FileCreation> FileCreations { get; init; }
@@ -40,6 +50,19 @@ public sealed record Transcript
     /// <summary>True when the CLI registered this skill as an invocable slash command.</summary>
     public bool SkillIsAvailable(string skill) =>
         SlashCommands.Any(c => StreamParser.Unqualify(c).Equals(skill, StringComparison.Ordinal));
+
+    /// <summary>Ordinal of the first call to this skill, or null if it never fired.</summary>
+    public int? FirstSkillOrdinal(string skill) =>
+        SkillCalls.FirstOrDefault(c => c.Name.Equals(skill, StringComparison.Ordinal))?.Ordinal;
+
+    /// <summary>How many distinct OTHER skills fired before this one. 0 means it fired first.</summary>
+    public int? SkillsFiredBefore(string skill)
+    {
+        var at = FirstSkillOrdinal(skill);
+        return at is null
+            ? null
+            : SkillCalls.Where(c => c.Ordinal < at).Select(c => c.Name).Distinct(StringComparer.Ordinal).Count();
+    }
 
     public int? FirstCreationOrdinal(string path) =>
         FileCreations.FirstOrDefault(c => c.Path.EndsWith(path, StringComparison.OrdinalIgnoreCase))?.Ordinal;

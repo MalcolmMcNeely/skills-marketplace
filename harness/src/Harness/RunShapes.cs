@@ -16,7 +16,9 @@ public sealed class FiringRunner(HarnessPaths paths)
             // Firing is decided before any work happens, so forbid the expensive tools.
             // NOT restricted here: --allowedTools only auto-approves, and disallowing Write made the
             // model read the repo until it blew the budget. The stop rule does the saving instead.
-            MaxBudgetUsd = 0.40m,   // MEASURED: 0.20 aborted mid-run and voided the sample.
+            // #11 fixed the per-run ceiling at $0.60. Layer 3 keeps its own lower one, MEASURED:
+            // 0.20 aborted mid-run and voided the sample, 0.40 has not.
+            MaxBudgetUsd = 0.40m,
             // Runs to the end on purpose. Killing at the first decision truncates the fired SET, and
             // #10 grades a positive case on an exact set match, so a second skill firing later would
             // be invisible. A killed run also emits no result line, so it cannot report its own cost.
@@ -46,11 +48,23 @@ public sealed class ContractRunner(HarnessPaths paths)
 }
 
 /// <summary>Resample a case until it has enough VALID runs, or give up and say so.</summary>
-public sealed record Sample(IReadOnlyList<RunScore> Scores, bool CapHit, bool BudgetExhausted = false)
+public sealed record Sample(
+    IReadOnlyList<RunScore> Scores,
+    bool CapHit,
+    bool BudgetExhausted = false,
+    bool Throttled = false)
 {
     public int Valid => Scores.Count(s => s.Verdict != Verdict.Void);
-    /// <summary>Hitting the cap is a LAYER 3 failure and must be reported as one, not as a contract break.</summary>
-    public string? Failure => BudgetExhausted ? "suite-budget-exhausted" : CapHit ? "insufficient-firings" : null;
+
+    /// <summary>
+    /// Hitting the cap is a LAYER 3 failure and must be reported as one, not as a contract break.
+    /// A throttle is neither: it is the machine refusing to answer, and it is checked FIRST so a
+    /// limit can never be reported as a skill that would not fire.
+    /// </summary>
+    public string? Failure => Throttled ? "throttled"
+        : BudgetExhausted ? "suite-budget-exhausted"
+        : CapHit ? "insufficient-firings"
+        : null;
 }
 
 public static class Resampler
@@ -69,6 +83,9 @@ public static class Resampler
             var score = await once(ct);
             scores.Add(score);
             ledger?.Record(score);
+            // #12: a usage limit does not lift between attempts. Retrying spends the cap to reach the
+            // same wall and then reports the wall as insufficient-firings.
+            if (score.Throttled) return new Sample(scores, CapHit: false, Throttled: true);
             if (score.Verdict != Verdict.Void) valid++;
         }
         return new Sample(scores, valid < wanted);

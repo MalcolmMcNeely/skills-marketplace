@@ -33,6 +33,7 @@ Start with the plan, then follow a link when you want the working.
 | [Baseline test-first](docs/baseline-test-first.md) | What Claude does with no skill installed, and which assertions discriminate |
 | [Harness skeleton](docs/harness-skeleton.md) | The shape the harness takes, and three assumptions a real run disproved |
 | [Running the paying layers](docs/running-the-paid-layers.md) | Where layers 3 and 4 run, why there is no CI, and why every dollar here is notional |
+| [Before the calibration pass](docs/calibration-prep.md) | Pinning the model, what a throttled run counts as, and why the pass writes a journal |
 | [MCP skill delivery](docs/mcp-skill-delivery.md) | Can an MCP server install a skill, and should it |
 | [Output styles](docs/output-styles.md) | How to set one voice across a company, and what it costs |
 

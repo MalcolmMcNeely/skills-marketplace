@@ -36,6 +36,23 @@ public sealed record RunOutcome
     /// <summary>True when the init line was seen, so the CLI really started.</summary>
     public required bool Started { get; init; }
 
+    /// <summary>The CLI's own error output. Where a usage limit names itself.</summary>
+    public string StandardError { get; init; } = "";
+
+    /// <summary>
+    /// A usage limit, not a skill result. Void like any broken run, but never resampled: see
+    /// <see cref="Throttle"/>. Always false for a run that passed its validity gate.
+    /// </summary>
+    public bool Throttled { get; init; }
+
+    /// <summary>The model this run ASKED for. The one it got is <c>Transcript.Model</c>.</summary>
+    public string? RequestedModel { get; init; }
+
+    /// <summary>False when the session resolved to a different model than the pin. #12 point 3.</summary>
+    public bool ModelHeld =>
+        RequestedModel is null || Transcript.Model is null
+        || Transcript.Model.Equals(RequestedModel, StringComparison.OrdinalIgnoreCase);
+
     public bool IsValid => StopMode switch
     {
         // A killed run has no exit code and no result line, so the completion rule cannot apply.
@@ -47,9 +64,14 @@ public sealed record RunOutcome
 
     public string VoidReason => IsValid
         ? "not void"
+        : Throttled
+            ? $"THROTTLED: {FirstLine(StandardError) ?? FirstLine(Transcript.ResultText) ?? "usage limit"}"
         : StopMode == StopMode.FirstDecision && !KilledAtDecision
             ? $"early-stop run reached no firing decision (started={Started}, exit={ExitCode}, subtype={TerminalSubtype ?? "<none>"})"
             : $"exit={ExitCode} subtype={TerminalSubtype ?? "<none>"}";
+
+    private static string? FirstLine(string? text) =>
+        string.IsNullOrWhiteSpace(text) ? null : text.Split('\n')[0].Trim();
 
     public bool TryGetValid([NotNullWhen(true)] out ValidRun? run)
     {

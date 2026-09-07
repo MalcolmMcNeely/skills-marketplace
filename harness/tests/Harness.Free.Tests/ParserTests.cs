@@ -76,7 +76,7 @@ public class ParserTests
 
     private static Transcript Empty() => new()
     {
-        FiredSkills = [], FiredSkillsRaw = [], FileCreations = [], ShellCommands = [], SlashCommands = [], LoadedSkills = [],
+        FiredSkills = [], FiredSkillsRaw = [], SkillCalls = [], FileCreations = [], ShellCommands = [], SlashCommands = [], LoadedSkills = [],
         Model = null, OutputStyle = null, PermissionMode = null, ResultText = null, CostUsd = null,
     };
 }

@@ -16,7 +16,12 @@ public sealed record RunSpec
     public string Settings { get; init; } = """{"outputStyle":"default"}""";
     public StopMode StopMode { get; init; } = StopMode.Completion;
     public TimeSpan Timeout { get; init; } = TimeSpan.FromMinutes(5);
-    public string? Model { get; init; }
+    /// <summary>
+    /// Pinned by default, NOT null. #12: a null model takes whatever the CLI defaults to, so a
+    /// default change would move every number on the map with no trace in the record.
+    /// Set SKILL_HARNESS_MODEL to measure a different one on purpose.
+    /// </summary>
+    public string? Model { get; init; } = RunEnvironment.ResolveModel();
 }
 
 public static class ClaudeCli
@@ -49,6 +54,10 @@ public static class ClaudeCli
         using var timeout = CancellationTokenSource.CreateLinkedTokenSource(ct);
         timeout.CancelAfter(spec.Timeout);
 
+        // Drained on its own task. stderr was redirected and never read, which fills the pipe and
+        // deadlocks a chatty run, and #12 needs these words: a usage limit names itself here.
+        var stderrTask = proc.StandardError.ReadToEndAsync(CancellationToken.None);
+
         try
         {
             while (await proc.StandardOutput.ReadLineAsync(timeout.Token) is { } line)
@@ -73,6 +82,7 @@ public static class ClaudeCli
         sw.Stop();
         var stream = buffer.ToString();
         var (transcript, subtype) = StreamParser.Parse(stream);
+        var standardError = await SafeStderr(stderrTask);
 
         return new RunOutcome
         {
@@ -85,6 +95,9 @@ public static class ClaudeCli
             StopMode = spec.StopMode,
             KilledAtDecision = killed,
             Started = started,
+            StandardError = standardError,
+            Throttled = Throttle.Detect(subtype, transcript.ResultText, standardError),
+            RequestedModel = spec.Model,
         };
     }
 
@@ -99,6 +112,13 @@ public static class ClaudeCli
         return line.Contains("\"name\":\"Skill\"")
             || line.Contains("\"name\":\"Write\"")
             || line.Contains("\"name\":\"Edit\"");
+    }
+
+    /// <summary>A killed process can leave the reader faulted. No stderr is not a reason to lose the run.</summary>
+    private static async Task<string> SafeStderr(Task<string> reader)
+    {
+        try { return await reader.WaitAsync(TimeSpan.FromSeconds(5)); }
+        catch { return ""; }
     }
 
     private static int SafeExitCode(Process p)

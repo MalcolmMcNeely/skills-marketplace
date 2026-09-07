@@ -41,6 +41,23 @@ public static class Pooling
             cases.SelectMany(c => c.Runs).Sum(r => r.CostUsd ?? 0m));
     }
 
+    /// <summary>
+    /// Wilson score interval. #12 output 1 asks for p_good with an interval, and baseline-test-first.md
+    /// already reports one, so the two numbers are read the same way. Wilson and not normal-approximate,
+    /// because a rate near 0 or 1 on 60 runs breaks the normal one: 0 of 15 gave an upper bound of 0.204
+    /// where the normal approximation gives 0.
+    /// </summary>
+    public static (double Low, double High) Wilson(int successes, int n, double z = 1.96)
+    {
+        if (n == 0) return (0, 1);
+        var p = (double)successes / n;
+        var z2 = z * z;
+        var denom = 1 + z2 / n;
+        var centre = (p + z2 / (2.0 * n)) / denom;
+        var half = z / denom * Math.Sqrt(p * (1 - p) / n + z2 / (4.0 * n * n));
+        return (Math.Max(0, centre - half), Math.Min(1, centre + half));
+    }
+
     /// <summary>gate_k = max { k : P(Binom(N, p) &lt; k) &lt;= alpha }. The 5th percentile of the healthy distribution.</summary>
     public static int GateK(int n, double p, double alpha = 0.05)
     {

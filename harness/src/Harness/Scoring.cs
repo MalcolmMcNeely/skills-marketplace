@@ -2,11 +2,19 @@ namespace Harness;
 
 public static class Scoring
 {
+    /// <summary>
+    /// The one void path, so a throttle cannot be dropped by a scorer that forgot to carry it.
+    /// A throttled run is void like any other broken run; what changes is that the Resampler
+    /// stops instead of retrying.
+    /// </summary>
+    private static RunScore Void(RunOutcome outcome) =>
+        new(Verdict.Void, outcome.VoidReason, [], [], outcome.Transcript.CostUsd, outcome.Throttled);
+
     /// <summary>Layer 3, positive case: exact set match (#10). Layer 3 has no contract, so a match is Held.</summary>
     public static RunScore ScoreFiring(RunOutcome outcome, IReadOnlyCollection<string> expected)
     {
         if (!outcome.TryGetValid(out var run))
-            return new RunScore(Verdict.Void, outcome.VoidReason, [], [], outcome.Transcript.CostUsd);
+            return Void(outcome);
 
         var fired = run.Transcript.FiredSet;
         if (fired.Count == 0 && expected.Count > 0)
@@ -25,7 +33,7 @@ public static class Scoring
     public static RunScore ScoreQuiet(RunOutcome outcome, string mustStayQuiet)
     {
         if (!outcome.TryGetValid(out var run))
-            return new RunScore(Verdict.Void, outcome.VoidReason, [], [], outcome.Transcript.CostUsd);
+            return Void(outcome);
 
         var fired = run.Transcript.FiredSet;
         var verdict = fired.Contains(mustStayQuiet) ? Verdict.Broken : Verdict.Held;
@@ -37,7 +45,7 @@ public static class Scoring
     public static RunScore ScoreContract(RunOutcome outcome, string skill, IContractAssertions assertions)
     {
         if (!outcome.TryGetValid(out var run))
-            return new RunScore(Verdict.Void, outcome.VoidReason, [], [], outcome.Transcript.CostUsd);
+            return Void(outcome);
 
         var fired = run.Transcript.FiredSet;
         // MEASURED, and it cost $2.28 to learn: a by-name run does NOT reliably emit a Skill tool_use.

@@ -60,7 +60,7 @@ public class ScoringTests
         KilledAtDecision = false, Started = true,
         Transcript = new Transcript
         {
-            FiredSkills = fired, FiredSkillsRaw = fired, FileCreations = [], ShellCommands = [], SlashCommands = [], LoadedSkills = [],
+            FiredSkills = fired, FiredSkillsRaw = fired, SkillCalls = [.. fired.Select((f, i) => new SkillCall(f, f, i))], FileCreations = [], ShellCommands = [], SlashCommands = [], LoadedSkills = [],
             Model = null, OutputStyle = null, PermissionMode = null, ResultText = null, CostUsd = 0.04m,
         },
     };

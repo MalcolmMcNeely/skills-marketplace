@@ -13,6 +13,7 @@ public static class StreamParser
     {
         var fired = new List<string>();
         var firedRaw = new List<string>();
+        var skillCalls = new List<SkillCall>();
         var creations = new List<FileCreation>();
         var seenPaths = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
         var shell = new List<string>();
@@ -65,6 +66,7 @@ public static class StreamParser
                             if (!firedRaw.Contains(skill, StringComparer.Ordinal)) firedRaw.Add(skill);
                             var bare = Unqualify(skill);
                             if (!fired.Contains(bare, StringComparer.Ordinal)) fired.Add(bare);
+                            skillCalls.Add(new SkillCall(bare, skill, ordinal));
                         }
                         else if (name is "Write" or "NotebookEdit")
                         {
@@ -102,6 +104,7 @@ public static class StreamParser
         {
             FiredSkills = fired,
             FiredSkillsRaw = firedRaw,
+            SkillCalls = skillCalls,
             FileCreations = creations,
             ShellCommands = shell,
             Model = model,

@@ -20,7 +20,9 @@ public sealed record RunScore(
     string Detail,
     IReadOnlyList<string> FiredSet,
     IReadOnlyList<AssertionResult> Assertions,
-    decimal? CostUsd)
+    decimal? CostUsd,
+    /// <summary>A usage limit stopped this run. Void, but never resampled: see <see cref="Throttle"/>.</summary>
+    bool Throttled = false)
 {
     public bool CountsForFiring => Verdict is not Verdict.Void;
     public bool FiringPassed => Verdict is Verdict.Held or Verdict.Broken;
