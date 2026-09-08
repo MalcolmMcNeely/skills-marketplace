@@ -38,6 +38,16 @@ Start with the plan, then follow a link when you want the working.
 | [MCP skill delivery](docs/mcp-skill-delivery.md) | Can an MCP server install a skill, and should it |
 | [Output styles](docs/output-styles.md) | How to set one voice across a company, and what it costs |
 
+## Automating the loop
+
+A second line of research, in `docs/research/`. The catalogue documents above ask what a skill should say. These ask what should run the skills, and what stops it going wrong.
+
+| Document | What it answers |
+|---|---|
+| [Agent patterns for the implement loop](docs/research/agent-patterns-for-the-implement-loop.md) | Orchestrator or daisy chain, and which mechanisms actually run today |
+| [Hooks as guardrails](docs/research/hooks-as-guardrails.md) | Every hook event in 2.1.248, what each can block, and what hooks cannot do |
+| [Ticket state as a guardrail](docs/research/ticket-state-guardrails.md) | Whether GitHub's blocking edges are machine-readable, and three traps in the way |
+
 ## Two skill locations, and they are not the same thing
 
 This trips people up.
