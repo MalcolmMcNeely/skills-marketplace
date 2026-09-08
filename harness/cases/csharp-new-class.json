@@ -1,7 +1,7 @@
 {
   "suite": "csharp-new-class",
   "skillUnderTest": "csharp-new-class",
-  "pGood": 0.67,
+  "pGood": 0.940,
 
   "firing": {
     "shouldFire": [

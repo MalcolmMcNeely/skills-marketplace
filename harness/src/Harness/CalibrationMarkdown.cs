@@ -89,7 +89,12 @@ public static class CalibrationMarkdown
     {
         sb.AppendLine("## 3. The derived gate");
         sb.AppendLine();
-        sb.AppendLine("`gate_k = max { k : P(Binom(N, p_good) < k) <= 0.05 }`, the 5th percentile of the healthy distribution.");
+        sb.AppendLine("`gate_k = max { k : P(Binom(N, p) < k) <= 0.05 }`, the 5th percentile of the healthy distribution.");
+        sb.AppendLine();
+        sb.AppendLine($"`p` is the **lower bound** of the interval above, {r.PGoodInterval.Low:0.000}, not the point estimate "
+                      + $"{r.PGood:0.000}. A gate built on the point estimate demands whatever the pass happened to score, so a "
+                      + "perfect pass sets a perfect gate and one flaky run reddens the build. The lower bound is the same "
+                      + "measurement read honestly.");
         sb.AppendLine();
         sb.AppendLine("| Runs in a pass | `gate_k` | Pass needs |");
         sb.AppendLine("|---:|---:|---|");

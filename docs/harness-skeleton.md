@@ -147,7 +147,7 @@ That is no longer true for our case shape. At `$0.196` a run, [#10](https://gith
 
 - **Why the `Skill` call appears under Git Bash and not otherwise.** Fourteen runs split cleanly along that line, but the mechanism was not isolated and no hypothesis was tested. The fix does not depend on the answer, and the answer would not change it.
 - **Whether the `slash_commands` precondition holds for a broken fixture.** It proves the plugin loaded. It does not prove the body was read. [#6](https://github.com/MalcolmMcNeely/skills-marketplace/issues/6) is the test of that, and until it runs, layer 4 is proven only against a fixture that passes.
-- **The firing rate.** Three of three fired, on one prompt. That is not a rate, and it says nothing about the 0.67 the pass mark rests on. The calibration pass is still owed.
+- **The firing rate.** Three of three fired, on one prompt. That is not a rate, and it said nothing about the 0.67 the pass mark rested on. **Settled since**: the calibration pass ran on 8 September 2026 and measured 60 of 60. See [calibration.md](calibration.md).
 - **Whether the `FirstDecision` stop rule is safe for negative cases.** A negative case is graded only on one skill staying quiet, so truncation is harmless there and the saving is real. It was not run that way.
 - **Cost stability.** Nineteen runs on one machine, one model, one CLI version, one afternoon. The `$0.196` and `$0.207` medians have no interval attached.
 - **Layer 2's actual assertions.** Three placeholder tests show the shape. What layer 2 asserts is [#5](https://github.com/MalcolmMcNeely/skills-marketplace/issues/5), still open, and nothing here settles it.

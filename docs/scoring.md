@@ -17,7 +17,7 @@ The arithmetic that forces the rest: a skill firing at the measured 2 runs in 3 
 | 1 | Firing accuracy | A per-run verdict on the **set** that fired, with a separate verdict for a run the harness broke. Keep `skill-creator`'s trigger rate, drop its per-query 0.5 threshold. 0.5 is defensible as a rate and indefensible as a gate |
 | 2 | Contract assertions | Firing is a **sampling gate, not a score component**. A non-firing run is `void`, not a zero. Better still, invoke the skill by name so nothing can fail to fire |
 | 3 | Aggregation | Neither mean-of-case-scores nor pass-rate-over-cases. Pool every valid run in the suite. 60 should-fire runs per engine, 5 per contract case |
-| 4 | The pass mark | A formula, not a number: the 5th percentile of `Binom(N, p_good)`, where `p_good` comes from a calibration pass. At the measured `p_good = 0.67` and `N = 60`, that is **0.567** |
+| 4 | The pass mark | A formula, not a number: the 5th percentile of `Binom(N, p)`, where `p` comes from a calibration pass. **Calibrated on 8 September 2026**: the pass scored 60 of 60, so `p` is the interval's lower bound 0.940 and the gate at `N = 60` is **53 of 60**. See [calibration.md](calibration.md) |
 
 ## What the two reference scorers actually do
 
@@ -108,6 +108,8 @@ Now require all ten should-fire queries in a suite to pass:
 | **0.67** | **0.053** | 0.101 | 0.159 | 0.222 | 0.417 |
 
 At the rate we actually measured, that gate goes green one time in twenty. Fifteen runs per query, five times the cost, gets it to two times in five. There is no affordable run count at which "every query must pass" works. The problem is not the 0.5 and it is not the run count. It is scoring at the case level and then requiring a conjunction.
+
+**Updated 8 September 2026.** The 0.67 row above came from a broad prompt against twelve competing stub skills. The calibration pass in [calibration.md](calibration.md) measured 1.000 on ten plainly worded prompts against a purpose-built catalogue. The rate a suite sees depends on how its prompts are written, which is the same finding [skill-targeting.md](skill-targeting.md) reached from the other direction. The argument here is unaffected: read the 0.67 rows as what conjunction scoring costs when the rate is imperfect, not as a claim about any one fixture.
 
 ### The rule that survives
 

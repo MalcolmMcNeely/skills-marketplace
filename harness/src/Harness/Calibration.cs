@@ -110,8 +110,16 @@ public sealed record CalibrationReport(
     public double PGood => PositiveValid == 0 ? 0 : (double)PositivePassed / PositiveValid;
     public (double Low, double High) PGoodInterval => Pooling.Wilson(PositivePassed, PositiveValid);
 
-    /// <summary>Output 3: the gate at a given run count.</summary>
-    public int GateK(int n) => Pooling.GateK(n, PGood);
+    /// <summary>
+    /// Output 3: the gate at a given run count.
+    ///
+    /// Derived from the LOWER BOUND of the interval, not from PGood itself. #12 measured 60 of 60,
+    /// so PGood is 1.000 and a gate built on it demands a perfect pass at every run count: one flaky
+    /// run reddens the build. 1.000 is the ceiling of what 60 runs can show, not evidence the true
+    /// rate is 1. The lower bound is the same measurement read honestly, and it is what the interval
+    /// is for. At 0.940 over 60 runs the gate is 53, not 60.
+    /// </summary>
+    public int GateK(int n) => Pooling.GateK(n, PGoodInterval.Low);
 
     /// <summary>Output 2: the zero floor, over cases with enough runs to judge one.</summary>
     public IReadOnlyList<string> ZeroFloorBreaches =>

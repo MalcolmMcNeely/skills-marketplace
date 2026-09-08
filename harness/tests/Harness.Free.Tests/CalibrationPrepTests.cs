@@ -259,6 +259,34 @@ public class CalibrationReportTests
         finally { File.Delete(path); }
     }
 
+    /// <summary>
+    /// #12's one judgement call. A perfect pass must NOT set a perfect gate, or a single flaky run
+    /// reddens the build. The gate comes from the lower bound of the interval, never from PGood.
+    /// </summary>
+    [Fact]
+    public void A_perfect_pass_does_not_set_a_perfect_gate()
+    {
+        var path = Path.Combine(Path.GetTempPath(), $"journal-{Guid.NewGuid():N}.jsonl");
+        try
+        {
+            using (var journal = new RunJournal(path))
+            {
+                for (var i = 0; i < 60; i++)
+                    journal.Append("P1", 3, Fake.Outcome(), new RunScore(Verdict.Held, "ok", [], [], 0.2m));
+            }
+
+            var report = CalibrationReport.FromJournal(path, Suite);
+            Assert.Equal(1.0, report.PGood, 6);
+            Assert.Equal(0.940, report.PGoodInterval.Low, 3);
+
+            // The point estimate would give 60 of 60. The lower bound gives 53, which survives a flake.
+            Assert.Equal(60, Pooling.GateK(60, report.PGood));
+            Assert.Equal(53, report.GateK(60));
+            Assert.Equal(8, report.GateK(10));
+        }
+        finally { File.Delete(path); }
+    }
+
     [Fact]
     public void The_two_cost_medians_are_kept_apart()
     {

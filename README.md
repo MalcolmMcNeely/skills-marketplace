@@ -6,14 +6,15 @@ A Claude Code plugin marketplace for sharing agent skills across an engineering 
 
 `plugins/core/skills/` holds `skill-authoring` and `new-skill`, which is enough to write the next one and enough for the quality gate to have something real to check. It is a start, not a catalogue.
 
-What the repo mostly holds is the reasoning, and the reasoning is the useful part. Eleven documents work out how a shared skill catalogue should be built, what it costs to run, and how to tell whether a skill change made anything better. Most of the numbers were measured on a real machine against Claude Code 2.1.248 rather than reasoned about. A prototype test harness in `harness/` shows the shape the quality gate takes, and records the plan assumptions that real runs disproved.
+What the repo mostly holds is the reasoning, and the reasoning is the useful part. Twelve documents work out how a shared skill catalogue should be built, what it costs to run, and how to tell whether a skill change made anything better. Most of the numbers were measured on a real machine against Claude Code 2.1.248 rather than reasoned about. A prototype test harness in `harness/` shows the shape the quality gate takes, and records the plan assumptions that real runs disproved.
 
 So: if you want a full catalogue, it is not here yet. If you want to work out how to build one for your own company, start reading.
 
 ## What the research found
 
-Four results that changed the plan.
+Five results that changed the plan.
 
+- **A perfect score must not set a perfect gate.** The calibration pass scored 60 of 60 on the good fixture. Building the gate on that demands a flawless run every time, so the gate comes from the interval's lower bound instead: 53 of 60. The same 133 runs also produced zero false fires across 50 negative prompts, and showed the model treats a C# record and an interface as a class.
 - **What fires is decided by how the developer phrases the task**, not by how the catalogue is designed. A short, vague request fired almost no skills. The same request with "do the whole thing end to end" appended fired eleven of twelve. Under-firing is the common failure and the dangerous one, because nobody notices a skill that did not fire.
 - **A negative boundary in the description is worth more than any other wording change.** End a description by naming the nearest technologies it excludes, and a broad request pulls a mean of 1.2 skills out of 12 instead of 6.0. Recall does not measurably suffer.
 - **"Eval" is two machines, not one.** Does the skill fire when it should, and does it improve the outcome once fired. The first is cheap and applies to every model-invocable skill. The second is expensive and only pays where the skill specifies something observable.
@@ -34,6 +35,7 @@ Start with the plan, then follow a link when you want the working.
 | [Harness skeleton](docs/harness-skeleton.md) | The shape the harness takes, and three assumptions a real run disproved |
 | [Running the paying layers](docs/running-the-paid-layers.md) | Where layers 3 and 4 run, why there is no CI, and why every dollar here is notional |
 | [Before the calibration pass](docs/calibration-prep.md) | Pinning the model, what a throttled run counts as, and why the pass writes a journal |
+| [The calibration pass](docs/calibration.md) | 133 runs against the good fixture: `p_good`, the gate, and why a perfect score must not set a perfect gate |
 | [What layer 2 asserts](docs/layer-2.md) | The free gate: how skills reference each other, and what the budget test can and cannot prove |
 | [MCP skill delivery](docs/mcp-skill-delivery.md) | Can an MCP server install a skill, and should it |
 | [Output styles](docs/output-styles.md) | How to set one voice across a company, and what it costs |
