@@ -17,6 +17,10 @@ jobs:
         with:
           node-version: '22'
 
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+
       - name: Install the pinned Claude Code CLI
         run: npm install -g @anthropic-ai/claude-code@2.1.248
 
@@ -24,8 +28,8 @@ jobs:
         run: |
           echo "## Credential state" >> "$GITHUB_STEP_SUMMARY"
           echo '```' >> "$GITHUB_STEP_SUMMARY"
-          echo "ANTHROPIC_API_KEY set: ${ANTHROPIC_API_KEY:+yes}${ANTHROPIC_API_KEY:-no}" | tee -a "$GITHUB_STEP_SUMMARY"
-          echo "CLAUDE_CODE_OAUTH_TOKEN set: ${CLAUDE_CODE_OAUTH_TOKEN:+yes}${CLAUDE_CODE_OAUTH_TOKEN:-no}" | tee -a "$GITHUB_STEP_SUMMARY"
+          echo "ANTHROPIC_API_KEY set: ${ANTHROPIC_API_KEY:+yes}" | tee -a "$GITHUB_STEP_SUMMARY"
+          echo "CLAUDE_CODE_OAUTH_TOKEN set: ${CLAUDE_CODE_OAUTH_TOKEN:+yes}" | tee -a "$GITHUB_STEP_SUMMARY"
           echo "env vars matching anthropic|claude:" | tee -a "$GITHUB_STEP_SUMMARY"
           env | grep -iE 'anthropic|claude' | sed 's/=.*/=<redacted>/' | tee -a "$GITHUB_STEP_SUMMARY" || echo "  (none)" | tee -a "$GITHUB_STEP_SUMMARY"
           echo "credential files in HOME:" | tee -a "$GITHUB_STEP_SUMMARY"
