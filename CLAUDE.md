@@ -16,7 +16,7 @@ A Claude Code plugin marketplace for sharing agent skills across teams. Today th
 ```
 claude plugin validate .                        # marketplace manifest
 claude plugin validate ./plugins/core           # plugin manifest
-dotnet test harness/tests/Harness.Free.Tests    # 125 tests, no network, ~1s
+dotnet test harness/tests/Harness.Free.Tests    # 139 tests, no network, ~1s
 ```
 
 Run all three before you commit.

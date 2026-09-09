@@ -28,7 +28,7 @@ public class Layer4_ContractTests(ITestOutputHelper output)
 
         foreach (var s in sample.Scores)
         {
-            output.WriteLine($"{s.Verdict,-7} {s.Detail}  ${s.CostUsd:0.000}");
+            output.WriteLine($"{s.Verdict,-7} {s.Detail}  {s.Cost}");
             foreach (var a in s.Assertions)
                 output.WriteLine($"    A{a.Number} {(a.Passed ? "pass" : "FAIL")} [{a.Kind}/{a.Evidence}] {a.Description} :: {a.Detail}");
         }

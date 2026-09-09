@@ -33,7 +33,7 @@ public class DescriptionLadderTests(ITestOutputHelper output)
         output.WriteLine($"{RunEnvironment.Current}, prompt {probe.Id}: {probe.Prompt}");
         output.WriteLine("");
 
-        var results = new List<(string Candidate, int Fired, int Valid, decimal Cost)>();
+        var results = new List<(string Candidate, int Fired, int Valid, SpendTotal Cost)>();
 
         foreach (var candidate in Candidates)
         {
@@ -46,17 +46,17 @@ public class DescriptionLadderTests(ITestOutputHelper output)
 
             var valid = sample.Scores.Where(s => s.Verdict != Verdict.Void).ToList();
             var fired = valid.Count(s => s.Verdict == Verdict.Held);
-            results.Add((candidate, fired, valid.Count, sample.Scores.Sum(s => s.CostUsd ?? 0m)));
+            results.Add((candidate, fired, valid.Count, SpendTotal.Of(sample.Scores.Select(s => s.Cost))));
 
             output.WriteLine($"{candidate,-18} fired {fired}/{valid.Count}  {FixtureBuilder.DescriptionOf(Path.Combine(overlay, "skills", "csharp-new-class", "SKILL.md"))}");
-            foreach (var s in sample.Scores) output.WriteLine($"    {s.Verdict,-9} {s.Detail}  ${s.CostUsd:0.000}");
+            foreach (var s in sample.Scores) output.WriteLine($"    {s.Verdict,-9} {s.Detail}  {s.Cost}");
         }
 
         output.WriteLine("");
         output.WriteLine("| Candidate | Fired | Cost |");
         output.WriteLine("|---|---|---|");
         foreach (var (candidate, fired, valid, cost) in results)
-            output.WriteLine($"| {candidate} | {fired}/{valid} | ${cost:0.00} |");
+            output.WriteLine($"| {candidate} | {fired}/{valid} | {cost} |");
         output.WriteLine(ledger.Report());
 
         // A screen, not a gate. Every candidate firing every time is the finding that a description

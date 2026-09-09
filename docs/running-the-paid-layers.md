@@ -69,6 +69,27 @@ Ten void runs cost `$2.28` on #8 before the resample cap fired, each one
 individually inside its per-run budget. That is the failure the ledger exists for,
 and it is unchanged by who is paying.
 
+### The ledger charges a costless run `$0.23`
+
+A run that does not finish emits no `result` line, so it cannot price itself. The
+suite ledger used to charge such a run zero. That took it out of the guard's view,
+and a resample loop made of killed runs could then go on forever inside a ledger
+that believed it had spent nothing.
+
+`$0.23` is the estimate. It is not a new measurement. It is the per-run figure from
+#8's ten void runs, measured on this machine on 2 September 2026 against Claude Code
+`2.1.248` and `claude-opus-5[1m]`, and recorded in
+[harness-skeleton.md](harness-skeleton.md).
+
+The journal writes `"costBasis":"estimated"` beside the figure, and every report that
+quotes a total names the estimated part. Nothing presents an estimate as a measurement.
+Re-rendering a journal from before #16 charges its costless runs the same `$0.23`, so a
+regenerated total will not match the one committed at the time.
+
+This rule over-charges a refused run. It billed nothing, and the ledger charges it
+`$0.23` anyway. That is the direction to be wrong in. A guard that under-counts does
+not fire, and a refusal stops the pass on its first run.
+
 ## Version pinning
 
 Still load-bearing, now as a discipline rather than a CI variable.

@@ -69,7 +69,10 @@ public sealed record RunOutcome
             // behind it, and calling it a usage limit anyway would put a guess in the journal.
             ? (FirstLine(StandardError) ?? FirstLine(Transcript.ResultText)) is { } named
                 ? $"THROTTLED: {named}"
-                : $"REFUSED: no result, ${Transcript.CostUsd ?? 0m:0.00} in {Duration.TotalSeconds:0.0}s, exit={ExitCode} subtype={TerminalSubtype ?? "<none>"}"
+                // #16: never print a fabricated $0.00 here. This text goes into the journal's detail
+                // beside a costUsd the ledger may have ESTIMATED, and two figures for one run that
+                // disagree is worse than one figure missing.
+                : $"REFUSED: no result, {(Transcript.CostUsd is { } billed ? $"${billed:0.00} billed" : "no cost reported")} in {Duration.TotalSeconds:0.0}s, exit={ExitCode} subtype={TerminalSubtype ?? "<none>"}"
         : StopMode == StopMode.FirstDecision && !KilledAtDecision
             ? $"early-stop run reached no firing decision (started={Started}, exit={ExitCode}, subtype={TerminalSubtype ?? "<none>"})"
             : $"exit={ExitCode} subtype={TerminalSubtype ?? "<none>"}";

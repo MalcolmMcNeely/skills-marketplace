@@ -49,8 +49,8 @@ public class ScoringTests
 
     private static CaseResult Case(string id, int passed, int valid) => new(id,
     [
-        .. Enumerable.Repeat(new RunScore(Verdict.Held, "", [], [], 0.04m), passed),
-        .. Enumerable.Repeat(new RunScore(Verdict.Missed, "", [], [], 0.04m), valid - passed),
+        .. Enumerable.Repeat(new RunScore(Verdict.Held, "", [], [], RunCost.Of(0.04m)), passed),
+        .. Enumerable.Repeat(new RunScore(Verdict.Missed, "", [], [], RunCost.Of(0.04m)), valid - passed),
     ]);
 
     private static RunOutcome Valid(string[] fired) => new()
@@ -78,7 +78,7 @@ public class SpendLedgerTests
         var sample = await Resampler.CollectAsync(wanted: 5, cap: 20, once: _ =>
         {
             attempts++;
-            return Task.FromResult(new RunScore(Verdict.Void, "exit=1 subtype=error_max_budget_usd", [], [], 0.23m));
+            return Task.FromResult(new RunScore(Verdict.Void, "exit=1 subtype=error_max_budget_usd", [], [], RunCost.Of(0.23m)));
         }, ledger);
 
         Assert.Equal("suite-budget-exhausted", sample.Failure);

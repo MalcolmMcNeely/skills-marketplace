@@ -25,7 +25,7 @@ public class BreakageSmokeTests(ITestOutputHelper output)
         var firing = Scoring.ScoreFiring(
             await new FiringRunner(Paths, catalogue).RunAsync(positive.Prompt), positive.Expect);
         ledger.Record(firing);
-        output.WriteLine($"layer 3 / description-catalogue  {firing.Verdict,-9} {firing.Detail}  ${firing.CostUsd:0.000}");
+        output.WriteLine($"layer 3 / description-catalogue  {firing.Verdict,-9} {firing.Detail}  {firing.Cost}");
 
         // Layer 4, one run against the broken body. This one has a definite expectation: the fixture
         // must still LOAD, or every run in the real pass voids on the same precondition.
@@ -35,7 +35,7 @@ public class BreakageSmokeTests(ITestOutputHelper output)
             await new ContractRunner(Paths).RunAsync(suite.SkillUnderTest, c.Task, plugin),
             suite.SkillUnderTest, AssertionCatalogue.Resolve(c));
         ledger.Record(contract);
-        output.WriteLine($"layer 4 / body-plugin            {contract.Verdict,-9} {contract.Detail}  ${contract.CostUsd:0.000}");
+        output.WriteLine($"layer 4 / body-plugin            {contract.Verdict,-9} {contract.Detail}  {contract.Cost}");
         foreach (var a in contract.Assertions)
             output.WriteLine($"    A{a.Number} {(a.Passed ? "pass" : "FAIL")} [{a.Kind}/{a.Evidence}] {a.Description} :: {a.Detail}");
 

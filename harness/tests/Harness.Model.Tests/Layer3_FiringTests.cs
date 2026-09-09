@@ -25,10 +25,10 @@ public class Layer3_FiringTests(ITestOutputHelper output)
             async ct => Scoring.ScoreFiring(await runner.RunAsync(c.Prompt, ct), c.Expect), ledger);
 
         foreach (var s in sample.Scores)
-            output.WriteLine($"{s.Verdict,-9} {s.Detail}  ${s.CostUsd:0.000}");
+            output.WriteLine($"{s.Verdict,-9} {s.Detail}  {s.Cost}");
 
         Assert.Null(sample.Failure);
         var pool = Pooling.Pool([new CaseResult(c.Id, sample.Scores)], suite.PGood);
-        output.WriteLine($"pooled {pool.PooledPassed}/{pool.PooledValid} gate>={pool.GateK} total ${pool.TotalCostUsd:0.00}");
+        output.WriteLine($"pooled {pool.PooledPassed}/{pool.PooledValid} gate>={pool.GateK} total {pool.Cost}");
     }
 }

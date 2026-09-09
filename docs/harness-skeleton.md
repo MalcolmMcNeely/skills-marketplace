@@ -108,7 +108,7 @@ There is a second reading worth stating plainly. Inline expansion means the body
 
 Each of the ten void runs stayed inside its own `--max-budget-usd 0.60`. The suite still spent `$2.28`, because the resample cap counts attempts and not money. The prototype adds a `SpendLedger`: a running total across the whole suite with a hard stop, reported as `suite-budget-exhausted` and distinct from `insufficient-firings`.
 
-The ledger only works because firing runs are allowed to finish. A killed run reports no cost, so a suite of killed runs would spend without the ledger noticing.
+At the time of writing the ledger only worked because firing runs were allowed to finish. A killed run reports no cost, so a suite of killed runs spent without the ledger noticing. [#16](https://github.com/MalcolmMcNeely/skills-marketplace/issues/16) closed that hole: a run that reports no cost is now charged a flat `$0.23`, marked `estimated` in the journal. See [running-the-paid-layers.md](running-the-paid-layers.md).
 
 ## Cost, measured
 

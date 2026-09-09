@@ -95,7 +95,7 @@ public class ResamplerThrottleTests
         var sample = await Resampler.CollectAsync(6, 12, _ =>
         {
             attempts++;
-            return Task.FromResult(new RunScore(Verdict.Void, "THROTTLED", [], [], null, Throttled: true));
+            return Task.FromResult(new RunScore(Verdict.Void, "THROTTLED", [], [], RunCost.Of(null), Throttled: true));
         });
 
         Assert.Equal(1, attempts);
@@ -118,8 +118,8 @@ public class ResamplerThrottleTests
         {
             attempts++;
             return Task.FromResult(attempts < 3
-                ? new RunScore(Verdict.Void, "exit=1", [], [], null)
-                : new RunScore(Verdict.Held, "set matched", [], [], 0.2m));
+                ? new RunScore(Verdict.Void, "exit=1", [], [], RunCost.Of(null))
+                : new RunScore(Verdict.Held, "set matched", [], [], RunCost.Of(0.2m)));
         });
 
         Assert.Null(sample.Failure);
@@ -218,7 +218,7 @@ public class JournalTests
             using (var journal = new RunJournal(path))
             {
                 journal.Append("P1", 3, Fake.Outcome(skills: [("csharp-new-class", 4)]),
-                    new RunScore(Verdict.Held, "set matched", ["csharp-new-class"], [], 0.196m));
+                    new RunScore(Verdict.Held, "set matched", ["csharp-new-class"], [], RunCost.Of(0.196m)));
 
                 // Readable while the writer is still open, which is the whole point.
                 var midPass = RunJournal.Read(path);
@@ -238,7 +238,7 @@ public class JournalTests
         try
         {
             using (var journal = new RunJournal(path))
-                journal.Append("P1", 3, Fake.Outcome(), new RunScore(Verdict.Held, "ok", [], [], 0.1m));
+                journal.Append("P1", 3, Fake.Outcome(), new RunScore(Verdict.Held, "ok", [], [], RunCost.Of(0.1m)));
             File.AppendAllText(path, "{\"case\":\"P2\",\"verd");
 
             Assert.Single(RunJournal.Read(path));
@@ -263,9 +263,9 @@ public class CalibrationResumeTests
         {
             using (var journal = new RunJournal(path))
             {
-                journal.Append("P1", 3, Fake.Outcome(), new RunScore(Verdict.Held, "ok", [], [], 0.1m));
-                journal.Append("P1", 3, Fake.Outcome(), new RunScore(Verdict.Void, "exit=1", [], [], null));
-                journal.Append("P2", 3, Fake.Outcome(), new RunScore(Verdict.Missed, "nothing fired", [], [], 0.1m));
+                journal.Append("P1", 3, Fake.Outcome(), new RunScore(Verdict.Held, "ok", [], [], RunCost.Of(0.1m)));
+                journal.Append("P1", 3, Fake.Outcome(), new RunScore(Verdict.Void, "exit=1", [], [], RunCost.Of(null)));
+                journal.Append("P2", 3, Fake.Outcome(), new RunScore(Verdict.Missed, "nothing fired", [], [], RunCost.Of(0.1m)));
             }
 
             var done = CalibrationPass.ValidRunsByCase(path);
@@ -291,10 +291,10 @@ public class CalibrationReportTests
             using (var journal = new RunJournal(path))
             {
                 for (var i = 0; i < 4; i++)
-                    journal.Append("P1", 3, Fake.Outcome(), new RunScore(Verdict.Held, "ok", [], [], 0.2m));
-                journal.Append("P1", 3, Fake.Outcome(), new RunScore(Verdict.Missed, "nothing fired", [], [], 0.2m));
+                    journal.Append("P1", 3, Fake.Outcome(), new RunScore(Verdict.Held, "ok", [], [], RunCost.Of(0.2m)));
+                journal.Append("P1", 3, Fake.Outcome(), new RunScore(Verdict.Missed, "nothing fired", [], [], RunCost.Of(0.2m)));
                 // A negative that stayed quiet must not inflate p_good.
-                journal.Append("N1", 3, Fake.Outcome(), new RunScore(Verdict.Held, "quiet", [], [], 0.3m));
+                journal.Append("N1", 3, Fake.Outcome(), new RunScore(Verdict.Held, "quiet", [], [], RunCost.Of(0.3m)));
             }
 
             var report = CalibrationReport.FromJournal(path, Suite);
@@ -319,7 +319,7 @@ public class CalibrationReportTests
             using (var journal = new RunJournal(path))
             {
                 for (var i = 0; i < 60; i++)
-                    journal.Append("P1", 3, Fake.Outcome(), new RunScore(Verdict.Held, "ok", [], [], 0.2m));
+                    journal.Append("P1", 3, Fake.Outcome(), new RunScore(Verdict.Held, "ok", [], [], RunCost.Of(0.2m)));
             }
 
             var report = CalibrationReport.FromJournal(path, Suite);
@@ -342,8 +342,8 @@ public class CalibrationReportTests
         {
             using (var journal = new RunJournal(path))
             {
-                journal.Append("P1", 3, Fake.Outcome(), new RunScore(Verdict.Held, "ok", [], [], 0.196m));
-                journal.Append("N1", 3, Fake.Outcome(), new RunScore(Verdict.Held, "quiet", [], [], 0.400m));
+                journal.Append("P1", 3, Fake.Outcome(), new RunScore(Verdict.Held, "ok", [], [], RunCost.Of(0.196m)));
+                journal.Append("N1", 3, Fake.Outcome(), new RunScore(Verdict.Held, "quiet", [], [], RunCost.Of(0.400m)));
             }
 
             var report = CalibrationReport.FromJournal(path, Suite);
@@ -362,7 +362,7 @@ public class CalibrationReportTests
             using (var journal = new RunJournal(path))
             {
                 var late = Fake.Outcome(skills: [("csharp-modify-class", 2), ("csharp-new-class", 9)]);
-                journal.Append("N2", 3, late, new RunScore(Verdict.Broken, "csharp-new-class FIRED", [], [], 0.3m));
+                journal.Append("N2", 3, late, new RunScore(Verdict.Broken, "csharp-new-class FIRED", [], [], RunCost.Of(0.3m)));
             }
 
             var report = CalibrationReport.FromJournal(path, Suite);
@@ -381,7 +381,7 @@ public class CalibrationReportTests
             using (var journal = new RunJournal(path))
             {
                 var early = Fake.Outcome(skills: [("csharp-new-class", 2), ("csharp-modify-class", 9)]);
-                journal.Append("N2", 3, early, new RunScore(Verdict.Broken, "csharp-new-class FIRED", [], [], 0.3m));
+                journal.Append("N2", 3, early, new RunScore(Verdict.Broken, "csharp-new-class FIRED", [], [], RunCost.Of(0.3m)));
             }
 
             Assert.True(CalibrationReport.FromJournal(path, Suite).FirstDecisionSafeForNegatives);
@@ -396,7 +396,7 @@ public class CalibrationReportTests
         try
         {
             using (var journal = new RunJournal(path))
-                journal.Append("P1", 3, Fake.Outcome(), new RunScore(Verdict.Held, "ok", [], [], 0.2m));
+                journal.Append("P1", 3, Fake.Outcome(), new RunScore(Verdict.Held, "ok", [], [], RunCost.Of(0.2m)));
 
             var stopped = new CalibrationOutcome(true, "throttled", DateTimeOffset.UtcNow.AddMinutes(-20), DateTimeOffset.UtcNow);
             var markdown = CalibrationMarkdown.Render(CalibrationReport.FromJournal(path, Suite), stopped, Suite, path);
@@ -418,13 +418,15 @@ internal static class Fake
         string? model = null,
         string? requested = null,
         (string Name, int Ordinal)[]? skills = null,
-        double seconds = 40)
+        double seconds = 40,
+        decimal? cost = null)
     {
         var (parsed, parsedSubtype) = StreamParser.Parse(stream);
         var calls = skills ?? [];
         var transcript = parsed with
         {
             Model = model,
+            CostUsd = cost ?? parsed.CostUsd,
             SkillCalls = [.. calls.Select(s => new SkillCall(s.Name, s.Name, s.Ordinal))],
             FiredSkills = [.. calls.Select(s => s.Name).Distinct(StringComparer.Ordinal)],
         };

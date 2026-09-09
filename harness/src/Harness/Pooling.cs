@@ -15,7 +15,7 @@ public sealed record PoolResult(
     int GateK,
     bool PooledGatePassed,
     IReadOnlyList<string> ZeroFloorBreaches,
-    decimal TotalCostUsd)
+    SpendTotal Cost)
 {
     public bool Passed => PooledGatePassed && ZeroFloorBreaches.Count == 0;
 }
@@ -38,7 +38,7 @@ public static class Pooling
         return new PoolResult(cases, valid, passed,
             valid == 0 ? 0 : (double)passed / valid,
             gate, passed >= gate, breaches,
-            cases.SelectMany(c => c.Runs).Sum(r => r.CostUsd ?? 0m));
+            SpendTotal.Of(cases.SelectMany(c => c.Runs).Select(r => r.Cost)));
     }
 
     /// <summary>

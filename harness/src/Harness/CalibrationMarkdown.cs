@@ -30,7 +30,7 @@ public static class CalibrationMarkdown
         sb.AppendLine($"| Throttled runs | {r.ThrottledRuns} |");
         sb.AppendLine($"| Runs on the wrong model | {r.ModelDriftRuns} |");
         sb.AppendLine($"| Wall clock | {outcome.Elapsed:hh\\:mm\\:ss} |");
-        sb.AppendLine($"| Reported cost | {Money(r.TotalCostUsd)} |");
+        sb.AppendLine($"| Cost | {r.Cost} |");
         sb.AppendLine($"| Journal | `{journalPath}` |");
         sb.AppendLine();
 
@@ -168,10 +168,21 @@ public static class CalibrationMarkdown
         sb.AppendLine();
         sb.AppendLine("| | |");
         sb.AppendLine("|---|---|");
-        sb.AppendLine($"| Median, positive run | {Money(r.PositiveMedianCost)} |");
-        sb.AppendLine($"| Median, negative run | {Money(r.NegativeMedianCost)} |");
-        sb.AppendLine($"| Whole pass | {Money(r.TotalCostUsd)} |");
+        sb.AppendLine($"| Median, positive run, measured | {Money(r.PositiveMedianCost)} |");
+        sb.AppendLine($"| Median, negative run, measured | {Money(r.NegativeMedianCost)} |");
+        sb.AppendLine($"| Whole pass | {r.Cost} |");
         sb.AppendLine();
+
+        var estimated = r.Cost.EstimatedRuns;
+        if (estimated > 0)
+        {
+            sb.AppendLine($"**{estimated} run{(estimated == 1 ? "" : "s")} reported no cost and {(estimated == 1 ? "was" : "were")} "
+                        + $"charged a flat `${RunCost.KilledRunEstimateUsd:0.00}` estimate.** A run that does not finish emits no "
+                        + "`result` line, so it cannot price itself. The estimate keeps such a run visible to the "
+                        + "suite-wide spend guard. It is not a measurement, and the two medians above exclude it.");
+            sb.AppendLine();
+        }
+
         sb.AppendLine("**These figures are notional.** The pass ran on a subscription, where no cash moves and runs");
         sb.AppendLine("draw on usage limits instead. The `result` line reports the same `total_cost_usd` either way,");
         sb.AppendLine("so nothing in the harness can tell them apart. Read them as a size comparison between run");

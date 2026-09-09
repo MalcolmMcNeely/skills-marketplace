@@ -8,7 +8,7 @@ public static class Scoring
     /// stops instead of retrying.
     /// </summary>
     private static RunScore Void(RunOutcome outcome) =>
-        new(Verdict.Void, outcome.VoidReason, [], [], outcome.Transcript.CostUsd, outcome.Throttled);
+        new(Verdict.Void, outcome.VoidReason, [], [], RunCost.Of(outcome.Transcript.CostUsd), outcome.Throttled);
 
     /// <summary>Layer 3, positive case: exact set match (#10). Layer 3 has no contract, so a match is Held.</summary>
     public static RunScore ScoreFiring(RunOutcome outcome, IReadOnlyCollection<string> expected)
@@ -18,12 +18,12 @@ public static class Scoring
 
         var fired = run.Transcript.FiredSet;
         if (fired.Count == 0 && expected.Count > 0)
-            return new RunScore(Verdict.Missed, "nothing fired", [], [], run.Transcript.CostUsd);
+            return new RunScore(Verdict.Missed, "nothing fired", [], [], RunCost.Of(run.Transcript.CostUsd));
         if (!fired.SetEquals(expected))
             return new RunScore(Verdict.WrongSet, $"fired {{{string.Join(", ", fired.Order())}}}, expected {{{string.Join(", ", expected.Order())}}}",
-                [.. fired.Order()], [], run.Transcript.CostUsd);
+                [.. fired.Order()], [], RunCost.Of(run.Transcript.CostUsd));
 
-        return new RunScore(Verdict.Held, "set matched", [.. fired.Order()], [], run.Transcript.CostUsd);
+        return new RunScore(Verdict.Held, "set matched", [.. fired.Order()], [], RunCost.Of(run.Transcript.CostUsd));
     }
 
     /// <summary>
@@ -38,7 +38,7 @@ public static class Scoring
         var fired = run.Transcript.FiredSet;
         var verdict = fired.Contains(mustStayQuiet) ? Verdict.Broken : Verdict.Held;
         return new RunScore(verdict, verdict == Verdict.Held ? $"{mustStayQuiet} stayed quiet" : $"{mustStayQuiet} FIRED",
-            [.. fired.Order()], [], run.Transcript.CostUsd);
+            [.. fired.Order()], [], RunCost.Of(run.Transcript.CostUsd));
     }
 
     /// <summary>Layer 4, invoked by name. Firing cannot miss, so the only outcomes are Void, Held, Broken.</summary>
@@ -55,13 +55,13 @@ public static class Scoring
         // init line's slash_commands proves for free.
         if (!run.Transcript.SkillIsAvailable(skill))
             return new RunScore(Verdict.Void, $"{skill} was not registered as a slash command; the --plugin-dir fixture did not load",
-                [.. fired.Order()], [], run.Transcript.CostUsd);
+                [.. fired.Order()], [], RunCost.Of(run.Transcript.CostUsd));
 
         var results = assertions.Evaluate(run);
         var failed = results.Where(r => !r.Passed).ToList();
         return new RunScore(
             failed.Count == 0 ? Verdict.Held : Verdict.Broken,
             failed.Count == 0 ? "all assertions passed" : string.Join("; ", failed.Select(f => $"A{f.Number} {f.Kind} failed")),
-            [.. fired.Order()], results, run.Transcript.CostUsd);
+            [.. fired.Order()], results, RunCost.Of(run.Transcript.CostUsd));
     }
 }

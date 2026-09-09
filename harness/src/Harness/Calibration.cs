@@ -155,7 +155,7 @@ public sealed record CaseReport(
     int Valid,
     int Passed,
     double Rate,
-    IReadOnlyList<decimal> Costs,
+    IReadOnlyList<RunCost> Costs,
     IReadOnlyList<JournalEntry> Runs);
 
 /// <summary>
@@ -171,7 +171,7 @@ public sealed record CalibrationReport(
     int VoidRuns,
     int ThrottledRuns,
     int ModelDriftRuns,
-    decimal TotalCostUsd)
+    SpendTotal Cost)
 {
     /// <summary>Output 1: p_good, pooled over the should-fire runs.</summary>
     public int PositiveValid => Positives.Sum(c => c.Valid);
@@ -210,9 +210,13 @@ public sealed record CalibrationReport(
     public decimal? PositiveMedianCost => Median(Positives);
     public decimal? NegativeMedianCost => Median(Negatives);
 
+    /// <summary>
+    /// Measured runs only. An estimate is the same fixed figure every time, so letting it in would
+    /// drag the median towards the estimate and then present the result as a price.
+    /// </summary>
     public static decimal? Median(IEnumerable<CaseReport> cases)
     {
-        var costs = cases.SelectMany(c => c.Costs).Order().ToList();
+        var costs = cases.SelectMany(c => c.Costs).Where(c => !c.IsEstimated).Select(c => c.Usd).Order().ToList();
         if (costs.Count == 0) return null;
         var mid = costs.Count / 2;
         return costs.Count % 2 == 1 ? costs[mid] : (costs[mid - 1] + costs[mid]) / 2m;
@@ -239,7 +243,7 @@ public sealed record CalibrationReport(
             entries.Count(e => e.Verdict == nameof(Verdict.Void)),
             entries.Count(e => e.Throttled),
             entries.Count(e => !e.ModelHeld),
-            entries.Sum(e => e.CostUsd ?? 0m))
+            SpendTotal.Of(entries.Select(e => e.Cost)))
         { LateFires = lateFires };
     }
 
@@ -260,7 +264,7 @@ public sealed record CalibrationReport(
             var passed = valid.Count(e => e.Verdict == nameof(Verdict.Held));
             return new CaseReport(id, kind, valid.Count, passed,
                 valid.Count == 0 ? 0 : (double)passed / valid.Count,
-                [.. runs.Where(r => r.CostUsd is not null).Select(r => r.CostUsd!.Value)],
+                [.. runs.Select(r => r.Cost)],
                 runs);
         })];
 }

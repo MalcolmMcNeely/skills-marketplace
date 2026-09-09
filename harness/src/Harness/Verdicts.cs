@@ -20,7 +20,8 @@ public sealed record RunScore(
     string Detail,
     IReadOnlyList<string> FiredSet,
     IReadOnlyList<AssertionResult> Assertions,
-    decimal? CostUsd,
+    /// <summary>What this run charges the ledger, and whether that figure was measured or estimated.</summary>
+    RunCost Cost,
     /// <summary>A usage limit stopped this run. Void, but never resampled: see <see cref="Throttle"/>.</summary>
     bool Throttled = false)
 {

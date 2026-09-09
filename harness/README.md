@@ -58,7 +58,10 @@ Claude Code 2.1.248, `claude-opus-5[1m]`, 2 September 2026.
 | Layer 3, killed at the first decision | 4 | not reportable | ~9.5s |
 
 A killed run emits no `result` line, so it cannot report its own cost. That is why firing
-runs are allowed to finish.
+runs are allowed to finish. It is also why the suite ledger charges such a run a flat
+`$0.23` rather than zero, marked `estimated` in the journal. A resample loop of killed runs
+would otherwise hide from the runaway guard. See
+[running-the-paid-layers.md](../docs/running-the-paid-layers.md).
 
 ## Three things a real run disagreed with
 

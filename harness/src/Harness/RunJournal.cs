@@ -13,6 +13,11 @@ public sealed record JournalEntry
     [JsonPropertyName("detail")] public required string Detail { get; init; }
     [JsonPropertyName("throttled")] public bool Throttled { get; init; }
     [JsonPropertyName("costUsd")] public decimal? CostUsd { get; init; }
+    /// <summary>
+    /// #16: "measured" or "estimated". A killed run reports no cost and is charged a fixed estimate,
+    /// and no report may quote that figure as a bill. Absent on every journal written before #16.
+    /// </summary>
+    [JsonPropertyName("costBasis")] public string? CostBasis { get; init; }
     [JsonPropertyName("seconds")] public double Seconds { get; init; }
     [JsonPropertyName("modelAsked")] public string? ModelAsked { get; init; }
     [JsonPropertyName("modelGot")] public string? ModelGot { get; init; }
@@ -29,6 +34,9 @@ public sealed record JournalEntry
     [JsonPropertyName("assertions")] public IReadOnlyList<JournalAssertion> Assertions { get; init; } = [];
     [JsonPropertyName("exitCode")] public int ExitCode { get; init; }
     [JsonPropertyName("subtype")] public string? Subtype { get; init; }
+
+    /// <summary>The two cost fields read back as one figure that knows where it came from.</summary>
+    [JsonIgnore] public RunCost Cost => RunCost.FromJournal(CostUsd, CostBasis);
 }
 
 public sealed record JournalAssertion(
@@ -83,7 +91,8 @@ public sealed class RunJournal : IDisposable
             Verdict = score.Verdict.ToString(),
             Detail = score.Detail,
             Throttled = score.Throttled,
-            CostUsd = score.CostUsd,
+            CostUsd = score.Cost.Usd,
+            CostBasis = score.Cost.Label,
             Seconds = Math.Round(outcome.Duration.TotalSeconds, 1),
             ModelAsked = outcome.RequestedModel,
             ModelGot = outcome.Transcript.Model,

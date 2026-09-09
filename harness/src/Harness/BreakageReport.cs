@@ -17,7 +17,7 @@ public sealed record ArmReport(
     IReadOnlyList<AssertionTally> Assertions,
     int VoidRuns,
     int TotalRuns,
-    decimal CostUsd)
+    SpendTotal Cost)
 {
     public LayerOutcome Firing =>
         !Arm.RunFiring || FiringValid == 0 ? LayerOutcome.NotRun
@@ -90,7 +90,7 @@ public sealed record ArmReport(
             tallies,
             entries.Count(e => e.Verdict == nameof(Verdict.Void)),
             entries.Count,
-            entries.Sum(e => e.CostUsd ?? 0m));
+            SpendTotal.Of(entries.Select(e => e.Cost)));
     }
 }
 
@@ -134,7 +134,7 @@ public sealed record BreakageReport(RunEnvironment Environment, IReadOnlyList<Ar
             .Select(a => a.Arm.Id + ": " + string.Join(", ",
                 a.FailedGuards.Select(g => $"A{g.Number} failed {g.Failed} of {g.Seen}")))];
 
-    public decimal TotalCostUsd => Arms.Sum(a => a.CostUsd);
+    public SpendTotal Cost => SpendTotal.Of(Arms.Select(a => a.Cost));
     public int TotalRuns => Arms.Sum(a => a.TotalRuns);
     public int VoidRuns => Arms.Sum(a => a.VoidRuns);
 }
@@ -148,7 +148,7 @@ public static class BreakageMarkdown
         s.AppendLine("# The two broken versions");
         s.AppendLine();
         s.AppendLine($"Issue #6. {report.Environment}. {report.TotalRuns} runs, {report.VoidRuns} void, "
-                   + $"{Duration(elapsed)}, ${report.TotalCostUsd:0.00}.");
+                   + $"{Duration(elapsed)}, {report.Cost}.");
         s.AppendLine();
 
         s.AppendLine("## The matrix");
