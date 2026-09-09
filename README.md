@@ -41,6 +41,7 @@ Start with the plan, then follow a link when you want the working.
 | [What layer 2 asserts](docs/layer-2.md) | The free gate: how skills reference each other, and what the budget test can and cannot prove |
 | [Does `plugin validate` need a login in CI?](docs/ci-plugin-validate.md) | Whether layer 1 can gate a runner with no credential |
 | [MCP skill delivery](docs/mcp-skill-delivery.md) | Can an MCP server install a skill, and should it |
+| [MCP and plugins](docs/mcp-and-plugins.md) | What each carries, where they collide, and how an org ships both |
 | [Output styles](docs/output-styles.md) | How to set one voice across a company, and what it costs |
 
 ## Automating the loop
