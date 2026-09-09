@@ -1,6 +1,6 @@
 # Hooks as guardrails
 
-Researched 2026-09-08 against Claude Code 2.1.248. Anything labelled **measured** was run on this machine (Windows 11 Pro 26200, Git Bash) on that date. Anything else was read from [the hooks guide](https://code.claude.com/docs/en/hooks-guide) and [the hooks reference](https://code.claude.com/docs/en/hooks) and cited where it matters.
+Researched 2026-09-08 against Claude Code 2.1.248, and re-checked against the installed binary and the release changelog on 2026-09-09. Anything labelled **measured** was run on this machine (Windows 11 Pro 26200, Git Bash) on that date. Anything else was read from [the hooks guide](https://code.claude.com/docs/en/hooks-guide) and [the hooks reference](https://code.claude.com/docs/en/hooks) and cited where it matters.
 
 Starting state on this machine, for the record: `~/.claude/settings.json` has no `hooks` key, this repo has no `.claude/settings.json`, and no plugin under `plugins/` ships a `hooks/` directory. Every hook described here would be new.
 
@@ -14,7 +14,7 @@ One consequence to plan around: hooks are collected when the session starts. Edi
 
 ## When hooks fire
 
-Claude Code 2.1.248 fires hooks at these points. "Blocks" means the hook can stop the thing happening.
+Claude Code 2.1.248 fires hooks at these points, with two exceptions noted under "Context and model". "Blocks" means the hook can stop the thing happening.
 
 ### Tool execution
 
@@ -72,8 +72,10 @@ Claude Code 2.1.248 fires hooks at these points. "Blocks" means the hook can sto
 |---|---|---|---|
 | `PreCompact` | `manual`/`auto` | **yes** | Before compaction |
 | `PostCompact` | `manual`/`auto` | no | After compaction. Pairs with `SessionStart` matcher `compact` to re-inject context |
-| `PreModelSwitch` | model name | **yes** | Refuse a model switch |
-| `PostModelSwitch` | model name | no | A model switch happened |
+| `PreModelSwitch` | model name | **yes** | Refuse a model switch. **Not in 2.1.248.** Added in 2.1.251 |
+| `PostModelSwitch` | model name | no | A model switch happened. **Not in 2.1.248.** Added in 2.1.251 |
+
+**Measured, 2026-09-09.** Every event in the tables above is present as a literal string in the installed 2.1.248 binary except those last two. The changelog dates both to 2.1.251, 28 August 2026, one release after the build this repo pins. Reading the hooks guide alone would have carried the error into the recipes below, because the CLI does not validate event names: a `--settings` block naming `PreModelSwitch`, and one naming the invented `NotARealEventXyz`, were both accepted in silence and both runs succeeded. Acceptance proves nothing. Grep the binary.
 
 ### MCP and worktrees
 
@@ -94,7 +96,7 @@ Every hook reads a JSON object on stdin and answers with an exit code, stdout, o
 
 | Field | Where | Effect |
 |---|---|---|
-| `permissionDecision` | `PreToolUse`, `PreModelSwitch` | `allow` / `deny` / `ask` / `defer` |
+| `permissionDecision` | `PreToolUse`, `PreModelSwitch` (2.1.251+) | `allow` / `deny` / `ask` / `defer` |
 | `permissionDecisionReason` | same | Text shown with the decision |
 | `updatedInput` | `PreToolUse`, `UserPromptSubmit` | **Rewrite the tool's arguments or the prompt** |
 | `additionalContext` | `SessionStart`, `UserPromptSubmit`, `PreToolUse`, `PostToolUse` | Inject text Claude reads |
@@ -120,7 +122,7 @@ This is the finding most likely to change what you build. A hook does not have t
 
 `prompt` and `agent` hooks are guardrails that exercise judgment. A deterministic script cannot answer "does this change match what the ticket asked for". An `agent` hook can read the ticket and the diff and say so. The cost is latency, money and non-determinism, so keep them for the checks a regex genuinely cannot make.
 
-Some events cut the default timeout: `UserPromptSubmit`, `PreModelSwitch` and `PostModelSwitch` get 30s, `MessageDisplay` gets 10s, and all `SessionEnd` hooks share a 1.5s budget that a per-hook `timeout` can raise to 60s.
+Some events cut the default timeout: `UserPromptSubmit` gets 30s, as do `PreModelSwitch` and `PostModelSwitch` on the builds that have them, `MessageDisplay` gets 10s, and all `SessionEnd` hooks share a 1.5s budget that a per-hook `timeout` can raise to 60s.
 
 ## Narrowing a hook to specific arguments
 
@@ -189,7 +191,7 @@ Set the guard on `stop_hook_active`, so a ticket that genuinely cannot be closed
 | Re-inject conventions after compaction | `SessionStart` matcher `compact` | Echo the reminder to stdout |
 | Log every shell command | `PostToolUse` matcher `Bash` | Append `.tool_input.command` to a file |
 | Audit configuration changes | `ConfigChange` | Append source and path to an audit log |
-| Refuse a model downgrade | `PreModelSwitch` matcher on model name | `permissionDecision: "deny"` |
+| Refuse a model downgrade | `PreModelSwitch` matcher on model name | `permissionDecision: "deny"`. Needs 2.1.251 or later |
 | Judge a change against its ticket | `Stop`, type `agent` | Sub-agent reads the ticket and the diff |
 | Cap what an unattended run may touch | `PreToolUse` | `deny` holds even under `bypassPermissions` |
 
@@ -220,3 +222,4 @@ Resolve it by putting them at different events. Enforcement belongs on `Stop`, w
 - `allowManagedHooksOnly`, `disableAllHooks` and plugin-shipped hooks.
 - Whether the file watcher reliably picks up a mid-session hook change on Windows.
 - Any guardrail in the table above, end to end. The mechanisms are documented and two Stop-hook mechanics are measured; the recipes are not.
+- Anything added after 2.1.248. This machine is pinned to that build; the newest release is 2.1.265, 8 September 2026, seventeen releases later. `PreModelSwitch` and `PostModelSwitch` are the one gap this pass caught by grepping the binary against the changelog. The same method would find any others, and has not been run over the whole feature set.
