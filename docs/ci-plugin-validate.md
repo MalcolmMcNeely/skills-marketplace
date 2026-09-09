@@ -20,24 +20,26 @@ Two outcomes were acceptable. This is the preferred one.
 
 ## What was on the runner
 
-The probe installed `@anthropic-ai/claude-code@2.1.248` from npm and nothing else. The job carried no
-secret, so nothing could leak in through the environment.
+The probe installed `@anthropic-ai/claude-code@2.1.248` from npm, on top of Node 22 and the .NET 10 SDK.
+The job was given no secret of its own. GitHub's own `GITHUB_TOKEN` is there as it always is, and checkout
+uses it, but no Anthropic credential could reach the job through the environment.
 
 | Checked | Found |
 |---|---|
 | `ANTHROPIC_API_KEY` | unset |
 | `CLAUDE_CODE_OAUTH_TOKEN` | unset |
-| Any environment variable matching `anthropic` or `claude` | none |
-| Any `claude` file or folder in `$HOME` | none |
+| Any environment variable matching `anthropic` or `claude` | no line printed |
+| Any `claude` file or folder in `$HOME` | no line printed |
 | `claude --version` | `2.1.248 (Claude Code)` |
 
-Nobody had ever started the CLI on that machine, so it had no onboarding state either. Validate did
-not ask for any.
+Nobody had ever started the CLI on that machine, so it had no onboarding state either. Validate did not
+ask for any. The two searches printed nothing at all, which is what an empty result looks like here, so
+read those rows as "the check found nothing" rather than as a positive report of absence.
 
 ## The result
 
-I tried four forms, because the two commands `CLAUDE.md` documents are not quite the two the harness
-runs: layer 1 adds `--strict`.
+I tried four forms. `CLAUDE.md` tells a human to run two commands without `--strict`, and layer 1 runs
+the first of them with `--strict`. All four had to hold.
 
 | Command | Exit code | Output |
 |---|---|---|
@@ -46,8 +48,8 @@ runs: layer 1 adds `--strict`.
 | `claude plugin validate ./plugins/core` | 0 | `✔ Validation passed` |
 | `claude plugin validate ./plugins/core --strict` | 0 | `✔ Validation passed` |
 
-Each command returned in under half a second. The whole job, including installing Node, the .NET 10 SDK
-and the CLI, took 32 seconds.
+The first call took about a second. The three after it took between 0.31 and 0.47 seconds. The whole job,
+installs included, took 32 seconds.
 
 The same job ran the free suite too. It passed 152 of 152 in one second, so the
 `net10.0` projects build on a runner as well. That covers the rest of what #14's workflow will need.
@@ -66,6 +68,6 @@ The same job ran the free suite too. It passed 152 of 152 in one second, so the
 Nothing changes. The workflow installs the pinned CLI and runs the same three commands `CLAUDE.md` gives
 a human, layer 1's subprocess included. No credential, no secret, no fallback.
 
-The workflow that measured this was throwaway on purpose. It ran on a pull request branch, and I deleted
-it before that branch merged, so nothing under `.github/` reached `main` from the probe. The workflow
-that lands there is #14's.
+The workflow that measured this was throwaway on purpose. It ran on a pull request branch that never
+landed, and only this document came back to `main`, so nothing under `.github/` reached `main` from the
+probe. The workflow that lands there is #14's.
