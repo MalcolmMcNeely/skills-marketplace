@@ -21,9 +21,20 @@ public sealed record JournalEntry
     [JsonPropertyName("firedSet")] public IReadOnlyList<string> FiredSet { get; init; } = [];
     /// <summary>#12 output 6: where each Skill call sat in the run.</summary>
     [JsonPropertyName("skillCalls")] public IReadOnlyList<JournalSkillCall> SkillCalls { get; init; } = [];
+    /// <summary>
+    /// #6: WHICH assertion fell over, not just that one did. Two breaks that both read "score went
+    /// down" are indistinguishable, and telling a targeting fault from a behaviour fault is the whole
+    /// point of having two layers. Absent on a layer 3 entry and on every journal written before #6.
+    /// </summary>
+    [JsonPropertyName("assertions")] public IReadOnlyList<JournalAssertion> Assertions { get; init; } = [];
     [JsonPropertyName("exitCode")] public int ExitCode { get; init; }
     [JsonPropertyName("subtype")] public string? Subtype { get; init; }
 }
+
+public sealed record JournalAssertion(
+    [property: JsonPropertyName("n")] int Number,
+    [property: JsonPropertyName("kind")] string Kind,
+    [property: JsonPropertyName("passed")] bool Passed);
 
 public sealed record JournalSkillCall(
     [property: JsonPropertyName("name")] string Name,
@@ -80,6 +91,7 @@ public sealed class RunJournal : IDisposable
             CliVersion = RunEnvironment.Current.CliVersion,
             FiredSet = [.. outcome.Transcript.FiredSkills],
             SkillCalls = [.. outcome.Transcript.SkillCalls.Select(c => new JournalSkillCall(c.Name, c.Ordinal))],
+            Assertions = [.. score.Assertions.Select(a => new JournalAssertion(a.Number, a.Kind.ToString(), a.Passed))],
             ExitCode = outcome.ExitCode,
             Subtype = outcome.TerminalSubtype,
         };

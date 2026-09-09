@@ -1,5 +1,17 @@
 namespace Harness;
 
+/// <summary>How much of the firing suite a pass runs. #6 buys narrower shapes than #12 needed.</summary>
+public enum FiringPlanShape
+{
+    /// <summary>#12: all 23 cases, 125 runs.</summary>
+    Full,
+    /// <summary>The 10 should-fire cases at their declared run counts. 60 runs.</summary>
+    PositivesOnly,
+    /// <summary>The first 3 should-fire cases at 2 runs each. 6 runs, and a probe, not a measurement.</summary>
+    ShortPositives,
+}
+
+
 /// <summary>
 /// Issue #12. Runs #10's 23-case suite against the frozen good fixture and produces the numbers every
 /// gate value on the map rests on. 125 runs: 10 positives at 6, 10 negatives at 5, 3 watch cases at 5.
@@ -10,7 +22,7 @@ namespace Harness;
 /// The pass writes a journal and nothing else. Every number is derived from the journal afterwards by
 /// <see cref="CalibrationReport"/>, so a pass stopped at run 110 still reports on the 110 it got.
 /// </summary>
-public sealed class CalibrationPass(HarnessPaths paths, SuiteFile suite)
+public sealed class CalibrationPass(HarnessPaths paths, SuiteFile suite, FiringRunner? runner = null, FiringPlanShape shape = FiringPlanShape.Full)
 {
     public const int FiringLayer = 3;
 
@@ -21,7 +33,7 @@ public sealed class CalibrationPass(HarnessPaths paths, SuiteFile suite)
         Action<string>? log = null,
         CancellationToken ct = default)
     {
-        var runner = new FiringRunner(paths);
+        var firing = runner ?? new FiringRunner(paths);
         var already = ValidRunsByCase(journal.Path);
         var started = DateTimeOffset.UtcNow;
         log?.Invoke($"calibration pass, {RunEnvironment.Current}, journal {journal.Path}");
@@ -38,7 +50,7 @@ public sealed class CalibrationPass(HarnessPaths paths, SuiteFile suite)
             var remaining = step.Runs - done;
             var sample = await Resampler.CollectAsync(remaining, step.Cap, async token =>
             {
-                var outcome = await runner.RunAsync(step.Prompt, token);
+                var outcome = await firing.RunAsync(step.Prompt, token);
                 var score = step.Expect is null
                     ? Scoring.ScoreQuiet(outcome, suite.SkillUnderTest)
                     : Scoring.ScoreFiring(outcome, step.Expect);
@@ -59,13 +71,30 @@ public sealed class CalibrationPass(HarnessPaths paths, SuiteFile suite)
 
     public sealed record Step(string Id, string Prompt, int Runs, int Cap, IReadOnlyList<string>? Expect);
 
-    /// <summary>Positives, then negatives, then the watch list. Expect is null for a case graded on silence.</summary>
-    public IEnumerable<Step> Plan()
+    /// <summary>
+    /// Positives, then negatives, then the watch list. Expect is null for a case graded on silence.
+    ///
+    /// #6 needs two narrower shapes. PositivesOnly re-measures p_good against a broken description
+    /// without paying for 50 negative runs that answer a different question. ShortPositives is the
+    /// cheap "did this move at all" probe, for an arm whose layer 3 result is expected to be a
+    /// non-event and would not be worth an hour to confirm at full width.
+    /// </summary>
+    public IEnumerable<Step> Plan() => shape switch
     {
-        foreach (var c in suite.Firing.ShouldFire) yield return new Step(c.Id, c.Prompt, c.Runs, c.Cap, c.Expect);
-        foreach (var c in suite.Firing.ShouldNotFire) yield return new Step(c.Id, c.Prompt, c.Runs, c.Cap, null);
-        foreach (var c in suite.Firing.Watch) yield return new Step(c.Id, c.Prompt, c.Runs, c.Cap, null);
-    }
+        FiringPlanShape.PositivesOnly => Positives(),
+        FiringPlanShape.ShortPositives => Positives().Take(ShortCases)
+            .Select(s => s with { Runs = ShortRuns, Cap = ShortRuns * 2 }),
+        _ => Positives().Concat(Quiet(suite.Firing.ShouldNotFire)).Concat(Quiet(suite.Firing.Watch)),
+    };
+
+    public const int ShortCases = 3;
+    public const int ShortRuns = 2;
+
+    private IEnumerable<Step> Positives() =>
+        suite.Firing.ShouldFire.Select(c => new Step(c.Id, c.Prompt, c.Runs, c.Cap, c.Expect));
+
+    private static IEnumerable<Step> Quiet(IEnumerable<NegativeCase> cases) =>
+        cases.Select(c => new Step(c.Id, c.Prompt, c.Runs, c.Cap, null));
 
     /// <summary>Resume support: a case with enough valid runs on disk is not run again.</summary>
     public static Dictionary<string, int> ValidRunsByCase(string journalPath) =>

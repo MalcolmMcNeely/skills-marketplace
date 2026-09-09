@@ -4,7 +4,7 @@ namespace Harness;
 /// Issue #8 item 7: layer 3 and layer 4 are two different run shapes and must not be confused.
 /// They are separate types so a case cannot be handed to the wrong one.
 /// </summary>
-public sealed class FiringRunner(HarnessPaths paths)
+public sealed class FiringRunner(HarnessPaths paths, string? catalogueDir = null)
 {
     /// <summary>Natural-language prompt against the description-only stub catalogue, killed at the first tool call.</summary>
     public Task<RunOutcome> RunAsync(string prompt, CancellationToken ct = default) =>
@@ -12,7 +12,8 @@ public sealed class FiringRunner(HarnessPaths paths)
         {
             Prompt = prompt,
             WorkingDirectory = paths.FixtureRepo,
-            PluginDirs = [paths.StubCatalogue],
+            // #6 lays a break overlay over the stub catalogue in scratch. Null is the unbroken catalogue.
+            PluginDirs = [catalogueDir ?? paths.StubCatalogue],
             // Firing is decided before any work happens, so forbid the expensive tools.
             // NOT restricted here: --allowedTools only auto-approves, and disallowing Write made the
             // model read the repo until it blew the budget. The stop rule does the saving instead.

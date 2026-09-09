@@ -19,7 +19,9 @@ public sealed class HarnessPaths
     public string Fixtures => Path.Combine(Root, "fixtures");
     public string StubCatalogue => Path.Combine(Fixtures, "catalogue");
     public string GoodPlugin => Path.Combine(Fixtures, "good");
-    public string BrokenPlugin(string name) => Path.Combine(Fixtures, "broken", name);
+    /// <summary>#6's break overlays. Sparse trees laid over a base fixture, never plugins in their own right.</summary>
+    public string Breaks => Path.Combine(Fixtures, "breaks");
+    public string BreakOverlay(string name) => Path.Combine(Breaks, name);
     public string FixtureRepo => Path.Combine(Fixtures, "repo");
     public string Cases => Path.Combine(Root, "cases");
     public string Captured => Path.Combine(Root, "captured");
