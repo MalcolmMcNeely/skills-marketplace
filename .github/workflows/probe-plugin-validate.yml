@@ -1,0 +1,71 @@
+# Temporary probe for ticket #19. Answers one question: does `claude plugin validate`
+# exit 0 on a CI runner with no credential present? Deleted from this branch once the
+# answer is recorded in docs/. It must never reach main.
+name: probe-plugin-validate
+
+on:
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  probe:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Install the pinned Claude Code CLI
+        run: npm install -g @anthropic-ai/claude-code@2.1.248
+
+      - name: Show there is no credential
+        run: |
+          echo "## Credential state" >> "$GITHUB_STEP_SUMMARY"
+          echo '```' >> "$GITHUB_STEP_SUMMARY"
+          echo "ANTHROPIC_API_KEY set: ${ANTHROPIC_API_KEY:+yes}${ANTHROPIC_API_KEY:-no}" | tee -a "$GITHUB_STEP_SUMMARY"
+          echo "CLAUDE_CODE_OAUTH_TOKEN set: ${CLAUDE_CODE_OAUTH_TOKEN:+yes}${CLAUDE_CODE_OAUTH_TOKEN:-no}" | tee -a "$GITHUB_STEP_SUMMARY"
+          echo "env vars matching anthropic|claude:" | tee -a "$GITHUB_STEP_SUMMARY"
+          env | grep -iE 'anthropic|claude' | sed 's/=.*/=<redacted>/' | tee -a "$GITHUB_STEP_SUMMARY" || echo "  (none)" | tee -a "$GITHUB_STEP_SUMMARY"
+          echo "credential files in HOME:" | tee -a "$GITHUB_STEP_SUMMARY"
+          ls -a "$HOME" | grep -i claude | tee -a "$GITHUB_STEP_SUMMARY" || echo "  (none)" | tee -a "$GITHUB_STEP_SUMMARY"
+          echo '```' >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Check the pinned version installed
+        run: |
+          installed=$(claude --version)
+          echo "claude --version: $installed" | tee -a "$GITHUB_STEP_SUMMARY"
+          case "$installed" in
+            2.1.248*) ;;
+            *) echo "expected 2.1.248, got $installed"; exit 1 ;;
+          esac
+
+      - name: Run every validate form and record the exit code
+        run: |
+          echo "## Probe results" >> "$GITHUB_STEP_SUMMARY"
+          echo "| Command | Exit code |" >> "$GITHUB_STEP_SUMMARY"
+          echo "|---|---|" >> "$GITHUB_STEP_SUMMARY"
+          run_probe () {
+            echo "::group::claude $*"
+            set +e
+            timeout 120 claude "$@" 2>&1 | tee /tmp/probe-out
+            code=${PIPESTATUS[0]}
+            set -e
+            echo "::endgroup::"
+            echo "EXIT($*) = $code"
+            echo "| \`claude $*\` | $code |" >> "$GITHUB_STEP_SUMMARY"
+          }
+          run_probe plugin validate .
+          run_probe plugin validate . --strict
+          run_probe plugin validate ./plugins/core
+          run_probe plugin validate ./plugins/core --strict
+
+      - name: Run the free suite for comparison
+        run: |
+          echo "::group::dotnet test"
+          set +e
+          dotnet test harness/tests/Harness.Free.Tests 2>&1 | tail -40
+          echo "EXIT(dotnet test free) = ${PIPESTATUS[0]}"
+          set -e
+          echo "::endgroup::"
