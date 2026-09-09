@@ -26,9 +26,11 @@ public sealed class FiringRunner(HarnessPaths paths, string? catalogueDir = null
         // Firing is decided before any work happens, so forbid the expensive tools.
         // NOT restricted here: --allowedTools only auto-approves, and disallowing Write made the
         // model read the repo until it blew the budget. The stop rule does the saving instead.
-        // #11 fixed the per-run ceiling at $0.60. Layer 3 keeps its own lower one, MEASURED:
-        // 0.20 aborted mid-run and voided the sample, 0.40 has not.
-        MaxBudgetUsd = 0.40m,
+        // #18: layer 3 sits at the per-run ceiling #11 fixed and keeps no tighter cap of its own.
+        // 0.20 aborted mid-run, and three passes then measured 0.40 clipping runs that were working:
+        // the figures are in breakage.md section 7. A cap only decides which runs are VOID, so
+        // raising it moves no gate.
+        MaxBudgetUsd = RunSpec.PerRunCeilingUsd,
         StopMode = StopRuleFor(kind),
         // Unchanged by the kind. An early-stop run needs the same room to REACH its decision; what
         // it saves is the work after that decision, not the time before it.
@@ -75,7 +77,7 @@ public sealed class ContractRunner(HarnessPaths paths)
             PluginDirs = [pluginDir],
             // baseline-test-first.md: allowlist, not bypassPermissions.
             AllowedTools = ["Write", "Edit", "Read", "Bash", "Glob", "Grep"],
-            MaxBudgetUsd = 0.60m,
+            MaxBudgetUsd = RunSpec.PerRunCeilingUsd,
             StopMode = StopMode.Completion,
             Timeout = TimeSpan.FromMinutes(5),
         }, ct);

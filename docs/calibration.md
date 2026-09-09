@@ -181,7 +181,7 @@ abort when a run passes `--max-budget-usd`.
 | N7 | 1 |
 | W1 | 1 |
 
-Layer 3 runs at a $0.40 per-run cap, lower than the $0.60 suite default. #11 set it there after
+Layer 3 ran at a $0.40 per-run cap, lower than the $0.60 suite default. #11 set it there after
 measuring 0.20 as too tight. At $0.40 the pass voided 6 per cent of its runs, which cost about $3 and 12
 minutes of resampling and changed no verdict.
 
@@ -191,6 +191,12 @@ will keep clipping it. Raising layer 3 to $0.60 would probably remove all eight,
 a runaway run cost half as much again before the CLI stops it.
 
 I left the cap alone. #11 chose that number on purpose, and none of it changed a figure in this document.
+
+**Raised on 9 September 2026.** [#6](https://github.com/MalcolmMcNeely/skills-marketplace/issues/6)
+measured the same clipping again, so
+[#18](https://github.com/MalcolmMcNeely/skills-marketplace/issues/18) moved layer 3 to $0.60. That is
+the per-run ceiling #11 fixed for every other run shape. A cap decides which runs are void, not what
+a valid run does, so every figure above still stands and no gate moved.
 
 ## What we could not verify
 

@@ -62,8 +62,15 @@ it would burn money.
 
 | Level | Value | Mechanism |
 |---|---|---|
-| Per run | `$0.60` | `--max-budget-usd`, hardcoded in the harness `RunSpec` |
+| Per run | `$0.60` | `--max-budget-usd`, hardcoded as `RunSpec.PerRunCeilingUsd` |
 | Per suite | `$50` | The harness `SpendLedger`, set by `SKILL_HARNESS_CEILING_USD` |
+
+Every run shape takes the same per-run figure. Layer 3 kept a tighter `$0.40` of
+its own until [#18](https://github.com/MalcolmMcNeely/skills-marketplace/issues/18)
+raised it on 9 September 2026. Three passes had measured that number clipping runs
+that were doing real work: see [calibration.md](calibration.md) and
+[breakage.md](breakage.md) section 7 for the figures, the dates and the CLI version
+each was measured on.
 
 Ten void runs cost `$2.28` on #8 before the resample cap fired, each one
 individually inside its per-run budget. That is the failure the ledger exists for,

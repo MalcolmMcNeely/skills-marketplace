@@ -11,7 +11,7 @@ var outcome = await ClaudeCli.RunAsync(new RunSpec
     WorkingDirectory = workDir,
     PluginDirs = [paths.GoodPlugin],
     AllowedTools = ["Write", "Edit", "Read", "Bash", "Glob", "Grep"],
-    MaxBudgetUsd = 0.60m,
+    MaxBudgetUsd = RunSpec.PerRunCeilingUsd,
     StopMode = StopMode.FirstDecision,
 });
 

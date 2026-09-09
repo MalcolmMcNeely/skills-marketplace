@@ -206,6 +206,11 @@ there on purpose after measuring $0.20 as too tight.
 I left the cap alone again. Moving it mid-pass would have made the description arm and the control
 arm non-comparable, and it changed no verdict here.
 
+**Raised on 9 September 2026.** Three measurements of the same clipping were enough, so
+[#18](https://github.com/MalcolmMcNeely/skills-marketplace/issues/18) moved layer 3 to $0.60, the
+per-run ceiling #11 fixed for every other run shape. The harness now has one per-run number, and a
+test reddens the build if it splits in two again.
+
 ## 8. What it cost
 
 | | |

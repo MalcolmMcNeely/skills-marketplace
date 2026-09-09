@@ -11,7 +11,13 @@ public sealed record RunSpec
     /// <summary>baseline-test-first.md: use an allowlist, NOT bypassPermissions, which nudges the model into heredocs.</summary>
     public IReadOnlyList<string> AllowedTools { get; init; } = [];
     public IReadOnlyList<string> DisallowedTools { get; init; } = [];
-    public decimal MaxBudgetUsd { get; init; } = 0.60m;
+    /// <summary>
+    /// #11 fixed one per-run ceiling for the whole harness. #18 removed the last run shape that kept
+    /// a tighter figure of its own, so this is the figure every run shape now takes.
+    /// </summary>
+    public const decimal PerRunCeilingUsd = 0.60m;
+
+    public decimal MaxBudgetUsd { get; init; } = PerRunCeilingUsd;
     /// <summary>This machine has a user-level output style. Pin it or the run measures the machine, not the skill.</summary>
     public string Settings { get; init; } = """{"outputStyle":"default"}""";
     public StopMode StopMode { get; init; } = StopMode.Completion;
