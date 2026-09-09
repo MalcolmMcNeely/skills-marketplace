@@ -39,6 +39,7 @@ Start with the plan, then follow a link when you want the working.
 | [The calibration pass](docs/calibration.md) | 133 runs against the good fixture: `p_good`, the gate, and why a perfect score must not set a perfect gate |
 | [The two broken versions](docs/breakage.md) | Breaking the fixture on purpose: which layer notices, and the wall the harness could not see |
 | [What layer 2 asserts](docs/layer-2.md) | The free gate: how skills reference each other, and what the budget test can and cannot prove |
+| [Does `plugin validate` need a login in CI?](docs/ci-plugin-validate.md) | Whether layer 1 can gate a runner with no credential |
 | [MCP skill delivery](docs/mcp-skill-delivery.md) | Can an MCP server install a skill, and should it |
 | [Output styles](docs/output-styles.md) | How to set one voice across a company, and what it costs |
 
