@@ -14,9 +14,16 @@ namespace Harness;
 /// Stopping is the right response, because the journal holds every completed run, so a stopped pass
 /// is resumable and a mislabelled one is not.
 ///
-/// NOT MEASURED. A usage limit cannot be provoked on demand, so these markers are read from the
-/// shapes the CLI is known to emit, not observed on this machine. Detection is therefore narrow on
-/// purpose, and narrow in two ways:
+/// MEASURED on 9 September 2026, and the markers were not enough. #6's pass hit a real wall at
+/// 11:21 UTC: 89 consecutive runs came back exit 1 with subtype "success", $0.00 and 1.7 seconds.
+/// No marker text, and the old guard returned false on the subtype before it read stderr at all, so
+/// the Resampler retried 89 times and reported the wall as insufficient-firings. Two arms were lost.
+///
+/// So detection now has two halves. The MARKERS below name a limit in the CLI's own words. The
+/// SHAPE below that needs no words: a run that failed its gate, billed nothing and returned in under
+/// five seconds did no work, and no number of retries will change that.
+///
+/// Marker detection is narrow on purpose, and narrow in two ways:
 ///
 /// 1. It only looks at a run that ALREADY failed the validity gate, so it can never turn a real
 ///    result into a throttle.
@@ -44,11 +51,27 @@ public static class Throttle
     /// A run that never reached an init line is included, because a limit refused at session start
     /// looks exactly like that.
     /// </summary>
-    public static bool Detect(string? terminalSubtype, string? resultText, string? standardError)
+    public static bool Detect(bool isValid, string? resultText, string? standardError)
     {
-        if (terminalSubtype == "success") return false;
+        // Keyed on the VALIDITY GATE, not on the subtype. #6 measured a wall that reported subtype
+        // "success" and still exited 1, and the old subtype guard returned false before reading a
+        // single word of stderr. A run is a candidate for a limit exactly when it is not a result.
+        if (isValid) return false;
         return Matches(resultText) || Matches(standardError);
     }
+
+    /// <summary>MEASURED: a refused run returned in 1.6 to 1.8 seconds. A real one takes 35 to 65.</summary>
+    public static readonly TimeSpan RefusalCeiling = TimeSpan.FromSeconds(5);
+
+    /// <summary>
+    /// A wall with no words for it. The machine refused before doing any work, so the run billed
+    /// nothing and came back at once. Retrying spends the cap to reach the same wall, which is the
+    /// same reason a named limit stops the pass.
+    ///
+    /// A budget abort is not this: it billed for the work it did before the CLI cut it off.
+    /// </summary>
+    public static bool Refused(bool isValid, decimal? costUsd, TimeSpan duration) =>
+        !isValid && costUsd is null or 0m && duration < RefusalCeiling;
 
     public static bool Matches(string? text) =>
         !string.IsNullOrEmpty(text)

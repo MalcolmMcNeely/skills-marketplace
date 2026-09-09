@@ -84,7 +84,7 @@ public static class ClaudeCli
         var (transcript, subtype) = StreamParser.Parse(stream);
         var standardError = await SafeStderr(stderrTask);
 
-        return new RunOutcome
+        var outcome = new RunOutcome
         {
             ExitCode = killed ? 0 : SafeExitCode(proc),
             TerminalSubtype = subtype,
@@ -96,8 +96,16 @@ public static class ClaudeCli
             KilledAtDecision = killed,
             Started = started,
             StandardError = standardError,
-            Throttled = Throttle.Detect(subtype, transcript.ResultText, standardError),
             RequestedModel = spec.Model,
+        };
+
+        // Decided AFTER the outcome exists, because both halves key on the validity gate and the
+        // gate reads the exit code and the subtype together. #6 lost two arms to a guard that read
+        // the subtype alone and returned false on a run that had exited 1.
+        return outcome with
+        {
+            Throttled = Throttle.Detect(outcome.IsValid, transcript.ResultText, standardError)
+                     || Throttle.Refused(outcome.IsValid, transcript.CostUsd, sw.Elapsed),
         };
     }
 

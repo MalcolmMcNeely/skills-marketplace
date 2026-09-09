@@ -21,10 +21,20 @@ public class BreakagePassTests(ITestOutputHelper output)
     private static decimal Ceiling =>
         decimal.TryParse(Environment.GetEnvironmentVariable("SKILL_HARNESS_CEILING_USD"), out var c) ? c : 50.00m;
 
-    private static string RunDirectory =>
-        Environment.GetEnvironmentVariable("SKILL_HARNESS_BREAK_DIR") is { Length: > 0 } d
-            ? d
-            : Path.Combine(Paths.Captured, $"breakage-{DateTime.UtcNow:yyyyMMdd-HHmmss}");
+    /// <summary>
+    /// Resolved against the harness root, not the process working directory. MEASURED the hard way:
+    /// the test host runs from its own build output, so a relative override put an entire pass's
+    /// journals under bin/Debug where nobody would look for them.
+    /// </summary>
+    private static string RunDirectory
+    {
+        get
+        {
+            var stamp = Path.Combine(Paths.Captured, $"breakage-{DateTime.UtcNow:yyyyMMdd-HHmmss}");
+            if (Environment.GetEnvironmentVariable("SKILL_HARNESS_BREAK_DIR") is not { Length: > 0 } d) return stamp;
+            return Path.IsPathRooted(d) ? d : Path.GetFullPath(Path.Combine(Paths.Root, d));
+        }
+    }
 
     [BreakageFact]
     public async Task Break_the_fixture_two_ways_and_see_which_layer_notices()

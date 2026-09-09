@@ -11,15 +11,15 @@ public class ThrottleTests
     [Fact]
     public void A_failed_run_whose_error_names_a_limit_is_throttled()
     {
-        Assert.True(Throttle.Detect("error_during_execution", "Claude AI usage limit reached", null));
-        Assert.True(Throttle.Detect(null, null, "API Error: 429 rate_limit_error"));
+        Assert.True(Throttle.Detect(isValid: false, "Claude AI usage limit reached", null));
+        Assert.True(Throttle.Detect(isValid: false, null, "API Error: 429 rate_limit_error"));
     }
 
     [Fact]
     public void A_successful_run_is_never_throttled()
     {
         // Belt and braces: the words come from the CLI, but a success is a result whatever it says.
-        Assert.False(Throttle.Detect("success", "explained the 429 rate limit to the user", null));
+        Assert.False(Throttle.Detect(isValid: true, "explained the 429 rate limit to the user", null));
     }
 
     [Fact]
@@ -32,10 +32,57 @@ public class ThrottleTests
         Assert.False(outcome.Throttled);
     }
 
+    /// <summary>
+    /// The wall #6 actually hit, on 9 September 2026 at 11:21 UTC. Exit 1 with subtype "success",
+    /// $0.00, 1.7 seconds, and no words anywhere naming a limit. The old guard read the subtype,
+    /// saw "success", and returned false before looking at stderr, so 89 runs were resampled into it.
+    /// </summary>
+    [Fact]
+    public void A_wall_that_names_itself_nowhere_is_still_caught_by_its_shape()
+    {
+        // No marker text, so the words find nothing.
+        Assert.False(Throttle.Detect(isValid: false, null, null));
+        // The shape finds it anyway: no result, nothing billed, back in under two seconds.
+        Assert.True(Throttle.Refused(isValid: false, costUsd: 0m, TimeSpan.FromSeconds(1.7)));
+    }
+
+    /// <summary>Exit 1 and subtype "success" together. Not valid, whatever the subtype says.</summary>
+    [Fact]
+    public void Subtype_success_with_a_failed_exit_code_is_not_a_result()
+    {
+        var outcome = Fake.Outcome(exit: 1, subtype: "success");
+
+        Assert.False(outcome.IsValid);
+        Assert.True(Throttle.Detect(outcome.IsValid, "Claude AI usage limit reached", null),
+            "the old guard returned false here on the subtype alone");
+    }
+
+    [Fact]
+    public void A_real_run_is_never_refused_by_shape()
+    {
+        // Valid runs are excluded outright, and so is any run that billed or took real time.
+        Assert.False(Throttle.Refused(isValid: true, costUsd: 0m, TimeSpan.FromSeconds(1.7)));
+        Assert.False(Throttle.Refused(isValid: false, costUsd: 0.21m, TimeSpan.FromSeconds(1.7)));
+        Assert.False(Throttle.Refused(isValid: false, costUsd: 0m, TimeSpan.FromSeconds(40)));
+    }
+
+    /// <summary>A shape refusal has no words behind it, so the journal must not invent any.</summary>
+    [Fact]
+    public void An_inferred_refusal_is_not_reported_as_a_named_limit()
+    {
+        var refused = Fake.Outcome(exit: 1, subtype: "success", seconds: 1.7);
+
+        Assert.True(refused.Throttled);
+        Assert.StartsWith("REFUSED:", refused.VoidReason, StringComparison.Ordinal);
+        Assert.DoesNotContain("usage limit", refused.VoidReason, StringComparison.OrdinalIgnoreCase);
+    }
+
     [Fact]
     public void A_budget_abort_is_not_a_throttle()
     {
-        Assert.False(Throttle.Detect("error_max_budget_usd", "run exceeded --max-budget-usd", null));
+        Assert.False(Throttle.Detect(isValid: false, "run exceeded --max-budget-usd", null));
+        // And not by shape either: a budget abort billed for the work it did before the cut-off.
+        Assert.False(Throttle.Refused(isValid: false, costUsd: 0.40m, TimeSpan.FromSeconds(48)));
     }
 }
 
@@ -370,7 +417,8 @@ internal static class Fake
         string stream = "",
         string? model = null,
         string? requested = null,
-        (string Name, int Ordinal)[]? skills = null)
+        (string Name, int Ordinal)[]? skills = null,
+        double seconds = 40)
     {
         var (parsed, parsedSubtype) = StreamParser.Parse(stream);
         var calls = skills ?? [];
@@ -381,19 +429,24 @@ internal static class Fake
             FiredSkills = [.. calls.Select(s => s.Name).Distinct(StringComparer.Ordinal)],
         };
 
-        return new RunOutcome
+        var outcome = new RunOutcome
         {
             ExitCode = exit,
             TerminalSubtype = stream.Length > 0 ? parsedSubtype : subtype,
             Transcript = transcript,
             WorkingDirectory = ".",
-            Duration = TimeSpan.FromSeconds(40),
+            Duration = TimeSpan.FromSeconds(seconds),
             RawStream = stream,
             StopMode = StopMode.Completion,
             KilledAtDecision = false,
             Started = true,
             RequestedModel = requested,
-            Throttled = Throttle.Detect(stream.Length > 0 ? parsedSubtype : subtype, transcript.ResultText, null),
+        };
+
+        return outcome with
+        {
+            Throttled = Throttle.Detect(outcome.IsValid, transcript.ResultText, null)
+                     || Throttle.Refused(outcome.IsValid, transcript.CostUsd, outcome.Duration),
         };
     }
 }

@@ -16,7 +16,7 @@ A Claude Code plugin marketplace for sharing agent skills across teams. Today th
 ```
 claude plugin validate .                        # marketplace manifest
 claude plugin validate ./plugins/core           # plugin manifest
-dotnet test harness/tests/Harness.Free.Tests    # 27 tests, no network, ~1s
+dotnet test harness/tests/Harness.Free.Tests    # 115 tests, no network, ~1s
 ```
 
 Run all three before you commit.
@@ -27,7 +27,19 @@ One suite spends money on real `claude -p` calls, and it is double-locked:
 SKILL_HARNESS_LIVE=1 dotnet test harness/tests/Harness.Model.Tests
 ```
 
-Run it only when the user asks for it, and report the cost the run prints.
+The two long passes inside it each need a second lock of their own, because neither should ever be
+tripped by running the project:
+
+```
+SKILL_HARNESS_CALIBRATE=1   # #12, 125 runs, about 2 hours
+SKILL_HARNESS_BREAK=1       # #6, 149 runs, about 2.5 hours
+SKILL_HARNESS_LADDER=1      # #6 screen, 9 runs, about 10 minutes
+```
+
+Both long passes resume. Point `SKILL_HARNESS_JOURNAL` or `SKILL_HARNESS_BREAK_DIR` at the run that
+stopped and every case with enough valid runs on disk is skipped rather than paid for twice.
+
+Run any of it only when the user asks for it, and report the cost the run prints.
 
 ## `harness/` is a prototype
 

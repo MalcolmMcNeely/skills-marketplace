@@ -14,6 +14,13 @@ SKILL_HARNESS_LIVE=1 dotnet test harness/tests/Harness.Model.Tests   # layers 3 
 The paying half is a separate project **and** refuses to run without `SKILL_HARNESS_LIVE=1`.
 Two locks, because one is forgettable.
 
+The long passes carry a third lock each, so neither is tripped by running the project:
+`SKILL_HARNESS_CALIBRATE=1` for #12 (125 runs, about 2 hours), `SKILL_HARNESS_BREAK=1` for #6
+(149 runs, about 2.5 hours) and `SKILL_HARNESS_LADDER=1` for #6's 9-run screen. Both long passes
+resume: point `SKILL_HARNESS_JOURNAL` or `SKILL_HARNESS_BREAK_DIR` at the run that stopped.
+**Give either an absolute path.** A relative one resolves against the test host's working
+directory, which is the build output folder, not the repo root.
+
 ## Layout
 
 | Path | What |
@@ -23,6 +30,7 @@ Two locks, because one is forgettable.
 | `tests/Harness.Model.Tests/` | Layers 3 and 4. Real `claude -p` runs |
 | `cases/` | Case files. Data |
 | `fixtures/good/` | The good `csharp-new-class` plugin, loaded with `--plugin-dir` |
+| `fixtures/breaks/` | #6's break overlays. Sparse trees laid over a base fixture at run time |
 | `fixtures/catalogue/` | Twelve description-only stubs for layer 3 |
 | `fixtures/repo/` | The bare .NET fixture repo from `docs/baseline-test-first.md` |
 | `captured/` | Real stream-json, so the parser tests need no model call |

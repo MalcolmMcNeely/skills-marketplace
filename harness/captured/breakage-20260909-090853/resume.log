@@ -1,0 +1,99 @@
+  Determining projects to restore...
+  All projects are up-to-date for restore.
+  Harness -> C:\Projects\skills-marketplace\harness\src\Harness\bin\Debug\net10.0\Harness.dll
+  Harness.Model.Tests -> C:\Projects\skills-marketplace\harness\tests\Harness.Model.Tests\bin\Debug\net10.0\Harness.Model.Tests.dll
+Test run for C:\Projects\skills-marketplace\harness\tests\Harness.Model.Tests\bin\Debug\net10.0\Harness.Model.Tests.dll (.NETCoreApp,Version=v10.0)
+A total of 1 test files matched the specified pattern.
+C:\Projects\skills-marketplace\harness\tests\Harness.Model.Tests\bin\Debug\net10.0\Harness.Model.Tests.dll
+[xUnit.net 00:00:00.00] xUnit.net VSTest Adapter v2.8.2+699d445a1a (64-bit .NET 10.0.8)
+[xUnit.net 00:00:00.61]   Discovering: Harness.Model.Tests
+[xUnit.net 00:00:00.63]   Discovered:  Harness.Model.Tests
+[xUnit.net 00:00:00.64]   Starting:    Harness.Model.Tests
+[xUnit.net 01:04:17.49]   Finished:    Harness.Model.Tests
+  Passed Harness.Model.Tests.BreakagePassTests.Break_the_fixture_two_ways_and_see_which_layer_notices [1 h 4 m]
+  Standard Output Messages:
+ breakage pass, model=claude-opus-5[1m] cli=2.1.248 (Claude Code), run directory C:/Projects/skills-marketplace/harness/captured/breakage-20260909-090853
+ arm description: description broken, body correct
+ calibration pass, model=claude-opus-5[1m] cli=2.1.248 (Claude Code), journal C:/Projects/skills-marketplace/harness/captured/breakage-20260909-090853\break-description.jsonl
+ P1   skipped, 6 valid runs already journalled
+ P2   skipped, 6 valid runs already journalled
+ P3   skipped, 6 valid runs already journalled
+ P4   skipped, 6 valid runs already journalled
+ P5   skipped, 6 valid runs already journalled
+ P6   skipped, 6 valid runs already journalled
+ P7   2/2 valid, $2.65 of $50.00, ok
+ P8   skipped, 6 valid runs already journalled
+ P9   skipped, 6 valid runs already journalled
+ P10  skipped, 6 valid runs already journalled
+ C1   skipped, 5 valid runs already journalled
+ arm body: body broken, description correct
+ calibration pass, model=claude-opus-5[1m] cli=2.1.248 (Claude Code), journal C:/Projects/skills-marketplace/harness/captured/breakage-20260909-090853\break-body.jsonl
+ P1   skipped, 2 valid runs already journalled
+ P2   skipped, 2 valid runs already journalled
+ P3   skipped, 2 valid runs already journalled
+ C1   skipped, 8 valid runs already journalled
+ arm control: prose reworded, both rules intact
+ calibration pass, model=claude-opus-5[1m] cli=2.1.248 (Claude Code), journal C:/Projects/skills-marketplace/harness/captured/breakage-20260909-090853\break-control.jsonl
+ P1   skipped, 6 valid runs already journalled
+ P2   skipped, 6 valid runs already journalled
+ P3   skipped, 6 valid runs already journalled
+ P4   skipped, 6 valid runs already journalled
+ P5   3/3 valid, $3.54 of $50.00, ok
+ P6   6/6 valid, $5.76 of $50.00, ok
+ P7   6/6 valid, $9.29 of $50.00, ok
+ P8   6/6 valid, $10.28 of $50.00, ok
+ P9   6/6 valid, $11.39 of $50.00, ok
+ P10  6/6 valid, $12.87 of $50.00, ok
+ C1   5/5 valid, $14.03 of $50.00, ok
+ arm good: the frozen fixture, unchanged
+ good         layer 3 not run by design
+ C1   5/5 valid, $15.18 of $50.00, ok
+ # The two broken versions
+ 
+ Issue #6. model=claude-opus-5[1m] cli=2.1.248 (Claude Code). 256 runs, 107 void, 01:04:16, $46.99.
+ 
+ ## The matrix
+ 
+ | Arm | What changed | Layer 3 | Layer 4 | As expected |
+ |---|---|---|---|---|
+ | `description` | description broken, body correct | **RED** 25/60, gate 53 | green 5/5 held | yes |
+ | `body` | body broken, description correct | green 6/6, gate 5 | **RED** 0/8 held | yes |
+ | `control` | prose reworded, both rules intact | green 60/60, gate 53 | green 5/5 held | yes |
+ | `good` | the frozen fixture, unchanged | not run | green 5/5 held | yes |
+ 
+ ## What #6 asked
+ 
+ | Question | Answer |
+ |---|---|
+ | Layer 3 catches a description break, and layer 4 does not | yes |
+ | Layer 4 catches a body break, and layer 3 does not | yes |
+ | The two failures are distinguishable | yes |
+ | The controls stayed quiet | yes |
+ 
+ ## Which assertion fell over
+ 
+ Passes out of valid contract runs, per assertion.
+ 
+ | Arm | Guards | Signals |
+ |---|---|---|
+ | `description` | A3 5/5, A4 5/5, A5 5/5 | A6 5/5, A7 5/5 |
+ | `body` | A3 8/8, A4 8/8, A5 8/8 | A6 0/8, A7 0/8 |
+ | `control` | A3 5/5, A4 5/5, A5 5/5 | A6 5/5, A7 5/5 |
+ | `good` | A3 5/5, A4 5/5, A5 5/5 | A6 5/5, A7 5/5 |
+ 
+ ## Journals
+ 
+ - `description` — `C:/Projects/skills-marketplace/harness/captured/breakage-20260909-090853\break-description.jsonl`
+ - `body` — `C:/Projects/skills-marketplace/harness/captured/breakage-20260909-090853\break-body.jsonl`
+ - `control` — `C:/Projects/skills-marketplace/harness/captured/breakage-20260909-090853\break-control.jsonl`
+ - `good` — `C:/Projects/skills-marketplace/harness/captured/breakage-20260909-090853\break-good.jsonl`
+ 
+ report written to C:/Projects/skills-marketplace/harness/captured/breakage-20260909-090853\breakage.md
+
+
+
+Test Run Successful.
+Total tests: 1
+     Passed: 1
+ Total time: 1.0716 Hours
+TEST_EXIT=0

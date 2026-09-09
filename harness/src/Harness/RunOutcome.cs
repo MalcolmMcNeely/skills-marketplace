@@ -65,7 +65,11 @@ public sealed record RunOutcome
     public string VoidReason => IsValid
         ? "not void"
         : Throttled
-            ? $"THROTTLED: {FirstLine(StandardError) ?? FirstLine(Transcript.ResultText) ?? "usage limit"}"
+            // Named or inferred, and the message says which. A refusal detected by SHAPE has no words
+            // behind it, and calling it a usage limit anyway would put a guess in the journal.
+            ? (FirstLine(StandardError) ?? FirstLine(Transcript.ResultText)) is { } named
+                ? $"THROTTLED: {named}"
+                : $"REFUSED: no result, ${Transcript.CostUsd ?? 0m:0.00} in {Duration.TotalSeconds:0.0}s, exit={ExitCode} subtype={TerminalSubtype ?? "<none>"}"
         : StopMode == StopMode.FirstDecision && !KilledAtDecision
             ? $"early-stop run reached no firing decision (started={Started}, exit={ExitCode}, subtype={TerminalSubtype ?? "<none>"})"
             : $"exit={ExitCode} subtype={TerminalSubtype ?? "<none>"}";

@@ -1,0 +1,182 @@
+  Determining projects to restore...
+  All projects are up-to-date for restore.
+  Harness -> C:\Projects\skills-marketplace\harness\src\Harness\bin\Debug\net10.0\Harness.dll
+  Harness.Model.Tests -> C:\Projects\skills-marketplace\harness\tests\Harness.Model.Tests\bin\Debug\net10.0\Harness.Model.Tests.dll
+Test run for C:\Projects\skills-marketplace\harness\tests\Harness.Model.Tests\bin\Debug\net10.0\Harness.Model.Tests.dll (.NETCoreApp,Version=v10.0)
+A total of 1 test files matched the specified pattern.
+C:\Projects\skills-marketplace\harness\tests\Harness.Model.Tests\bin\Debug\net10.0\Harness.Model.Tests.dll
+[xUnit.net 00:00:00.00] xUnit.net VSTest Adapter v2.8.2+699d445a1a (64-bit .NET 10.0.8)
+[xUnit.net 00:00:01.22]   Discovering: Harness.Model.Tests
+[xUnit.net 00:00:01.24]   Discovered:  Harness.Model.Tests
+[xUnit.net 00:00:01.24]   Starting:    Harness.Model.Tests
+[xUnit.net 02:15:19.85]     Harness.Model.Tests.BreakagePassTests.Break_the_fixture_two_ways_and_see_which_layer_notices [FAIL]
+[xUnit.net 02:15:19.85]       control: no valid layer 4 runs, so layer 4 has no verdict to give
+[xUnit.net 02:15:19.85]       Stack Trace:
+[xUnit.net 02:15:19.85]         C:\Projects\skills-marketplace\harness\tests\Harness.Model.Tests\BreakagePassTests.cs(81,0): at Harness.Model.Tests.BreakagePassTests.Break_the_fixture_two_ways_and_see_which_layer_notices()
+[xUnit.net 02:15:19.85]         --- End of stack trace from previous location ---
+[xUnit.net 02:15:19.85]       Output:
+[xUnit.net 02:15:19.85]         breakage pass, model=claude-opus-5[1m] cli=2.1.248 (Claude Code), run directory harness/captured/breakage-20260909-090853
+[xUnit.net 02:15:19.85]         arm description: description broken, body correct
+[xUnit.net 02:15:19.85]         calibration pass, model=claude-opus-5[1m] cli=2.1.248 (Claude Code), journal harness/captured/breakage-20260909-090853\break-description.jsonl
+[xUnit.net 02:15:19.85]         P1   6/6 valid, $1.71 of $50.00, ok
+[xUnit.net 02:15:19.85]         P2   6/6 valid, $4.08 of $50.00, ok
+[xUnit.net 02:15:19.85]         P3   6/6 valid, $5.61 of $50.00, ok
+[xUnit.net 02:15:19.85]         P4   6/6 valid, $7.22 of $50.00, ok
+[xUnit.net 02:15:19.85]         P5   6/6 valid, $9.06 of $50.00, ok
+[xUnit.net 02:15:19.85]         P6   6/6 valid, $11.02 of $50.00, ok
+[xUnit.net 02:15:19.85]         P7   4/6 valid, $16.20 of $50.00, insufficient-firings
+[xUnit.net 02:15:19.85]         P8   6/6 valid, $17.63 of $50.00, ok
+[xUnit.net 02:15:19.85]         P9   6/6 valid, $19.38 of $50.00, ok
+[xUnit.net 02:15:19.85]         P10  6/6 valid, $21.33 of $50.00, ok
+[xUnit.net 02:15:19.85]         C1   5/5 valid, $22.50 of $50.00, ok
+[xUnit.net 02:15:19.85]         arm body: body broken, description correct
+[xUnit.net 02:15:19.85]         calibration pass, model=claude-opus-5[1m] cli=2.1.248 (Claude Code), journal harness/captured/breakage-20260909-090853\break-body.jsonl
+[xUnit.net 02:15:19.85]         P1   2/2 valid, $22.87 of $50.00, ok
+[xUnit.net 02:15:19.85]         P2   2/2 valid, $23.43 of $50.00, ok
+[xUnit.net 02:15:19.85]         P3   2/2 valid, $24.05 of $50.00, ok
+[xUnit.net 02:15:19.85]         C1   8/8 valid, $26.25 of $50.00, ok
+[xUnit.net 02:15:19.85]         arm control: prose reworded, both rules intact
+[xUnit.net 02:15:19.85]         calibration pass, model=claude-opus-5[1m] cli=2.1.248 (Claude Code), journal harness/captured/breakage-20260909-090853\break-control.jsonl
+[xUnit.net 02:15:19.85]         P1   6/6 valid, $27.34 of $50.00, ok
+[xUnit.net 02:15:19.85]         P2   6/6 valid, $28.85 of $50.00, ok
+[xUnit.net 02:15:19.85]         P3   6/6 valid, $29.99 of $50.00, ok
+[xUnit.net 02:15:19.85]         P4   6/6 valid, $30.89 of $50.00, ok
+[xUnit.net 02:15:19.85]         P5   3/6 valid, $31.81 of $50.00, insufficient-firings
+[xUnit.net 02:15:19.85]         P6   0/6 valid, $31.81 of $50.00, insufficient-firings
+[xUnit.net 02:15:19.85]         P7   0/6 valid, $31.81 of $50.00, insufficient-firings
+[xUnit.net 02:15:19.85]         P8   0/6 valid, $31.81 of $50.00, insufficient-firings
+[xUnit.net 02:15:19.85]         P9   0/6 valid, $31.81 of $50.00, insufficient-firings
+[xUnit.net 02:15:19.85]         P10  0/6 valid, $31.81 of $50.00, insufficient-firings
+[xUnit.net 02:15:19.85]         C1   0/5 valid, $31.81 of $50.00, insufficient-firings
+[xUnit.net 02:15:19.85]         arm good: the frozen fixture, unchanged
+[xUnit.net 02:15:19.85]         good         layer 3 not run by design
+[xUnit.net 02:15:19.85]         C1   0/5 valid, $31.81 of $50.00, insufficient-firings
+[xUnit.net 02:15:19.85]         # The two broken versions
+[xUnit.net 02:15:19.85]         
+[xUnit.net 02:15:19.85]         Issue #6. model=claude-opus-5[1m] cli=2.1.248 (Claude Code). 202 runs, 98 void, 02:15:18, $31.81.
+[xUnit.net 02:15:19.85]         
+[xUnit.net 02:15:19.85]         ## The matrix
+[xUnit.net 02:15:19.85]         
+[xUnit.net 02:15:19.85]         | Arm | What changed | Layer 3 | Layer 4 | As expected |
+[xUnit.net 02:15:19.85]         |---|---|---|---|---|
+[xUnit.net 02:15:19.85]         | `description` | description broken, body correct | **RED** 24/58, gate 51 | green 5/5 held | yes |
+[xUnit.net 02:15:19.85]         | `body` | body broken, description correct | green 6/6, gate 5 | **RED** 0/8 held | yes |
+[xUnit.net 02:15:19.85]         | `control` | prose reworded, both rules intact | green 27/27, gate 23 | not run | **NO** |
+[xUnit.net 02:15:19.85]         | `good` | the frozen fixture, unchanged | not run | not run | **NO** |
+[xUnit.net 02:15:19.85]         
+[xUnit.net 02:15:19.85]         ## What #6 asked
+[xUnit.net 02:15:19.85]         
+[xUnit.net 02:15:19.85]         | Question | Answer |
+[xUnit.net 02:15:19.85]         |---|---|
+[xUnit.net 02:15:19.85]         | Layer 3 catches a description break, and layer 4 does not | yes |
+[xUnit.net 02:15:19.85]         | Layer 4 catches a body break, and layer 3 does not | yes |
+[xUnit.net 02:15:19.85]         | The two failures are distinguishable | yes |
+[xUnit.net 02:15:19.85]         | The controls stayed quiet | yes |
+[xUnit.net 02:15:19.85]         
+[xUnit.net 02:15:19.85]         ## Which assertion fell over
+[xUnit.net 02:15:19.85]         
+[xUnit.net 02:15:19.85]         Passes out of valid contract runs, per assertion.
+[xUnit.net 02:15:19.85]         
+[xUnit.net 02:15:19.85]         | Arm | Guards | Signals |
+[xUnit.net 02:15:19.85]         |---|---|---|
+[xUnit.net 02:15:19.85]         | `description` | A3 5/5, A4 5/5, A5 5/5 | A6 5/5, A7 5/5 |
+[xUnit.net 02:15:19.85]         | `body` | A3 8/8, A4 8/8, A5 8/8 | A6 0/8, A7 0/8 |
+[xUnit.net 02:15:19.85]         
+[xUnit.net 02:15:19.85]         ## Journals
+[xUnit.net 02:15:19.85]         
+[xUnit.net 02:15:19.85]         - `description` — `harness/captured/breakage-20260909-090853\break-description.jsonl`
+[xUnit.net 02:15:19.85]         - `body` — `harness/captured/breakage-20260909-090853\break-body.jsonl`
+[xUnit.net 02:15:19.85]         - `control` — `harness/captured/breakage-20260909-090853\break-control.jsonl`
+[xUnit.net 02:15:19.85]         - `good` — `harness/captured/breakage-20260909-090853\break-good.jsonl`
+[xUnit.net 02:15:19.85]         
+[xUnit.net 02:15:19.85]         report written to harness/captured/breakage-20260909-090853\breakage.md
+[xUnit.net 02:15:19.86]   Finished:    Harness.Model.Tests
+  Failed Harness.Model.Tests.BreakagePassTests.Break_the_fixture_two_ways_and_see_which_layer_notices [2 h 15 m]
+  Error Message:
+   control: no valid layer 4 runs, so layer 4 has no verdict to give
+  Stack Trace:
+     at Harness.Model.Tests.BreakagePassTests.Break_the_fixture_two_ways_and_see_which_layer_notices() in C:\Projects\skills-marketplace\harness\tests\Harness.Model.Tests\BreakagePassTests.cs:line 81
+--- End of stack trace from previous location ---
+  Standard Output Messages:
+ breakage pass, model=claude-opus-5[1m] cli=2.1.248 (Claude Code), run directory harness/captured/breakage-20260909-090853
+ arm description: description broken, body correct
+ calibration pass, model=claude-opus-5[1m] cli=2.1.248 (Claude Code), journal harness/captured/breakage-20260909-090853\break-description.jsonl
+ P1   6/6 valid, $1.71 of $50.00, ok
+ P2   6/6 valid, $4.08 of $50.00, ok
+ P3   6/6 valid, $5.61 of $50.00, ok
+ P4   6/6 valid, $7.22 of $50.00, ok
+ P5   6/6 valid, $9.06 of $50.00, ok
+ P6   6/6 valid, $11.02 of $50.00, ok
+ P7   4/6 valid, $16.20 of $50.00, insufficient-firings
+ P8   6/6 valid, $17.63 of $50.00, ok
+ P9   6/6 valid, $19.38 of $50.00, ok
+ P10  6/6 valid, $21.33 of $50.00, ok
+ C1   5/5 valid, $22.50 of $50.00, ok
+ arm body: body broken, description correct
+ calibration pass, model=claude-opus-5[1m] cli=2.1.248 (Claude Code), journal harness/captured/breakage-20260909-090853\break-body.jsonl
+ P1   2/2 valid, $22.87 of $50.00, ok
+ P2   2/2 valid, $23.43 of $50.00, ok
+ P3   2/2 valid, $24.05 of $50.00, ok
+ C1   8/8 valid, $26.25 of $50.00, ok
+ arm control: prose reworded, both rules intact
+ calibration pass, model=claude-opus-5[1m] cli=2.1.248 (Claude Code), journal harness/captured/breakage-20260909-090853\break-control.jsonl
+ P1   6/6 valid, $27.34 of $50.00, ok
+ P2   6/6 valid, $28.85 of $50.00, ok
+ P3   6/6 valid, $29.99 of $50.00, ok
+ P4   6/6 valid, $30.89 of $50.00, ok
+ P5   3/6 valid, $31.81 of $50.00, insufficient-firings
+ P6   0/6 valid, $31.81 of $50.00, insufficient-firings
+ P7   0/6 valid, $31.81 of $50.00, insufficient-firings
+ P8   0/6 valid, $31.81 of $50.00, insufficient-firings
+ P9   0/6 valid, $31.81 of $50.00, insufficient-firings
+ P10  0/6 valid, $31.81 of $50.00, insufficient-firings
+ C1   0/5 valid, $31.81 of $50.00, insufficient-firings
+ arm good: the frozen fixture, unchanged
+ good         layer 3 not run by design
+ C1   0/5 valid, $31.81 of $50.00, insufficient-firings
+ # The two broken versions
+ 
+ Issue #6. model=claude-opus-5[1m] cli=2.1.248 (Claude Code). 202 runs, 98 void, 02:15:18, $31.81.
+ 
+ ## The matrix
+ 
+ | Arm | What changed | Layer 3 | Layer 4 | As expected |
+ |---|---|---|---|---|
+ | `description` | description broken, body correct | **RED** 24/58, gate 51 | green 5/5 held | yes |
+ | `body` | body broken, description correct | green 6/6, gate 5 | **RED** 0/8 held | yes |
+ | `control` | prose reworded, both rules intact | green 27/27, gate 23 | not run | **NO** |
+ | `good` | the frozen fixture, unchanged | not run | not run | **NO** |
+ 
+ ## What #6 asked
+ 
+ | Question | Answer |
+ |---|---|
+ | Layer 3 catches a description break, and layer 4 does not | yes |
+ | Layer 4 catches a body break, and layer 3 does not | yes |
+ | The two failures are distinguishable | yes |
+ | The controls stayed quiet | yes |
+ 
+ ## Which assertion fell over
+ 
+ Passes out of valid contract runs, per assertion.
+ 
+ | Arm | Guards | Signals |
+ |---|---|---|
+ | `description` | A3 5/5, A4 5/5, A5 5/5 | A6 5/5, A7 5/5 |
+ | `body` | A3 8/8, A4 8/8, A5 8/8 | A6 0/8, A7 0/8 |
+ 
+ ## Journals
+ 
+ - `description` — `harness/captured/breakage-20260909-090853\break-description.jsonl`
+ - `body` — `harness/captured/breakage-20260909-090853\break-body.jsonl`
+ - `control` — `harness/captured/breakage-20260909-090853\break-control.jsonl`
+ - `good` — `harness/captured/breakage-20260909-090853\break-good.jsonl`
+ 
+ report written to harness/captured/breakage-20260909-090853\breakage.md
+
+
+
+Test Run Failed.
+Total tests: 1
+     Failed: 1
+ Total time: 2.2556 Hours
