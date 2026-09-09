@@ -11,6 +11,20 @@ public enum FiringPlanShape
     ShortPositives,
 }
 
+/// <summary>
+/// Issue #15. Which of #10's three kinds a firing case is, said out loud rather than inferred.
+/// Two of the three are graded on silence, so an expected set cannot tell them apart, and the
+/// stop rule needs exactly that difference.
+/// </summary>
+public enum CaseKind
+{
+    /// <summary>Graded on an exact set match. Carries the set it expects.</summary>
+    ShouldFire,
+    /// <summary>Graded on the silence of the skill under test, and gated on it.</summary>
+    ShouldNotFire,
+    /// <summary>Graded on silence, run and recorded, never gated. #10's murky three.</summary>
+    Watch,
+}
 
 /// <summary>
 /// Issue #12. Runs #10's 23-case suite against the frozen good fixture and produces the numbers every
@@ -51,9 +65,7 @@ public sealed class CalibrationPass(HarnessPaths paths, SuiteFile suite, FiringR
             var sample = await Resampler.CollectAsync(remaining, step.Cap, async token =>
             {
                 var outcome = await firing.RunAsync(step.Prompt, token);
-                var score = step.Expect is null
-                    ? Scoring.ScoreQuiet(outcome, suite.SkillUnderTest)
-                    : Scoring.ScoreFiring(outcome, step.Expect);
+                var score = Score(step, outcome);
                 journal.Append(step.Id, FiringLayer, outcome, score);
                 return score;
             }, ledger, ct);
@@ -69,10 +81,36 @@ public sealed class CalibrationPass(HarnessPaths paths, SuiteFile suite, FiringR
         return new CalibrationOutcome(false, null, started, DateTimeOffset.UtcNow);
     }
 
-    public sealed record Step(string Id, string Prompt, int Runs, int Cap, IReadOnlyList<string>? Expect);
+    /// <summary>
+    /// One case, ready to run. The kind is declared, not read back off <see cref="Expect"/>, because
+    /// a should-not-fire case and a watch case are both silent and Expect cannot separate them.
+    /// The constructor refuses a step whose expected set contradicts its kind. A `with` expression
+    /// copies fields and skips that check, so narrow a shape by Runs and Cap, never by Kind.
+    /// </summary>
+    public sealed record Step(string Id, string Prompt, int Runs, int Cap, CaseKind Kind, IReadOnlyList<string> Expect)
+    {
+        /// <summary>The set a should-fire case must match exactly. Empty for a case graded on silence.</summary>
+        public IReadOnlyList<string> Expect { get; init; } = Validated(Id, Kind, Expect);
+
+        private static IReadOnlyList<string> Validated(string id, CaseKind kind, IReadOnlyList<string> expect)
+        {
+            if (kind is CaseKind.ShouldFire && expect.Count == 0)
+                throw new ArgumentException($"should-fire case '{id}' is graded on an exact set match and has no expected set");
+            if (kind is not CaseKind.ShouldFire && expect.Count > 0)
+                throw new ArgumentException($"{kind} case '{id}' is graded on silence and must carry no expected set");
+            return expect;
+        }
+    }
+
+    /// <summary>Which scorer a step is graded by. The kind decides, and only the kind.</summary>
+    public RunScore Score(Step step, RunOutcome outcome) => step.Kind switch
+    {
+        CaseKind.ShouldFire => Scoring.ScoreFiring(outcome, step.Expect),
+        _ => Scoring.ScoreQuiet(outcome, suite.SkillUnderTest),
+    };
 
     /// <summary>
-    /// Positives, then negatives, then the watch list. Expect is null for a case graded on silence.
+    /// Positives, then negatives, then the watch list.
     ///
     /// #6 needs two narrower shapes. PositivesOnly re-measures p_good against a broken description
     /// without paying for 50 negative runs that answer a different question. ShortPositives is the
@@ -84,17 +122,19 @@ public sealed class CalibrationPass(HarnessPaths paths, SuiteFile suite, FiringR
         FiringPlanShape.PositivesOnly => Positives(),
         FiringPlanShape.ShortPositives => Positives().Take(ShortCases)
             .Select(s => s with { Runs = ShortRuns, Cap = ShortRuns * 2 }),
-        _ => Positives().Concat(Quiet(suite.Firing.ShouldNotFire)).Concat(Quiet(suite.Firing.Watch)),
+        _ => Positives()
+            .Concat(Quiet(suite.Firing.ShouldNotFire, CaseKind.ShouldNotFire))
+            .Concat(Quiet(suite.Firing.Watch, CaseKind.Watch)),
     };
 
     public const int ShortCases = 3;
     public const int ShortRuns = 2;
 
     private IEnumerable<Step> Positives() =>
-        suite.Firing.ShouldFire.Select(c => new Step(c.Id, c.Prompt, c.Runs, c.Cap, c.Expect));
+        suite.Firing.ShouldFire.Select(c => new Step(c.Id, c.Prompt, c.Runs, c.Cap, CaseKind.ShouldFire, c.Expect));
 
-    private static IEnumerable<Step> Quiet(IEnumerable<NegativeCase> cases) =>
-        cases.Select(c => new Step(c.Id, c.Prompt, c.Runs, c.Cap, null));
+    private static IEnumerable<Step> Quiet(IEnumerable<NegativeCase> cases, CaseKind kind) =>
+        cases.Select(c => new Step(c.Id, c.Prompt, c.Runs, c.Cap, kind, []));
 
     /// <summary>Resume support: a case with enough valid runs on disk is not run again.</summary>
     public static Dictionary<string, int> ValidRunsByCase(string journalPath) =>
@@ -111,7 +151,7 @@ public sealed record CalibrationOutcome(bool Stopped, string? Reason, DateTimeOf
 
 public sealed record CaseReport(
     string CaseId,
-    string Kind,
+    CaseKind Kind,
     int Valid,
     int Passed,
     double Rate,
@@ -183,9 +223,9 @@ public sealed record CalibrationReport(
         var entries = RunJournal.Read(journalPath);
         var skill = suite.SkillUnderTest;
 
-        var positives = Build(entries, suite.Firing.ShouldFire.Select(c => c.Id), "should-fire");
-        var negatives = Build(entries, suite.Firing.ShouldNotFire.Select(c => c.Id), "should-not-fire");
-        var watch = Build(entries, suite.Firing.Watch.Select(c => c.Id), "watch");
+        var positives = Build(entries, suite.Firing.ShouldFire.Select(c => c.Id), CaseKind.ShouldFire);
+        var negatives = Build(entries, suite.Firing.ShouldNotFire.Select(c => c.Id), CaseKind.ShouldNotFire);
+        var watch = Build(entries, suite.Firing.Watch.Select(c => c.Id), CaseKind.Watch);
 
         var lateFires = negatives.Concat(watch)
             .SelectMany(c => c.Runs)
@@ -211,7 +251,7 @@ public sealed record CalibrationReport(
     }
 
     private static IReadOnlyList<CaseReport> Build(
-        IReadOnlyList<JournalEntry> entries, IEnumerable<string> ids, string kind) =>
+        IReadOnlyList<JournalEntry> entries, IEnumerable<string> ids, CaseKind kind) =>
         [.. ids.Select(id =>
         {
             var runs = entries.Where(e => e.CaseId == id).ToList();

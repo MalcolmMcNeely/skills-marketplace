@@ -444,7 +444,7 @@ public class FiringPlanShapeTests
 
         Assert.Equal(10, plan.Count);
         Assert.Equal(60, plan.Sum(s => s.Runs));
-        Assert.All(plan, s => Assert.NotNull(s.Expect));
+        Assert.All(plan, s => Assert.Equal(CaseKind.ShouldFire, s.Kind));
     }
 
     [Fact]
@@ -468,5 +468,77 @@ public class FiringPlanShapeTests
         Assert.Equal(126, firing);
         Assert.Equal(23, contract);
         Assert.Equal(149, firing + contract);
+    }
+}
+
+/// <summary>
+/// Issue #15. A plan step says which of the three kinds a case is. Before this, the kind was read
+/// back off <c>Expect</c>, which separates a should-fire case from a quiet one but leaves the two
+/// quiet kinds indistinguishable — and that is the one difference the stop rule needs.
+/// </summary>
+public class CaseKindTests
+{
+    private static readonly HarnessPaths Paths = new();
+    private static SuiteFile Suite => SuiteFile.Load(Path.Combine(Paths.Cases, "csharp-new-class.json"));
+    private static CalibrationPass Pass => new(Paths, Suite);
+    private static List<CalibrationPass.Step> FullPlan => [.. Pass.Plan()];
+
+    [Fact]
+    public void Every_step_in_the_full_plan_declares_one_of_the_three_kinds()
+    {
+        var counted = FullPlan.CountBy(s => s.Kind).ToDictionary(p => p.Key, p => p.Value);
+
+        Assert.Equal(10, counted[CaseKind.ShouldFire]);
+        Assert.Equal(10, counted[CaseKind.ShouldNotFire]);
+        Assert.Equal(3, counted[CaseKind.Watch]);
+    }
+
+    /// <summary>The whole point of the ticket: both are quiet, so Expect cannot tell them apart.</summary>
+    [Fact]
+    public void A_should_not_fire_step_is_told_apart_from_a_watch_step_without_inspecting_expect()
+    {
+        var quiet = FullPlan.Where(s => s.Kind is not CaseKind.ShouldFire).ToList();
+        Assert.All(quiet, s => Assert.Empty(s.Expect));
+
+        Assert.Equal(CaseKind.ShouldNotFire, FullPlan.Single(s => s.Id == "N1").Kind);
+        Assert.Equal(CaseKind.Watch, FullPlan.Single(s => s.Id == "W1").Kind);
+    }
+
+    [Fact]
+    public void A_narrower_shape_keeps_the_kind_it_narrowed()
+    {
+        var shortened = new CalibrationPass(Paths, Suite, null, FiringPlanShape.ShortPositives).Plan();
+        Assert.All(shortened, s => Assert.Equal(CaseKind.ShouldFire, s.Kind));
+    }
+
+    [Fact]
+    public void A_should_fire_step_without_an_expected_set_is_refused()
+    {
+        Assert.Throws<ArgumentException>(() =>
+            new CalibrationPass.Step("P1", "add a class", 6, 12, CaseKind.ShouldFire, []));
+    }
+
+    [Fact]
+    public void A_quiet_step_carrying_an_expected_set_is_refused()
+    {
+        Assert.Throws<ArgumentException>(() =>
+            new CalibrationPass.Step("N1", "add tests", 5, 10, CaseKind.ShouldNotFire, ["csharp-new-class"]));
+    }
+
+    /// <summary>Grading is unchanged: a set match for should-fire, silence for both quiet kinds.</summary>
+    [Fact]
+    public void The_kind_picks_the_scorer_and_the_scorers_are_the_same_two_as_before()
+    {
+        var fired = Fake.Outcome(skills: [("csharp-new-class", 0)]);
+
+        Assert.Equal(Verdict.Held, Pass.Score(FullPlan.Single(s => s.Id == "P1"), fired).Verdict);
+        Assert.Equal(Verdict.Broken, Pass.Score(FullPlan.Single(s => s.Id == "N1"), fired).Verdict);
+        Assert.Equal(Verdict.Broken, Pass.Score(FullPlan.Single(s => s.Id == "W1"), fired).Verdict);
+
+        var silent = Fake.Outcome(skills: [("data-sql", 0)]);
+
+        Assert.Equal(Verdict.WrongSet, Pass.Score(FullPlan.Single(s => s.Id == "P1"), silent).Verdict);
+        Assert.Equal(Verdict.Held, Pass.Score(FullPlan.Single(s => s.Id == "N1"), silent).Verdict);
+        Assert.Equal(Verdict.Held, Pass.Score(FullPlan.Single(s => s.Id == "W1"), silent).Verdict);
     }
 }
