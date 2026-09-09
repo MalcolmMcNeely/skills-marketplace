@@ -6,26 +6,60 @@ namespace Harness;
 /// </summary>
 public sealed class FiringRunner(HarnessPaths paths, string? catalogueDir = null)
 {
-    /// <summary>Natural-language prompt against the description-only stub catalogue, killed at the first tool call.</summary>
-    public Task<RunOutcome> RunAsync(string prompt, CancellationToken ct = default) =>
-        ClaudeCli.RunAsync(new RunSpec
-        {
-            Prompt = prompt,
-            WorkingDirectory = paths.FixtureRepo,
-            // #6 lays a break overlay over the stub catalogue in scratch. Null is the unbroken catalogue.
-            PluginDirs = [catalogueDir ?? paths.StubCatalogue],
-            // Firing is decided before any work happens, so forbid the expensive tools.
-            // NOT restricted here: --allowedTools only auto-approves, and disallowing Write made the
-            // model read the repo until it blew the budget. The stop rule does the saving instead.
-            // #11 fixed the per-run ceiling at $0.60. Layer 3 keeps its own lower one, MEASURED:
-            // 0.20 aborted mid-run and voided the sample, 0.40 has not.
-            MaxBudgetUsd = 0.40m,
-            // Runs to the end on purpose. Killing at the first decision truncates the fired SET, and
-            // #10 grades a positive case on an exact set match, so a second skill firing later would
-            // be invisible. A killed run also emits no result line, so it cannot report its own cost.
-            StopMode = StopMode.Completion,
-            Timeout = TimeSpan.FromMinutes(3),
-        }, ct);
+    // #6 lays a break overlay over the stub catalogue in scratch. Null is the unbroken catalogue.
+    // Held as one instance so two specs from this runner differ only where they are meant to.
+    private readonly string[] _pluginDirs = [catalogueDir ?? paths.StubCatalogue];
+
+    /// <summary>Natural-language prompt against the description-only stub catalogue.</summary>
+    public Task<RunOutcome> RunAsync(string prompt, CaseKind kind, CancellationToken ct = default) =>
+        ClaudeCli.RunAsync(SpecFor(prompt, kind), ct);
+
+    /// <summary>
+    /// Issue #17. The run shape for one case, and the only thing the kind decides is where the run
+    /// stops. Separated from <see cref="RunAsync"/> so the rule can be read without paying for a run.
+    /// </summary>
+    public RunSpec SpecFor(string prompt, CaseKind kind) => new()
+    {
+        Prompt = prompt,
+        WorkingDirectory = paths.FixtureRepo,
+        PluginDirs = _pluginDirs,
+        // Firing is decided before any work happens, so forbid the expensive tools.
+        // NOT restricted here: --allowedTools only auto-approves, and disallowing Write made the
+        // model read the repo until it blew the budget. The stop rule does the saving instead.
+        // #11 fixed the per-run ceiling at $0.60. Layer 3 keeps its own lower one, MEASURED:
+        // 0.20 aborted mid-run and voided the sample, 0.40 has not.
+        MaxBudgetUsd = 0.40m,
+        StopMode = StopRuleFor(kind),
+        // Unchanged by the kind. An early-stop run needs the same room to REACH its decision; what
+        // it saves is the work after that decision, not the time before it.
+        Timeout = TimeSpan.FromMinutes(3),
+    };
+
+    /// <summary>
+    /// Where a run of this kind is allowed to stop. #8 measured `FirstDecision` at about 9.5 seconds
+    /// a run against about 40, and 50 of a 125-run pass are should-not-fire cases, so this is the
+    /// largest single saving on a pass bounded by time rather than by money.
+    ///
+    /// A case graded on its fired SET must run to the end. Killing at the first decision truncates
+    /// that set, and #10 grades a positive on an exact match, so a second skill firing later would be
+    /// invisible and a wrong run would score green. A watch case is ungated but recorded, and the
+    /// record is the full set, so it runs to the end too.
+    ///
+    /// A should-not-fire case is graded only on one skill staying quiet, so truncation can only hide
+    /// a fire that came after another skill. #11 parked the change on exactly that risk; #12 output 6
+    /// then measured it, and across all 65 negative and watch-list runs the skill under test never
+    /// fired after another skill. The premise #11 rejected is now evidence, so the rule switches on
+    /// for negatives and for nothing else.
+    /// </summary>
+    public static StopMode StopRuleFor(CaseKind kind) => kind switch
+    {
+        CaseKind.ShouldFire => StopMode.Completion,
+        CaseKind.Watch => StopMode.Completion,
+        CaseKind.ShouldNotFire => StopMode.FirstDecision,
+        // Listed one by one rather than defaulted, so a fourth kind has to say which it is instead
+        // of inheriting a rule that might silently truncate the set it is graded on.
+        _ => throw new ArgumentOutOfRangeException(nameof(kind), kind, "no stop rule declared for this case kind"),
+    };
 }
 
 public sealed class ContractRunner(HarnessPaths paths)

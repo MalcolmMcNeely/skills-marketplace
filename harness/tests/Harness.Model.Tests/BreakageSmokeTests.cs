@@ -23,7 +23,7 @@ public class BreakageSmokeTests(ITestOutputHelper output)
         var catalogue = builder.Build(Paths.StubCatalogue, Paths.BreakOverlay("description-catalogue"));
         var positive = suite.Firing.ShouldFire[0];
         var firing = Scoring.ScoreFiring(
-            await new FiringRunner(Paths, catalogue).RunAsync(positive.Prompt), positive.Expect);
+            await new FiringRunner(Paths, catalogue).RunAsync(positive.Prompt, CaseKind.ShouldFire), positive.Expect);
         ledger.Record(firing);
         output.WriteLine($"layer 3 / description-catalogue  {firing.Verdict,-9} {firing.Detail}  {firing.Cost}");
 

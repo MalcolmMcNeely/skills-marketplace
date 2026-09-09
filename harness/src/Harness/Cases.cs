@@ -29,6 +29,24 @@ public sealed record SuiteFile
     };
 }
 
+/// <summary>
+/// Issue #15. Which of #10's three kinds a firing case is, said out loud rather than inferred.
+/// Two of the three are graded on silence, so an expected set cannot tell them apart, and the
+/// stop rule needs exactly that difference.
+///
+/// It sits with the case data, not with the pass that plans the cases or the runner that spends
+/// them, because both of those read it and neither owns it.
+/// </summary>
+public enum CaseKind
+{
+    /// <summary>Graded on an exact set match. Carries the set it expects.</summary>
+    ShouldFire,
+    /// <summary>Graded on the silence of the skill under test, and gated on it.</summary>
+    ShouldNotFire,
+    /// <summary>Graded on silence, run and recorded, never gated. #10's murky three.</summary>
+    Watch,
+}
+
 public sealed record FiringSuite
 {
     [JsonPropertyName("shouldFire")] public IReadOnlyList<PositiveCase> ShouldFire { get; init; } = [];

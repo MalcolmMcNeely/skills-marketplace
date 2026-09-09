@@ -146,6 +146,10 @@ the first call would score as quiet when it was about to fire.
 **Safe.** Across all 65 negative and watch-list runs, `csharp-new-class` never fired after another
 skill. `FirstDecision` can be switched on for the negative half.
 
+**Switched on** in [#17](https://github.com/MalcolmMcNeely/skills-marketplace/issues/17), for should-not-fire
+cases only. A watch case is graded on silence too, but its record is the full fired set, so it keeps
+running to the end.
+
 ## 7. What the pass cost
 
 | | |

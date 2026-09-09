@@ -22,7 +22,7 @@ public class Layer3_FiringTests(ITestOutputHelper output)
         var runs = int.TryParse(Environment.GetEnvironmentVariable("SKILL_HARNESS_RUNS"), out var n) ? n : c.Runs;
         var ledger = new SpendLedger(Ceiling);
         var sample = await Resampler.CollectAsync(runs, c.Cap,
-            async ct => Scoring.ScoreFiring(await runner.RunAsync(c.Prompt, ct), c.Expect), ledger);
+            async ct => Scoring.ScoreFiring(await runner.RunAsync(c.Prompt, CaseKind.ShouldFire, ct), c.Expect), ledger);
 
         foreach (var s in sample.Scores)
             output.WriteLine($"{s.Verdict,-9} {s.Detail}  {s.Cost}");

@@ -419,7 +419,9 @@ internal static class Fake
         string? requested = null,
         (string Name, int Ordinal)[]? skills = null,
         double seconds = 40,
-        decimal? cost = null)
+        decimal? cost = null,
+        StopMode stop = StopMode.Completion,
+        bool killed = false)
     {
         var (parsed, parsedSubtype) = StreamParser.Parse(stream);
         var calls = skills ?? [];
@@ -439,8 +441,8 @@ internal static class Fake
             WorkingDirectory = ".",
             Duration = TimeSpan.FromSeconds(seconds),
             RawStream = stream,
-            StopMode = StopMode.Completion,
-            KilledAtDecision = false,
+            StopMode = stop,
+            KilledAtDecision = killed,
             Started = true,
             RequestedModel = requested,
         };

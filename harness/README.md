@@ -57,10 +57,13 @@ Claude Code 2.1.248, `claude-opus-5[1m]`, 2 September 2026.
 | Layer 4, by name, to completion | 3 | `$0.207` | ~35s |
 | Layer 3, killed at the first decision | 4 | not reportable | ~9.5s |
 
-A killed run emits no `result` line, so it cannot report its own cost. That is why firing
-runs are allowed to finish. It is also why the suite ledger charges such a run a flat
-`$0.23` rather than zero, marked `estimated` in the journal. A resample loop of killed runs
-would otherwise hide from the runaway guard. See
+A killed run emits no `result` line, so it cannot report its own cost. That is why a case
+graded on its fired set runs to the end. A should-not-fire case is graded on one skill
+staying quiet, so it takes the kill and the 9.5 seconds instead. That is 50 runs of a
+125-run pass ([#17](https://github.com/MalcolmMcNeely/skills-marketplace/issues/17)).
+It is also why the suite ledger charges a killed run a flat `$0.23` rather
+than zero, marked `estimated` in the journal. A resample loop of killed runs would
+otherwise hide from the runaway guard. See
 [running-the-paid-layers.md](../docs/running-the-paid-layers.md).
 
 ## Three things a real run disagreed with

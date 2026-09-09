@@ -42,7 +42,7 @@ public class DescriptionLadderTests(ITestOutputHelper output)
             var runner = new FiringRunner(Paths, catalogue);
 
             var sample = await Resampler.CollectAsync(Runs, Runs * 2,
-                async ct => Scoring.ScoreFiring(await runner.RunAsync(probe.Prompt, ct), probe.Expect), ledger);
+                async ct => Scoring.ScoreFiring(await runner.RunAsync(probe.Prompt, CaseKind.ShouldFire, ct), probe.Expect), ledger);
 
             var valid = sample.Scores.Where(s => s.Verdict != Verdict.Void).ToList();
             var fired = valid.Count(s => s.Verdict == Verdict.Held);

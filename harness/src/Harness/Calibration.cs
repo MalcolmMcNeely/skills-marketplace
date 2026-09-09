@@ -12,21 +12,6 @@ public enum FiringPlanShape
 }
 
 /// <summary>
-/// Issue #15. Which of #10's three kinds a firing case is, said out loud rather than inferred.
-/// Two of the three are graded on silence, so an expected set cannot tell them apart, and the
-/// stop rule needs exactly that difference.
-/// </summary>
-public enum CaseKind
-{
-    /// <summary>Graded on an exact set match. Carries the set it expects.</summary>
-    ShouldFire,
-    /// <summary>Graded on the silence of the skill under test, and gated on it.</summary>
-    ShouldNotFire,
-    /// <summary>Graded on silence, run and recorded, never gated. #10's murky three.</summary>
-    Watch,
-}
-
-/// <summary>
 /// Issue #12. Runs #10's 23-case suite against the frozen good fixture and produces the numbers every
 /// gate value on the map rests on. 125 runs: 10 positives at 6, 10 negatives at 5, 3 watch cases at 5.
 ///
@@ -64,7 +49,7 @@ public sealed class CalibrationPass(HarnessPaths paths, SuiteFile suite, FiringR
             var remaining = step.Runs - done;
             var sample = await Resampler.CollectAsync(remaining, step.Cap, async token =>
             {
-                var outcome = await firing.RunAsync(step.Prompt, token);
+                var outcome = await firing.RunAsync(step.Prompt, step.Kind, token);
                 var score = Score(step, outcome);
                 journal.Append(step.Id, FiringLayer, outcome, score);
                 return score;
