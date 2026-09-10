@@ -316,6 +316,163 @@ From the managed MCP page **[docs]**:
 
 There is no MCP registry. The plugin marketplace is the registry.
 
+## Sharing this internally, without publishing anything
+
+The blunt question an organisation asks first: to give our own developers a catalogue, must we put anything on a public surface? No. Nothing requires it, no mechanism could force it, and one official route actively forbids it.
+
+Three routes were proved end to end on this machine with no network. Three headless boots were pointed at `ANTHROPIC_BASE_URL=http://127.0.0.1:1`, so the cost was zero.
+
+### Nothing can be published to Anthropic even deliberately
+
+`claude plugin --help` has no `publish`, `submit` or `login` subcommand **[measured]**. The whole list is `details, disable, enable, eval, help, init, install, list, marketplace, prune, tag, uninstall, update, validate`.
+
+`claude plugin tag` sounds like a release step and is not **[measured]**. It creates a local annotated git tag and optionally pushes it to a named remote. No registry, no external service.
+
+The official marketplace is closed **[docs, plugins.md]**:
+
+> There is no application process, and the submission form does not add plugins to the official marketplace.
+
+A separate community marketplace exists and is opt-in. `plugin validate` runs entirely locally and checks nothing against a remote allowlist.
+
+`claude-plugins-official` registers itself on first interactive launch, and both removal and a policy block work **[measured]**:
+
+```
+$ claude plugin marketplace remove claude-plugins-official
+✔ Successfully removed marketplace: claude-plugins-official
+```
+
+Managed `blockedMarketplaces` accepts `{"source":"github","repo":"anthropics/*"}`, and `strictKnownMarketplaces` takes a `hostPattern`. The example shipped in the binary is literally `"^github\.mycompany\.com$"` **[binary]**.
+
+### The org console route requires a private repo
+
+The one route that can force-install rejects a public repository outright **[docs, support.claude.com, Manage plugins for your organization]**:
+
+> Your repository must be private or internal—public repos aren't allowed for organization marketplaces.
+
+An admin configures it at Organization settings > Plugins on a Team or Enterprise plan, by ZIP upload or by syncing a private repository on github.com or GitHub Enterprise. Four distribution states, and two of them push without asking: "Installed by default", and "Required", which members "cannot be disabled or uninstalled".
+
+Three caveats matter. Auto-sync fires on a pull request merge carrying a version bump and **not** on a direct push. A failed sync "may temporarily remove plugins for your team members". And a plugin with a top-level `bin/` directory is rejected, which collides with the `binaries` manifest key that installs into exactly that folder.
+
+The important limit today **[docs, plugins-reference.md]**:
+
+> Claude Code doesn't load them in sessions you start in your own terminal.
+
+It reaches chat, the Desktop Chat tab, Cowork and cloud sessions. Not `claude` in a terminal.
+
+That looks like it is changing. The binary carries a `syncClaudeAiPlugins` setting absent from the published settings reference, whose own description says synced plugins "load in every session like plugins you installed yourself" **[binary]**. It is gated on a server-side flag and an org policy key, both invisible from the client. Docs and binary disagree, so check the state rather than designing for either.
+
+### Routes proved with no network
+
+**A local directory** **[measured]**:
+
+```
+$ claude plugin marketplace add "C:\...\mp"
+✔ Successfully added marketplace: privatelab (declared in user settings)
+$ claude plugin install hello@privatelab
+✔ Successfully installed plugin: hello@privatelab (scope: user)
+```
+
+**A local git repository**, cloned from a bare repo with no network **[measured]**. The CLI argument parser rejects `file://`, but declaring the same repo as a `git` source in `extraKnownMarketplaces` works. The gate is the parser, not the clone machinery.
+
+**An internal URL over plain HTTP**, with a bearer token reaching the server **[measured]**:
+
+```
+$ claude plugin marketplace add "http://127.0.0.1:8799/marketplace.json"
+✔ Successfully added marketplace: urlmp (declared in user settings)
+```
+
+Note the trap: a marketplace registers under the `name` in its own manifest, not the key it was declared under. Declaring `authmp` produced `urlmp`. That will bite anyone writing managed settings.
+
+**A seed directory**, and this was the doc's most consequential unverified claim. It is true, and it does more than register.
+
+`CLAUDE_CODE_PLUGIN_SEED_DIR` expects exactly this layout **[binary]**:
+
+```
+<SEED_DIR>/known_marketplaces.json
+<SEED_DIR>/marketplaces/<name>/     (or <name>.json)
+```
+
+One headless boot registered the marketplace pointing at the seed image in place, nothing copied, with `autoUpdate` forced to `false` **[measured]**. Pairing it with `enabledPlugins` then installed the plugin on startup **[measured]**:
+
+```
+Installed plugins:
+  ❯ hello@seedmp   Version: 0.1.0   Scope: user   Status: ✔ enabled
+```
+
+Ship a read-only seed directory in the machine image plus `enabledPlugins` in managed settings, and every developer gets the catalogue installed on first launch with no git, no npm, no HTTP and no network. The seed function runs from `performStartupChecks` and `installPluginsForHeadless` only, never from a `claude plugin` subcommand, which is why the claim looked unverifiable from the CLI.
+
+### What the CLI accepts as a marketplace source
+
+**[measured]**, against the parser:
+
+| Form | Result |
+|---|---|
+| `git@git.corp.internal:team/catalogue.git` | Accepted, reaches clone |
+| `https://git.corp.internal/team/catalogue.git` | Accepted, reaches clone |
+| `ssh://git@host:2222/team/repo.git` | Rejected. Needs `extraKnownMarketplaces` |
+| `file:///…` | Rejected on the CLI, accepted via settings |
+
+The scp-like regex is `[a-zA-Z0-9._-]+@`, so any username works, not only `git@`. And the parser carries an explicit Azure DevOps case, `o.includes("/_git/")` **[binary]**, so an internal Azure DevOps host is a first-class path.
+
+Two unions exist and the same type name means different things at each level. `archive`, `command` and `git-subdir` are plugin-level only. Marketplace level has `git`, `file`, `settings`, `hostPattern` and `pathPattern`. Plugin-level `url` is a git repository URL; marketplace-level `url` is a `marketplace.json` URL. Only plugin-level `npm` takes a `registry` override.
+
+`archive` refuses anything but https and bans loopback **[binary]**:
+
+```js
+Azt="Archive URLs must use https:// and must not point at a loopback, link-local, or cloud-metadata host";
+```
+
+So it serves an internal artefact host and never a local file.
+
+### Private HTTPS marketplaces stop auto-updating
+
+This one deserves care because it fails silently.
+
+Every plugin git call runs with prompting disabled **[binary]**:
+
+```js
+var Tue={GIT_TERMINAL_PROMPT:"0",GIT_ASKPASS:"",GCM_INTERACTIVE:"never"};
+var S$=["-c","core.sshCommand=ssh -o BatchMode=yes -o StrictHostKeyChecking=yes"];
+```
+
+The background refresh then goes further and empties the credential helper list, behind a gate that defaults to off **[binary]**:
+
+```js
+let y=R("tengu_plugin_autoupdate_allow_credential_helper",!1),
+    ... await NH(r,e,void 0,{disableCredentialHelper:!y})
+```
+
+With `-c credential.helper=` set alongside an empty `GIT_ASKPASS`, a private HTTPS remote has nothing left to authenticate with. A human running `marketplace add` or `plugin update` is fine. The background pass is not.
+
+**SSH remotes are unaffected**, because they never touch a credential helper. Prefer `git@internal-host:team/catalogue.git` over `https://` for anything meant to auto-update. Proved in the binary, not exercised against a real private host.
+
+Setting `GITHUB_TOKEN` does not help; tokens only take effect through a configured helper.
+
+### What leaks
+
+On a private git, seed or managed-settings route, nothing about the catalogue reaches Anthropic. Telemetry redacts a private plugin's name to a literal string **[binary]**:
+
+```js
+plugin_name_redacted: u ? e : pv     // pv = "third-party"
+```
+
+Skills report `"custom_skill"`. A stable hash groups events without naming anything, and debug-only `_PROTO_plugin_name` fields are stripped before the sink.
+
+The exception is the org console route, where the plugin contents are uploaded by definition. Anthropic's backend clones, packages and hosts them, and an Enterprise org with scanning enabled has Claude review the contents. A deliberate trade rather than a leak, but it is the one route where the catalogue leaves the company's own infrastructure.
+
+### Which route to take
+
+| Route | Git? | Versioned? | Auto-updates? | Admin can force it? | Reaches the terminal? |
+|---|---|---|---|---|---|
+| Seed directory + managed `enabledPlugins` | No | Pinned at build | No, by design | Yes, if you own the image | Yes |
+| Internal git over SSH | Yes | Yes | Yes | Register only, not install | Yes |
+| Internal git over HTTPS | Yes | Yes | **Silently stops** | Register only | Yes |
+| Internal `url` endpoint with `headers` | No | Yes | Yes | Register only | Yes |
+| Managed settings `.claude/skills/` | No | **No** | No | Yes, strongest | Yes |
+| claude.ai org console | Private repo or ZIP | Yes | Yes, on PR merge | **Yes, "Required"** | **Not yet** |
+
+For this repository the honest recommendation is internal git over SSH, with managed `extraKnownMarketplaces` to register it. It keeps the normal git workflow, keeps versioning, and is the only remote form whose background auto-update survives the credential-helper wipe. The gap it leaves is force-install, and the seed directory closes that for any fleet where we control the image.
+
 ## The split, and the Edict case
 
 The line is not "tools versus prose". It is **what needs to run** versus **what needs to be read**.
@@ -369,6 +526,9 @@ One reason has weakened slightly. `binaries` and `${CLAUDE_PLUGIN_ROOT}` mean a 
 - **Whether a `binaries` auto-fetch works on Windows.** The target-triple table has no Windows entry and the mapper returns `undefined`. Read from the binary, not tested end to end.
 - **Whether a version constraint is actually enforced when violated.** The extraction and the demotion path were both read from the binary. No runtime test.
 - **Why `plugin details` reports `MCP servers (0)`** for manifest-declared servers, inline or by path, while counting those from a plugin-root `.mcp.json`. The behaviour is measured and the cause was not traced. They do load: `mcp list` shows `plugin:<plugin>:<server>` for an inline entry.
-- **The claude.ai console organisation plugin sync, and `CLAUDE_CODE_PLUGIN_SEED_DIR`.** Both are named in the docs as the paths that install rather than merely list. Neither was tested, and this is the most consequential untested claim here.
+- **The claude.ai console organisation plugin sync.** Named in the docs as a path that installs rather than merely lists, and it needs a Team or Enterprise plan to exercise. Not tested. `CLAUDE_CODE_PLUGIN_SEED_DIR`, the other such path, is now measured and written up above.
+- **A real clone from a private HTTPS or SSH host** with credential helpers. No such host was reachable, so the auto-update credential-helper failure is proved in the binary and not exercised.
+- **An `archive` install end to end.** The loopback ban makes it untestable on one machine.
+- **A private or scoped npm package against an internal registry,** and whether `.npmrc` is honoured.
 - **Behaviour gated on versions newer than 2.1.248.** `managedMcpServers` at v2.1.259+, http-to-sse fallback at v2.1.265+. Read from the docs, unmeasurable here.
 - **Whether Claude Code calls `completion/complete`** during interactive prompt-argument entry. The probe ran non-interactively and the docs are silent.
