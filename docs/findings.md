@@ -34,7 +34,11 @@ Sources: [AutoScout24](https://tech.autoscout24.com/blog/posts/designing-a-codin
 
 ### The counter-examples are worth reading too
 
-Ramp decentralised on purpose and says so on the record. Spotify published the most quantified rollout available, 99% weekly adoption and 2.5 million automated PRs, and never mentions skill sharing at all; their answer is to standardise the codebase instead. OpenAI keeps everything repo-local by design.
+Ramp decentralised on purpose and says so on the record. Spotify published the most quantified rollout available, 99% weekly adoption and 2.5 million automated PRs, and never mentions skill sharing at all; their answer is to standardise the codebase instead.
+
+**Corrected on 10 September 2026.** This section previously read "OpenAI keeps everything repo-local by design". That is half the story and the wrong half. OpenAI ran an open skills catalogue, `openai/skills`, at around 26,600 stars, deprecated it in June 2026, and folded it into a curated in-product Plugin Directory. They did not decline to build a catalogue. They built one and replaced it with something narrower, which is a stronger result than the one recorded here.
+
+Two sourcing corrections from the same pass, both in [mcp-and-plugins.md](mcp-and-plugins.md). Uber's blog post contains two sentences about skills as artefacts and describes no registry, no install step and no evaluation feedback loop; that detail comes from conference coverage rather than from Uber, so the row above is secondary on everything except the headline counts. And LinkedIn's mechanism is misdescribed as two-tier git with MCP meta-tools. That is the organisation. The delivery is a package pushed by the internal developer tool distribution that already existed, which turns out to be the most transferable finding in the whole survey.
 
 That absence in the strongest case study tells you how unsettled this is.
 

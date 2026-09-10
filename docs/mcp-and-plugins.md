@@ -473,6 +473,168 @@ The exception is the org console route, where the plugin contents are uploaded b
 
 For this repository the honest recommendation is internal git over SSH, with managed `extraKnownMarketplaces` to register it. It keeps the normal git workflow, keeps versioning, and is the only remote form whose background auto-update survives the credential-helper wipe. The gap it leaves is force-install, and the seed directory closes that for any fleet where we control the image.
 
+## The developer experience of staying current
+
+Registration is not installation, and the gap between them is where a catalogue dies. This section measures what actually removes manual work.
+
+### Auto-update works, and it is slower than it sounds
+
+A local git marketplace registered through `extraKnownMarketplaces` with `"autoUpdate": true`, then bumped three times. Three for three, with nobody typing anything **[measured]**:
+
+| Run | Version | Update landed |
+|---|---|---|
+| 1 | 0.1.0 to 0.2.0 | Yes |
+| 2 | 0.2.0 to 0.3.0 | 8 minutes 30 seconds into the session |
+| 3 | 0.3.0 to 0.4.0 | About 7 minutes in |
+
+Short sessions never update at all. A three-second and a twenty-two-second run left the clone on the old commit. The reason is a random jitter on an unreferenced timer **[binary]**:
+
+```js
+var O=600000;                        // 0 to 10 minutes, mean 5
+let k=Math.floor(Math.random()*O);
+await ne(k,void 0,{unref:!0}),d=Date.now();
+```
+
+So this is a background refresh mid-session, not a startup step. The current session pays the wait and the next one gets the new version.
+
+Our marketplace will not get this by default. The third-party default is a hard-coded name allowlist **[binary]**, and `skills-marketplace` is not on it, so `autoUpdate: true` has to be declared.
+
+### Auto-update never brings a plugin nobody has
+
+The update pass enumerates the installed registry and nothing else **[binary]**. A brand-new plugin added to an already-registered marketplace reaches nobody.
+
+That is not the worst of it. Shipping a new plugin by having an existing one depend on it **breaks the existing one** **[measured]**:
+
+```
+❯ orgkit@org-mkt
+  Version: 0.4.0
+  Status: ✘ failed to load
+  Error: Dependency "orgdep@org-mkt" is not installed
+```
+
+`claude plugin update` did not fix it, reporting "already at the latest version". Only a fresh install did. So the measured failure mode for a growing catalogue is a **broken** plugin, not a missing one.
+
+`enabledPlugins` alone does not install either. Naming an uninstalled plugin wrote an installation record pointing at a cache directory that was never created **[measured]**.
+
+### The `command` source removes the update step entirely
+
+This is the mechanism worth knowing about. A marketplace entry runs a command that prints a plugin directory, and Claude Code re-resolves it once per session in the background.
+
+Measured: install, then edit the source content, then run a **three-second** session **[measured]**:
+
+| | Version |
+|---|---|
+| After install | `1.0.0-c1ece0ea1a1b` |
+| After edit and a 3s session | `1.0.0-89395c0c0de3` |
+
+No `plugin update`, no prompt. The version is the manifest version plus a content hash.
+
+It also ignores both kill switches, because the re-resolve is awaited **before** the disabled check **[binary]**. `DISABLE_AUTOUPDATER=1` and `DISABLE_UPDATES=1` together still refreshed it **[measured]**. Command-sourced plugins reload in-session too, where a git update needs `/reload-plugins`.
+
+Three costs, and the first is the sting. Consent is a one-time human act that an agent cannot perform **[measured]**:
+
+```
+-y/--yes is ignored inside a Claude Code session: run this in your own terminal
+to accept the command shown above.
+```
+
+Second, changing the command string revokes that consent and every developer silently stops updating until they run an explicit update. Third, `mode: link` is refused on Windows **[measured]**, so the idea of symlinking to a directory the organisation controls is unavailable here.
+
+### The version pin that does not pin
+
+`enabledPlugins` is documented as supporting "extended format with version constraints". It does not hold a version **[measured]**:
+
+| Value | Marketplace at | Result |
+|---|---|---|
+| `{"orgkit@org-mkt": ["0.4.0"]}` | 0.5.0 | Updated to **0.5.0** |
+| `{"orgkit@org-mkt": {"version":"0.4.0"}}` | 0.5.0 | Already at 0.5.0 |
+
+The enabled predicate is `e===!0||Array.isArray(e)` **[binary]**. It reads enabled-or-not and discards the rest.
+
+The real pin lives in the org console. The moment an admin sets `auto_install` or `required`, a 40-character commit SHA becomes mandatory **[binary]**:
+
+> Ref must be a full 40-character commit SHA when Installation is auto_install or required
+
+Rolling the whole organisation forward or back is then one SHA edit. That is the rollback story worth having.
+
+### The only mechanism that pushes a new plugin
+
+The org plugins endpoint, managed key `organizationPluginsUrl`, with a per-marketplace `installationPreference` **[binary]**:
+
+> `available` (the default) lets users install from the Directory's Organization tab. `auto_install` installs automatically once per pinned commit; a plugin the user removes stays removed until the pin changes. `required` reinstalls on every sync, so it cannot stay removed.
+
+Nothing else measured or found installs a brand-new plugin onto an existing developer's machine.
+
+### Day-one cost, per route
+
+**[measured]** unless noted:
+
+| Route | Day-one actions | Keeps current? | Catches new plugins? |
+|---|---|---|---|
+| Nothing | 2 | No | No |
+| `extraKnownMarketplaces` in user or managed settings | 1 | Only with `autoUpdate: true` | No |
+| Same, in project settings | 1, plus a folder-trust prompt | Same | No |
+| Seed directory + `enabledPlugins` | **0** | No, `autoUpdate` forced false | No |
+| `command` source | 1, and it must be a real terminal | **Yes, every session** | No |
+| Org console with `required` | **0** | Yes, at the pinned SHA | **Yes** |
+
+A project `.claude/settings.json` declaring `extraKnownMarketplaces` registered nothing until the folder was trusted, and failed silently until then **[measured]**.
+
+## How other organisations solve this
+
+Every company that achieved zero-action delivery did it the same way: they attached to a channel that already ran without being asked. Nobody built a new pipe for skills and got adoption.
+
+**LinkedIn** is the clearest statement of it. Their tool CAPT is a Python package that is also a local MCP server **[LinkedIn engineering blog, 27 January 2026]**:
+
+> Using LinkedIn's internal developer tool distribution, CAPT ships to every laptop and updates silently in the background.
+>
+> No JSON editing, no config wrangling, no dependency issues. Adoption grew quickly because onboarding required essentially zero effort.
+
+They did not solve distribution. They put the skills inside the distribution they already had. Over 1,000 engineers, 500-plus playbooks.
+
+**Cloudflare** removed the laptop from the problem **[Cloudflare blog, 20 April 2026]**. Markdown compiles to one JSON config served from a Worker, and "Every new session picks up the latest version automatically". Shipping to 3,000-plus people is "just a `wrangler deploy` away". This needs an agent that supports remote config discovery. Claude Code does not, so the pattern is instructive rather than available.
+
+**Zalando** is the only company found publishing the managed-settings route **[Zalando engineering blog, 14 August 2026]**:
+
+> The skill collection is distributed via managed configuration settings or cli command installing the needed symlinks
+
+**DoorDash, Duolingo and Monzo** dissolve the problem by moving execution off the laptop entirely. There is nothing local to update. Out of proportion for a catalogue, but it explains why their write-ups never mention an install step.
+
+**GitLab is the cautionary case.** Five documented distribution channels, and not one explains how an update reaches a developer who already installed. Four are clone-or-symlink. Their product docs say it plainly: "Existing conversations and flows do not have access to new or updated skills automatically."
+
+Two corrections to [findings.md](findings.md) fall out of this. Uber's registry and context-triggered auto-install story is **secondary only**, from conference coverage rather than anything Uber wrote; the headline numbers are primary and the distribution story is not. And OpenAI did not simply keep everything repo-local: they ran an open skills catalogue of around 26,600 stars, deprecated it in June 2026, and folded it into a curated in-product directory. The direction of travel is away from an open browsable repo.
+
+### The finding that outranks distribution
+
+Vercel ran evals against a hardened suite targeting APIs absent from training data **[Vercel blog, 27 January 2026]**:
+
+| Arm | Pass rate |
+|---|---|
+| Baseline | 53% |
+| Skill, default | 53% |
+| Skill plus an explicit instruction | 79% |
+| Docs index in `AGENTS.md` | 100% |
+
+> In 56% of eval cases, the skill was never invoked.
+
+Winning the distribution argument only gets the file onto the disk. This is evidence for the negative-boundary rule rather than against skills, since their fix was making the *when* unmissable, but it deserves its own ticket and its own measurement here.
+
+### Two things worth checking before building on them
+
+A `SessionStart` hook can return `reloadSkills: true` to re-scan skill directories, per the v2.1.152 changelog. It appears nowhere in the hooks reference, and the issue asking for it to be documented was closed as not planned. That would give a zero-action update path for a self-hosted design, and it should be verified on this machine before anyone relies on it.
+
+Server-managed settings are fetched at startup and refreshed hourly, applied to running sessions without a restart, and they carry `extraKnownMarketplaces` and `enabledPlugins`. Read from the docs, not measured here, and it needs a Team or Enterprise plan with an Owner role.
+
+### What this means for us
+
+Two mechanisms remove real work and they solve different halves.
+
+The `command` source removes the update step completely, at the cost of a consent step no agent can perform and no `mode: link` on Windows. The org console with `required` removes everything including the first install, at the cost of a plan tier and uploading the catalogue to Anthropic.
+
+`autoUpdate: true` on a git marketplace is genuine and cheap, and its limit is the one that bites a catalogue designed to grow: it will never deliver a skill nobody has yet.
+
+The honest recommendation, which corrects the SSH suggestion above: SSH fixes updates and never fixes the first install. Treat the bootstrap as a separate problem and solve it the way LinkedIn did, through whatever already reaches developer machines. For a fleet we control, the seed directory does it for nothing.
+
 ## The split, and the Edict case
 
 The line is not "tools versus prose". It is **what needs to run** versus **what needs to be read**.
