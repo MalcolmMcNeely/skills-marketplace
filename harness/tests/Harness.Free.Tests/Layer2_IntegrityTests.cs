@@ -93,7 +93,7 @@ public class Layer2_IntegrityTests
     [Fact]
     public void The_marketplace_manifest_does_not_reference_the_harness()
     {
-        var manifest = File.ReadAllText(Path.Combine(Paths.Root, "..", ".claude-plugin", "marketplace.json"));
+        var manifest = File.ReadAllText(Paths.MarketplaceManifest);
         Assert.DoesNotContain("harness", manifest, StringComparison.OrdinalIgnoreCase);
     }
 }

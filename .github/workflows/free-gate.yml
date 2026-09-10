@@ -1,0 +1,66 @@
+# The free gate. Layers 1 and 2, the three commands CLAUDE.md gives a human, and nothing else.
+#
+# No credential, no secret, no model call. `claude plugin validate` needs no login on a runner, measured
+# on 2026-09-09 in docs/ci-plugin-validate.md. Green here and green on a laptop mean the same thing.
+#
+# Layers 3 and 4 are absent on purpose, and so is every trigger that could start them. They make real
+# model calls against a developer's subscription, one pass runs for hours, and an automatic gate would
+# block the very pull requests those passes exist to land. Settled on #11, and #7 deleted an earlier
+# dispatch workflow once the scope was fixed. Adding them back is a decision, not a tidy-up. Read
+# docs/running-the-paid-layers.md first.
+#
+# Two pins, for two different reasons. The CLI is 2.1.248 because every gate value on this map was
+# measured against that version, on a laptop and not on a runner: #12's calibration in
+# docs/calibration.md, #6's breakage arms in docs/breakage.md. The image is ubuntu-24.04 because that is
+# the runner #19 proved validate needs no login on. Bumping either changes what the gate means, so a bump
+# and a re-run of both passes are one change. Node and the .NET SDK float on purpose, because no gate
+# value turns on their patch version.
+
+name: Free gate
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  free-gate:
+    name: Layers 1 and 2
+    runs-on: ubuntu-24.04
+    # A hang guard, not the target. #19 measured 32 seconds for a job that did strictly more than this one.
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+
+      - name: Install the pinned CLI
+        run: npm install -g @anthropic-ai/claude-code@2.1.248
+
+      - name: Fail unless the pin is what installed
+        run: |
+          command -v claude || { echo "::error::claude is not on PATH. Layer 1 does not get to skip."; exit 1; }
+          installed="$(claude --version)"
+          echo "$installed"
+          case "$installed" in
+            2.1.248*) ;;
+            *) echo "::error::expected Claude Code 2.1.248, found $installed"; exit 1 ;;
+          esac
+
+      - name: Layer 1, the marketplace manifest
+        run: claude plugin validate .
+
+      - name: Layer 1, the plugin manifest
+        run: claude plugin validate ./plugins/core
+
+      - name: Layer 2, the free suite
+        run: dotnet test harness/tests/Harness.Free.Tests

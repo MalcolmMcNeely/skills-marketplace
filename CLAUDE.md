@@ -16,10 +16,10 @@ A Claude Code plugin marketplace for sharing agent skills across teams. Today th
 ```
 claude plugin validate .                        # marketplace manifest
 claude plugin validate ./plugins/core           # plugin manifest
-dotnet test harness/tests/Harness.Free.Tests    # 152 tests, no network, ~1s
+dotnet test harness/tests/Harness.Free.Tests    # 173 tests, no network, ~1s
 ```
 
-Run all three before you commit.
+Run all three before you commit. `.github/workflows/free-gate.yml` runs them again on every push to `main` and every pull request, on a pinned runner with no credential. Layers 3 and 4 get no workflow, and the header of that file says why.
 
 One suite spends money on real `claude -p` calls, and it is double-locked:
 

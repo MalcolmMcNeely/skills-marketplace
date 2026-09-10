@@ -72,6 +72,8 @@ skills-marketplace/
   .claude/skills/               dev tools, borrowed. Not shipped
   .claude-plugin/
     marketplace.json            catalogue of plugins
+  .github/workflows/
+    free-gate.yml               layers 1 and 2, on every push and pull request
   docs/                         the plan and the findings
   harness/                      prototype test harness. Not shipped
   plugins/
@@ -103,6 +105,8 @@ Run the free half of the harness. No network, no model calls, about a second:
 ```
 dotnet test harness/tests/Harness.Free.Tests
 ```
+
+`.github/workflows/free-gate.yml` runs those three on every push to `main` and every pull request. It pins the CLI to the version every gate value was measured against, and the runner image to the one `plugin validate` was proved to need no login on. The paying layers stay on a laptop, and the header of that file says why.
 
 The paying half makes real model calls and refuses to run without an opt-in:
 

@@ -25,7 +25,17 @@ public sealed class HarnessPaths
     public string FixtureRepo => Path.Combine(Fixtures, "repo");
     public string Cases => Path.Combine(Root, "cases");
     public string Captured => Path.Combine(Root, "captured");
-    public string ShippedCatalogue => Path.Combine(Root, "..", "plugins");
+
+    /// <summary>
+    /// The repo the harness sits inside. Three callers were walking ".." by hand, which is the interface
+    /// being wrong rather than the callers: everything the harness reads outside itself hangs off here.
+    /// </summary>
+    public string RepoRoot => Path.GetFullPath(Path.Combine(Root, ".."));
+
+    public string ShippedCatalogue => Path.Combine(RepoRoot, "plugins");
+    public string MarketplaceManifest => Path.Combine(RepoRoot, ".claude-plugin", "marketplace.json");
+    /// <summary>#20's free gate. Not harness material, and the gate tests read it as a file.</summary>
+    public string Workflows => Path.Combine(RepoRoot, ".github", "workflows");
 
     /// <summary>A contract run writes files, so each one gets its own copy of the bare fixture repo.</summary>
     public string NewScratchRepo()
