@@ -4,7 +4,7 @@ using Xunit.Abstractions;
 namespace Harness.Model.Tests;
 
 /// <summary>
-/// Issue #12. The whole 23-case pass, in one run. Roughly 83 minutes of continuous calling.
+/// Issue #12. The whole 23-case pass, in one run. The measured pass took 133 runs and 02:08:14 of continuous calling.
 ///
 /// Triple-locked, because this is the expensive one. SKILL_HARNESS_LIVE=1 gets you into the project;
 /// SKILL_HARNESS_CALIBRATE=1 gets you into this test. The single-case tests above are for checking the
@@ -64,6 +64,6 @@ public sealed class CalibrationFactAttribute : Xunit.FactAttribute
         if (Environment.GetEnvironmentVariable("SKILL_HARNESS_LIVE") != "1")
             Skip = "live model calls; set SKILL_HARNESS_LIVE=1";
         else if (Environment.GetEnvironmentVariable("SKILL_HARNESS_CALIBRATE") != "1")
-            Skip = "the full 125-run pass takes about 83 minutes; set SKILL_HARNESS_CALIBRATE=1";
+            Skip = "the full calibration pass measured 133 runs and 02:08:14; set SKILL_HARNESS_CALIBRATE=1";
     }
 }

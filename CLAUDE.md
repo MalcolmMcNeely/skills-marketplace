@@ -1,6 +1,6 @@
 # skills-marketplace
 
-A Claude Code plugin marketplace for sharing agent skills across teams. Today the repo holds research, a plan and a prototype harness. The shipped catalogue, `plugins/core/skills/`, has two skills in it: `skill-authoring` and `new-skill`. Filling it is the work.
+A Claude Code plugin marketplace for sharing agent skills across teams. Today the repo holds research, a plan and a working test harness. The shipped catalogue, `plugins/core/skills/`, has two skills in it: `skill-authoring` and `new-skill`. Filling it is the work.
 
 ## Two skill folders, and they are not the same thing
 
@@ -31,8 +31,8 @@ The two long passes inside it each need a second lock of their own, because neit
 tripped by running the project:
 
 ```
-SKILL_HARNESS_CALIBRATE=1   # #12, 125 runs, about 2 hours
-SKILL_HARNESS_BREAK=1       # #6, 149 runs, about 2.5 hours
+SKILL_HARNESS_CALIBRATE=1   # #12, 133 runs, 02:08:14 measured
+SKILL_HARNESS_BREAK=1       # #6, 256 runs, 03:19:34 measured
 SKILL_HARNESS_LADDER=1      # #6 screen, 9 runs, about 10 minutes
 ```
 
@@ -41,9 +41,9 @@ stopped and every case with enough valid runs on disk is skipped rather than pai
 
 Run any of it only when the user asks for it, and report the cost the run prints.
 
-## `harness/` is a prototype
+## `harness/` is the gate
 
-Throwaway, built to answer one design question. `marketplace.json` does not reference it and nothing under `harness/fixtures/` is a real skill. Read `harness/README.md` before changing anything in there.
+Layer 3 is red below 53 of 60 pooled should-fire runs, a gate measured twice across 120 runs against the frozen good fixture. `marketplace.json` does not reference it and nothing under `harness/fixtures/` is a real skill. Read `harness/README.md` before changing anything in there, and for what the other layers check.
 
 ## Writing a catalogue skill
 

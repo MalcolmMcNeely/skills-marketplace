@@ -4,7 +4,7 @@ using Xunit.Abstractions;
 namespace Harness.Model.Tests;
 
 /// <summary>
-/// Issue #6. Four arms, 149 runs, roughly two and a half hours of continuous calling.
+/// Issue #6. Four arms. Planned at 149 runs; the measured pass took 256 and 03:19:34 of continuous calling.
 ///
 /// Triple-locked like the calibration pass, and for the same reason: SKILL_HARNESS_LIVE=1 gets you
 /// into the project, SKILL_HARNESS_BREAK=1 gets you into this test.
@@ -93,7 +93,7 @@ public class BreakagePassTests(ITestOutputHelper output)
     }
 }
 
-/// <summary>149 runs and about two and a half hours. It needs its own lock, on top of the project's.</summary>
+/// <summary>256 runs and 03:19:34 when it was measured. It needs its own lock, on top of the project's.</summary>
 public sealed class BreakageFactAttribute : Xunit.FactAttribute
 {
     public BreakageFactAttribute()
@@ -101,6 +101,6 @@ public sealed class BreakageFactAttribute : Xunit.FactAttribute
         if (Environment.GetEnvironmentVariable("SKILL_HARNESS_LIVE") != "1")
             Skip = "live model calls; set SKILL_HARNESS_LIVE=1";
         else if (Environment.GetEnvironmentVariable("SKILL_HARNESS_BREAK") != "1")
-            Skip = "the full 149-run breakage pass takes about two and a half hours; set SKILL_HARNESS_BREAK=1";
+            Skip = "the full breakage pass measured 256 runs and 03:19:34; set SKILL_HARNESS_BREAK=1";
     }
 }

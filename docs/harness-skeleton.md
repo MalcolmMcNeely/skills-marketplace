@@ -1,6 +1,6 @@
 # The harness skeleton, built and run
 
-Written 2 September 2026 against Claude Code 2.1.248, model `claude-opus-5[1m]`. Resolves [#8](https://github.com/MalcolmMcNeely/skills-marketplace/issues/8). The prototype it describes lives under `harness/` on `main`. Builds on [scoring.md](scoring.md), [baseline-test-first.md](baseline-test-first.md) and the case suite in [#10](https://github.com/MalcolmMcNeely/skills-marketplace/issues/10).
+Written 2 September 2026 against Claude Code 2.1.248, model `claude-opus-5[1m]`. Resolves [#8](https://github.com/MalcolmMcNeely/skills-marketplace/issues/8). The harness it describes lives under `harness/` on `main`. Builds on [scoring.md](scoring.md), [baseline-test-first.md](baseline-test-first.md) and the case suite in [#10](https://github.com/MalcolmMcNeely/skills-marketplace/issues/10).
 
 ## The short version
 
@@ -76,7 +76,7 @@ The prompt `/csharp-new-class ...` produced this in the stream, verbatim:
 
 Both would have been killed at the `Bash` call, and both would have been recorded as the skill declining to fire. Run 2 fired. The model looks around before it picks a skill, because in a real repository there is something to look at. `run_eval.py` writes a stub with nothing to explore, which is why the trick works there and not here.
 
-The prototype replaces it with a `FirstDecision` stop rule: kill at the first `Skill` call, or at the first `Write` or `Edit` call, whichever comes first. That rule is sound and it is measurably faster, at about 9.5 seconds a run against about 40.
+The harness replaces it with a `FirstDecision` stop rule: kill at the first `Skill` call, or at the first `Write` or `Edit` call, whichever comes first. That rule is sound and it is measurably faster, at about 9.5 seconds a run against about 40.
 
 **It is used for should-not-fire cases and nothing else, and the reason is [#10](https://github.com/MalcolmMcNeely/skills-marketplace/issues/10).** A positive case is graded on an exact set match. Killing at the first `Skill` call truncates the set, so a second skill firing later in the run is invisible, and a cross-stack case would score green while being wrong. A watch case is ungated but recorded, and the record is the full set. Both run to the end.
 
@@ -88,7 +88,7 @@ This is the one that cost money. [scoring.md](scoring.md) recorded, from two run
 
 > `claude -p "/wf-probe <task>"` was run twice here. Both exited 0 with `"subtype":"success"`, both emitted `{"type":"tool_use","name":"Skill","input":{"skill":"wf-probe"}}`
 
-The prototype's layer 4 therefore treated a missing `Skill` call as a harness fault and voided the run. Ten consecutive runs voided, at `$2.28`, before the resample cap fired.
+The harness's layer 4 therefore treated a missing `Skill` call as a harness fault and voided the run. Ten consecutive runs voided, at `$2.28`, before the resample cap fired.
 
 The runs were healthy. Their streams were not kept, so the evidence comes from two runs reproduced afterwards under the same conditions. In one, killed early on purpose, the model narrated the rule it had just been given:
 
@@ -108,7 +108,7 @@ There is a second reading worth stating plainly. Inline expansion means the body
 
 ### A per-run budget does not bound a suite
 
-Each of the ten void runs stayed inside its own `--max-budget-usd 0.60`. The suite still spent `$2.28`, because the resample cap counts attempts and not money. The prototype adds a `SpendLedger`: a running total across the whole suite with a hard stop, reported as `suite-budget-exhausted` and distinct from `insufficient-firings`.
+Each of the ten void runs stayed inside its own `--max-budget-usd 0.60`. The suite still spent `$2.28`, because the resample cap counts attempts and not money. The harness adds a `SpendLedger`: a running total across the whole suite with a hard stop, reported as `suite-budget-exhausted` and distinct from `insufficient-firings`.
 
 At the time of writing the ledger only worked because firing runs were allowed to finish. A killed run reports no cost, so a suite of killed runs spent without the ledger noticing. [#16](https://github.com/MalcolmMcNeely/skills-marketplace/issues/16) closed that hole: a run that reports no cost is now charged a flat `$0.23`, marked `estimated` in the journal. See [running-the-paid-layers.md](running-the-paid-layers.md).
 

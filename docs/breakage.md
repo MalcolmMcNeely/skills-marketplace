@@ -8,7 +8,7 @@ scored the good fixture 60 of 60 and set the gate at 53, but a pass that clean i
 should produce and also what an easy one would. This ticket breaks the fixture on purpose.
 
 **It works.** Each break reddens one layer and not the other, the failures name themselves, and both
-controls stayed green. The control's 60 of 60 also replicates #12 seven days later, so `p_good` of
+controls stayed green. The control's 60 of 60 also replicates #12 the day before, so `p_good` of
 1.000 and the gate of 53 are now measured twice.
 
 | Arm | What changed | Layer 3 | Layer 4 |
@@ -144,7 +144,7 @@ which is what most real skill edits are. Both stayed green.
 The layer 3 control is the more valuable of the two. Its description is the good one, so its 60 runs
 are a same-session re-measurement of #12's number:
 
-| | #12, 2 September | #6 control, 9 September |
+| | #12, 8 September | #6 control, 9 September |
 |---|---|---|
 | Pooled | 60/60 | 60/60 |
 | Per case | 6/6 on all ten | 6/6 on all ten |

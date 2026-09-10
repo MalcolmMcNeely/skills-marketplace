@@ -4,8 +4,8 @@ using Xunit.Abstractions;
 namespace Harness.Model.Tests;
 
 /// <summary>
-/// Two runs, before the 149. The free tests prove the overlay is the right FILE; only a real run
-/// proves the CLI loaded it, and finding that out at run 3 of 149 costs two and a half hours.
+/// Two runs, before the pass. The free tests prove the overlay is the right FILE; only a real run
+/// proves the CLI loaded it, and finding that out at run 3 of 256 costs over three hours.
 /// </summary>
 public class BreakageSmokeTests(ITestOutputHelper output)
 {
