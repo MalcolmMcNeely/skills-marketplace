@@ -1,0 +1,2 @@
+# Raw OTLP captures are local evidence, not source. They contain user.email.
+sink/capture/
