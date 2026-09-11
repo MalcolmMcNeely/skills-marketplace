@@ -61,7 +61,7 @@
         "overrides": []
       },
       "options": {
-        "reduceOptions": { "calcs": ["count"], "fields": "", "values": false },
+        "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false },
         "textMode": "value",
         "graphMode": "none"
       },
@@ -69,7 +69,7 @@
         {
           "refId": "A",
           "datasource": { "type": "loki", "uid": "claude-loki" },
-          "expr": "sum by (skill_name) (count_over_time({service_name=\"claude-code\"} | event_name=\"skill_activated\" [$__range]))",
+          "expr": "count(sum by (skill_name) (count_over_time({service_name=\"claude-code\"} | event_name=\"skill_activated\" [$__range])))",
           "queryType": "instant"
         }
       ]
@@ -81,7 +81,13 @@
       "description": "claude-proactive means the description worked. user-slash means a developer had to type it. This is the engine versus entry point split.",
       "gridPos": { "h": 10, "w": 14, "x": 10, "y": 0 },
       "datasource": { "type": "loki", "uid": "claude-loki" },
-      "fieldConfig": { "defaults": { "unit": "short" }, "overrides": [] },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "displayName": "${__field.labels.invocation_trigger}"
+        },
+        "overrides": []
+      },
       "options": {
         "legend": { "displayMode": "table", "placement": "right", "values": ["value", "percent"] },
         "pieType": "donut",
@@ -108,7 +114,7 @@
         "overrides": []
       },
       "options": {
-        "reduceOptions": { "calcs": ["count"], "fields": "", "values": false },
+        "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false },
         "textMode": "value",
         "graphMode": "none"
       },
@@ -116,55 +122,70 @@
         {
           "refId": "A",
           "datasource": { "type": "loki", "uid": "claude-loki" },
-          "expr": "sum by (session_id) (count_over_time({service_name=\"claude-code\"} | event_name=\"skill_activated\" [$__range]))",
+          "expr": "count(sum by (session_id) (count_over_time({service_name=\"claude-code\"} | event_name=\"skill_activated\" [$__range])))",
           "queryType": "instant"
         }
       ]
     },
     {
       "id": 5,
-      "type": "barchart",
+      "type": "bargauge",
       "title": "Activations by skill",
       "description": "The ranking. A skill missing from this chart entirely never fired in the window.",
       "gridPos": { "h": 11, "w": 12, "x": 0, "y": 10 },
       "datasource": { "type": "loki", "uid": "claude-loki" },
-      "fieldConfig": { "defaults": { "unit": "short" }, "overrides": [] },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "displayName": "${__field.labels.skill_name}",
+          "color": { "mode": "continuous-BlPu" }
+        },
+        "overrides": []
+      },
       "options": {
         "orientation": "horizontal",
-        "xTickLabelRotation": 0,
-        "showValue": "always",
-        "legend": { "showLegend": false }
+        "displayMode": "gradient",
+        "valueMode": "text",
+        "showUnfilled": true,
+        "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false }
       },
       "targets": [
         {
           "refId": "A",
           "datasource": { "type": "loki", "uid": "claude-loki" },
           "expr": "sort_desc(sum by (skill_name) (count_over_time({service_name=\"claude-code\"} | event_name=\"skill_activated\" | skill_name=~\"$skill\" [$__range])))",
-          "queryType": "instant",
-          "legendFormat": "{{skill_name}}"
+          "queryType": "instant"
         }
       ]
     },
     {
       "id": 6,
-      "type": "barchart",
+      "type": "bargauge",
       "title": "Activations by source",
       "description": "plugin means it came from the catalogue. projectSettings means .claude/skills/ in the repo.",
       "gridPos": { "h": 11, "w": 12, "x": 12, "y": 10 },
       "datasource": { "type": "loki", "uid": "claude-loki" },
-      "fieldConfig": { "defaults": { "unit": "short" }, "overrides": [] },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "displayName": "${__field.labels.skill_source}",
+          "color": { "mode": "continuous-GrYlRd" }
+        },
+        "overrides": []
+      },
       "options": {
         "orientation": "horizontal",
-        "showValue": "always",
-        "legend": { "showLegend": false }
+        "displayMode": "gradient",
+        "valueMode": "text",
+        "showUnfilled": true,
+        "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false }
       },
       "targets": [
         {
           "refId": "A",
           "datasource": { "type": "loki", "uid": "claude-loki" },
           "expr": "sort_desc(sum by (skill_source) (count_over_time({service_name=\"claude-code\"} | event_name=\"skill_activated\" [$__range])))",
-          "queryType": "instant",
-          "legendFormat": "{{skill_source}}"
+          "queryType": "instant"
         }
       ]
     },
