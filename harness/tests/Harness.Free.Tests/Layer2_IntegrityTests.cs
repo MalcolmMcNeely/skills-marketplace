@@ -79,11 +79,16 @@ public class Layer2_IntegrityTests
                 $"{skill.Name}: {skill.Description.Length} characters, limit is {Catalogue.MaxDescriptionChars}");
     }
 
-    /// <summary>Issue #8 item 1: a fixture must never be mistaken for catalogue content.</summary>
+    /// <summary>
+    /// Issue #8 item 1: a fixture must never be mistaken for catalogue content. #25 split the fixtures
+    /// across two roots, so both are swept here. Sweeping one would have quietly stopped checking the
+    /// twelve distractors, which carry the names most likely to collide with a real skill.
+    /// </summary>
     [Fact]
     public void No_fixture_skill_leaks_into_the_shipped_catalogue()
     {
-        var fixtures = Catalogue.Load(Paths.Fixtures).Select(s => s.Name).ToHashSet(StringComparer.Ordinal);
+        var fixtures = new[] { Paths.Fixtures, Paths.Shared }
+            .SelectMany(Catalogue.Load).Select(s => s.Name).ToHashSet(StringComparer.Ordinal);
         Assert.NotEmpty(fixtures);
 
         foreach (var skill in Shipped)
@@ -185,7 +190,7 @@ public class SlashFormTests
     {
         // Without this, any path containing an engine's name reads as a slash reference to it.
         Assert.Empty(SlashForms.InProse("Write it to plugins/core/skills/skill-authoring/SKILL.md"));
-        Assert.Empty(SlashForms.InProse("See harness/fixtures/catalogue and docs/evals.md"));
+        Assert.Empty(SlashForms.InProse("See harness/shared/catalogue and docs/evals.md"));
     }
 
     [Fact]

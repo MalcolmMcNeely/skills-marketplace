@@ -15,7 +15,7 @@ public sealed record BreakageArm
     public required string Id { get; init; }
     public required string What { get; init; }
 
-    /// <summary>Laid over fixtures/catalogue for layer 3. Null runs the unbroken catalogue.</summary>
+    /// <summary>Laid over shared/catalogue for layer 3. Null runs the unbroken catalogue.</summary>
     public string? FiringOverlay { get; init; }
     public FiringPlanShape FiringShape { get; init; } = FiringPlanShape.PositivesOnly;
     public bool RunFiring { get; init; } = true;

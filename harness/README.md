@@ -59,9 +59,10 @@ directory, which is the build output folder, not the repo root.
 | `cases/` | Case files. Data |
 | `fixtures/good/` | The good `csharp-new-class` plugin, loaded with `--plugin-dir` |
 | `fixtures/breaks/` | #6's break overlays. Sparse trees laid over a base fixture at run time |
-| `fixtures/catalogue/` | Twelve description-only stubs for layer 3 |
-| `fixtures/repo/` | The bare .NET fixture repo from `docs/baseline-test-first.md` |
-| `captured/` | Real stream-json, so the parser tests need no model call |
+| `shared/catalogue/` | Twelve description-only stubs for layer 3 |
+| `shared/repo/` | The bare .NET fixture repo from `docs/baseline-test-first.md` |
+| `shared/streams/` | Real stream-json, so the parser tests need no model call |
+| `captured/` | Run records written by the paid passes |
 | `tools/probe/` | One-shot debugging runner |
 
 ## The exit-code trap, closed by construction

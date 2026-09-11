@@ -6,20 +6,20 @@ namespace Harness.Free.Tests;
 /// <summary>Offline. No model calls. These run in milliseconds and gate every PR.</summary>
 public class ParserTests
 {
-    private static string Captured(string name) =>
-        File.ReadAllText(Path.Combine(new HarnessPaths().Captured, name));
+    private static string Stream(string name) =>
+        File.ReadAllText(new HarnessPaths().Stream(name));
 
     [Fact]
     public void Records_every_skill_invocation_not_just_the_first()
     {
-        var (t, _) = StreamParser.Parse(Captured("two-skills-fired.jsonl"));
+        var (t, _) = StreamParser.Parse(Stream("two-skills-fired.jsonl"));
         Assert.Equal(["csharp-new-class", "data-sql"], t.FiredSkills);
     }
 
     [Fact]
     public void A_budget_abort_is_void_and_never_reads_as_a_miss()
     {
-        var stream = Captured("budget-abort.jsonl");
+        var stream = Stream("budget-abort.jsonl");
         var (t, subtype) = StreamParser.Parse(stream);
         Assert.Empty(t.FiredSkills);            // a naive parser stops here and calls it a miss
         Assert.Equal("error_max_budget_usd", subtype);
@@ -34,7 +34,7 @@ public class ParserTests
     [Fact]
     public void A_real_miss_on_a_valid_run_is_scored_as_a_miss()
     {
-        var stream = Captured("nothing-fired-success.jsonl");
+        var stream = Stream("nothing-fired-success.jsonl");
         var (_, subtype) = StreamParser.Parse(stream);
         var outcome = Outcome(stream, exit: 0, subtype, StopMode.Completion);
 
@@ -44,7 +44,7 @@ public class ParserTests
     [Fact]
     public void Ordering_survives_a_bash_heredoc()
     {
-        var (t, _) = StreamParser.Parse(Captured("heredoc-both-files.jsonl"));
+        var (t, _) = StreamParser.Parse(Stream("heredoc-both-files.jsonl"));
         Assert.Equal(CreationRoute.Bash, t.FileCreations[0].Route);
         // Both files land in one command, and the order inside the command string is still readable.
         Assert.True(t.FirstCreationOrdinal("src/Discount.cs") <= t.FirstCreationOrdinal("tests/DiscountTests.cs"));
@@ -85,7 +85,7 @@ public class ParserTests
 public class RealCaptureTests
 {
     private static readonly string Stream =
-        File.ReadAllText(Path.Combine(new HarnessPaths().Captured, "real-layer4-held.jsonl"));
+        File.ReadAllText(new HarnessPaths().Stream("real-layer4-held.jsonl"));
 
     [Fact]
     public void The_plugin_prefix_is_stripped_so_a_case_never_names_the_fixture()
@@ -132,7 +132,7 @@ public class RealCaptureTests
 public class ByNameWithoutASkillCallTests
 {
     private static readonly string Stream =
-        File.ReadAllText(Path.Combine(new HarnessPaths().Captured, "real-layer4-no-skill-call.jsonl"));
+        File.ReadAllText(new HarnessPaths().Stream("real-layer4-no-skill-call.jsonl"));
 
     [Fact]
     public void No_Skill_tool_use_appears_but_the_fixture_did_load()

@@ -157,7 +157,7 @@ public class SkillCallOrdinalTests
     [Fact]
     public void Every_skill_call_keeps_its_position_in_the_run()
     {
-        var stream = File.ReadAllText(Path.Combine(Paths.Captured, "two-skills-fired.jsonl"));
+        var stream = File.ReadAllText(Paths.Stream("two-skills-fired.jsonl"));
         var (t, _) = StreamParser.Parse(stream);
 
         // MEASURED against this capture: three Skill calls, two distinct skills, the third a repeat
@@ -172,7 +172,7 @@ public class SkillCallOrdinalTests
     [Fact]
     public void A_skill_that_fired_first_has_nothing_before_it()
     {
-        var stream = File.ReadAllText(Path.Combine(Paths.Captured, "two-skills-fired.jsonl"));
+        var stream = File.ReadAllText(Paths.Stream("two-skills-fired.jsonl"));
         var (t, _) = StreamParser.Parse(stream);
 
         Assert.Equal(0, t.SkillsFiredBefore(t.FiredSkills[0]));

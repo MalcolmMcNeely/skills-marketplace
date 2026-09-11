@@ -8,10 +8,10 @@ applies nothing would measure the good fixture while claiming to measure a break
 
 | Overlay | Base | Description | Body | Should redden |
 |---|---|---|---|---|
-| `description-catalogue/` | `fixtures/catalogue` | broken | stub, unchanged | layer 3 |
+| `description-catalogue/` | `shared/catalogue` | broken | stub, unchanged | layer 3 |
 | `description-plugin/` | `fixtures/good` | broken | byte-identical to good | nothing |
 | `body-plugin/` | `fixtures/good` | byte-identical to good | rule inverted | layer 4 |
-| `control-catalogue/` | `fixtures/catalogue` | byte-identical to good | stub prose reworded | nothing |
+| `control-catalogue/` | `shared/catalogue` | byte-identical to good | stub prose reworded | nothing |
 | `control-plugin/` | `fixtures/good` | byte-identical to good | prose reworded, rule intact | nothing |
 
 ## Why five and not two

@@ -34,5 +34,5 @@ Both must pass before it lands.
 
 ## Do not
 
-- Reuse a name from `harness/fixtures/catalogue/skills/`. Those are test fixtures and the integrity tests fail if a shipped skill shadows one.
+- Reuse a name from `harness/shared/catalogue/skills/`. Those are test fixtures and the integrity tests fail if a shipped skill shadows one.
 - Write `/name` to make one skill call another. That is a developer action, not a model one.

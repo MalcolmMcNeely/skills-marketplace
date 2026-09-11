@@ -94,7 +94,7 @@ The runs were healthy. Their streams were not kept, so the evidence comes from t
 
 > Empty project ... Writing the test first per the rule.
 
-The other ran to completion. It wrote `tests/DiscountTests.cs` first, then `src/Discount.cs`, and never executed `dotnet test`. In both, the `slash_commands` field of the `init` line listed `harness-fixture-good:csharp-new-class`, so the plugin loaded. The CLI had expanded the slash command inline rather than routing it through the `Skill` tool. Both captures are committed under `harness/captured/`, and a free test scores the complete one `Held` on both signal assertions.
+The other ran to completion. It wrote `tests/DiscountTests.cs` first, then `src/Discount.cs`, and never executed `dotnet test`. In both, the `slash_commands` field of the `init` line listed `harness-fixture-good:csharp-new-class`, so the plugin loaded. The CLI had expanded the slash command inline rather than routing it through the `Skill` tool. Both captures are committed under `harness/shared/streams/`, and a free test scores the complete one `Held` on both signal assertions.
 
 | Shell the CLI was launched from | `Skill` tool calls |
 |---|---|

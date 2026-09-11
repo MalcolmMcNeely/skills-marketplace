@@ -38,10 +38,10 @@ untested.
 
 | Overlay | Base | Description | Body |
 |---|---|---|---|
-| `description-catalogue` | `fixtures/catalogue` | broken | stub, unchanged |
+| `description-catalogue` | `shared/catalogue` | broken | stub, unchanged |
 | `description-plugin` | `fixtures/good` | broken | byte-identical to good |
 | `body-plugin` | `fixtures/good` | byte-identical to good | rule reversed |
-| `control-catalogue` | `fixtures/catalogue` | byte-identical to good | stub prose reworded |
+| `control-catalogue` | `shared/catalogue` | byte-identical to good | stub prose reworded |
 | `control-plugin` | `fixtures/good` | byte-identical to good | prose reworded, rule intact |
 
 `body-plugin` doubles as a layer 3 overlay. Its description is byte-identical to the good one, so

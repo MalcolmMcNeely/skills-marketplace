@@ -17,13 +17,32 @@ public sealed class HarnessPaths
     public string Scratch { get; }
 
     public string Fixtures => Path.Combine(Root, "fixtures");
-    public string StubCatalogue => Path.Combine(Fixtures, "catalogue");
     public string GoodPlugin => Path.Combine(Fixtures, "good");
     /// <summary>#6's break overlays. Sparse trees laid over a base fixture, never plugins in their own right.</summary>
     public string Breaks => Path.Combine(Fixtures, "breaks");
     public string BreakOverlay(string name) => Path.Combine(Breaks, name);
-    public string FixtureRepo => Path.Combine(Fixtures, "repo");
     public string Cases => Path.Combine(Root, "cases");
+
+    /// <summary>
+    /// Issue #25. Material every suite borrows, kept apart from the material one skill owns. Three
+    /// things qualify and nothing else does: the distractor catalogue layer 3 fires against, the bare
+    /// repo a contract run writes into, and the streams the offline parser tests read.
+    /// </summary>
+    public string Shared => Path.Combine(Root, "shared");
+
+    /// <summary>The twelve-skill distractor set. Descriptions only, so a run is decided on the listing.</summary>
+    public string StubCatalogue => Path.Combine(Shared, "catalogue");
+
+    /// <summary>The bare C# repo a contract run writes into, copied per run by <see cref="NewScratchRepo"/>.</summary>
+    public string FixtureRepo => Path.Combine(Shared, "repo");
+
+    public string Streams => Path.Combine(Shared, "streams");
+    public string Stream(string name) => Path.Combine(Streams, name);
+
+    /// <summary>
+    /// Real run records, written by the paid passes. NOT test data: #25 left these where they were,
+    /// because a long pass resumes by reading back what it wrote and a wrong path costs money to find.
+    /// </summary>
     public string Captured => Path.Combine(Root, "captured");
     /// <summary>Issue #24. One folder per skill under test, scanned by <see cref="SuiteDiscovery"/>.</summary>
     public string Suites => Path.Combine(Root, "skills");
