@@ -12,7 +12,9 @@ So: if you want a full catalogue, it is not here yet. If you want to work out ho
 
 ## What the research found
 
-Six results that changed the plan.
+Seven results that changed the plan.
+
+- **Per-skill usage is countable today, and the delivery route decides what you get.** `claude_code.skill_activated` carries `skill.name`, and `OTEL_LOG_TOOL_DETAILS=1` unredacts it for a private catalogue. Measured. But shipping as a plugin permanently forfeits per-skill cost attribution: on the cost and token metrics a third-party plugin's skill name is replaced with `third-party`, and that code path has no escape hatch. Meanwhile no company anywhere publishes a per-skill invocation count, and nobody retires a skill for going unused.
 
 - **The harness catches its own breaks, and tells them apart.** Break the description and layer 3 reddens at 25 of 60 while layer 4 holds at 5 of 5. Break the body and layer 4 reddens at 0 of 8 while layer 3 holds. Two controls that reworded prose around an unchanged rule moved nothing, and one of them replicated the 60 of 60 the next day. But a description only stops firing when its **subject** changes: stripping the trigger word still fired 3 of 3, and inverting the boundary still fired 2 of 3.
 - **A perfect score must not set a perfect gate.** The calibration pass scored 60 of 60 on the good fixture. Building the gate on that demands a flawless run every time, so the gate comes from the interval's lower bound instead: 53 of 60. The same 133 runs also produced zero false fires across 50 negative prompts, and showed the model treats a C# record and an interface as a class.
@@ -53,6 +55,17 @@ A second line of research, in `docs/research/`. The catalogue documents above as
 | [Agent patterns for the implement loop](docs/research/agent-patterns-for-the-implement-loop.md) | Orchestrator or daisy chain, and which mechanisms actually run today |
 | [Hooks as guardrails](docs/research/hooks-as-guardrails.md) | Every hook event in 2.1.248, what each can block, and what hooks cannot do |
 | [Ticket state as a guardrail](docs/research/ticket-state-guardrails.md) | Whether GitHub's blocking edges are machine-readable, and three traps in the way |
+
+## Knowing whether a skill earns its slot
+
+A third line, also in `docs/research/`. Once the catalogue ships, which skills does anyone actually use, and how would you know a skill was worth writing.
+
+| Document | What it answers |
+|---|---|
+| [What to measure, and how](docs/research/what-to-measure.md) | The decision. Two tables: what a machine can count, and what needs git, a survey or an eval. Start here |
+| [What we can count](docs/research/skill-usage-telemetry.md) | Every mechanism that carries a skill name, measured on the wire, and the one variable that unlocks it |
+| [Who measures it](docs/research/who-measures-skill-usage.md) | Twenty-seven companies against their own sources, and why the blanks are the finding |
+| [Buy or build](docs/research/buying-skill-telemetry.md) | Thirteen products that count skills, and the one thing none of them does |
 
 ## Two skill locations, and they are not the same thing
 
