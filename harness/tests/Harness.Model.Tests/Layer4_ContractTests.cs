@@ -7,6 +7,7 @@ namespace Harness.Model.Tests;
 public class Layer4_ContractTests(ITestOutputHelper output)
 {
     private static readonly HarnessPaths Paths = new();
+    private static readonly DiscoveredSuite Found = UnderTest.CsharpNewClass;
 
     /// <summary>Suite-wide hard stop. Ten void runs cost $2.28 on this ticket before the resample cap fired.</summary>
     private static decimal Ceiling =>
@@ -15,7 +16,7 @@ public class Layer4_ContractTests(ITestOutputHelper output)
     [LiveFact]
     public async Task The_good_fixture_holds_its_contract()
     {
-        var suite = SuiteFile.Load(Path.Combine(Paths.Cases, "csharp-new-class.json"));
+        var suite = Found.Suite;
         var c = suite.Contract[0];
         var assertions = AssertionCatalogue.Resolve(c);
         var runner = new ContractRunner(Paths);
@@ -23,7 +24,7 @@ public class Layer4_ContractTests(ITestOutputHelper output)
         var runs = int.TryParse(Environment.GetEnvironmentVariable("SKILL_HARNESS_RUNS"), out var n) ? n : c.Runs;
         var ledger = new SpendLedger(Ceiling);
         var sample = await Resampler.CollectAsync(runs, c.Cap,
-            async ct => Scoring.ScoreContract(await runner.RunAsync(suite.SkillUnderTest, c.Task, Paths.GoodPlugin, ct),
+            async ct => Scoring.ScoreContract(await runner.RunAsync(suite.SkillUnderTest, c.Task, Found.Plugin, ct),
                 suite.SkillUnderTest, assertions), ledger);
 
         foreach (var s in sample.Scores)

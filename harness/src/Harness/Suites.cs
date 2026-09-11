@@ -29,6 +29,10 @@ public sealed record DiscoveredSuite
     /// A break overlay, by the identifier an arm names. Unknown throws, for the reason the overlay
     /// builder throws on a path that matches nothing: a break that quietly resolves to the wrong
     /// material runs the wrong fixture and reports it under this suite's name.
+    ///
+    /// #26 grouped the overlays by break, so `breaks/` now has an inner level and an identifier can
+    /// land on a GROUP rather than an overlay. That is the same bug wearing a new hat, so a group is
+    /// refused here and named, rather than left to fail later as a pile of unmatched files.
     /// </summary>
     public string BreakOverlay(string id)
     {
@@ -38,6 +42,14 @@ public sealed record DiscoveredSuite
         if (!resolved.StartsWith(inside, StringComparison.Ordinal) || !Directory.Exists(resolved))
             throw new InvalidOperationException(
                 $"suite '{Name}' has no break overlay '{id}'. Overlays are resolved inside {Breaks}.");
+
+        // An overlay is laid over a plugin, so its top level is a plugin's: skills/, and nothing else
+        // the harness overlays. A folder without one holds overlays rather than being one.
+        if (!Directory.Exists(Path.Combine(resolved, SuiteDiscovery.SkillsFolder)))
+            throw new InvalidOperationException(
+                $"suite '{Name}': break overlay '{id}' has no {SuiteDiscovery.SkillsFolder}/ in it, so it groups "
+                + $"overlays rather than being one. Name one of: "
+                + $"{string.Join(", ", Directory.GetDirectories(resolved).Select(d => $"{id}/{Path.GetFileName(d)}"))}");
 
         return resolved;
     }
@@ -60,6 +72,8 @@ public sealed class SuiteDiscovery(string suitesRoot, string shippedCatalogue)
     public const string PluginFolder = "plugin";
     public const string BreaksFolder = "breaks";
     public const string RunsFolder = "runs";
+    /// <summary>A plugin's skills live here, and so do an overlay's. It is what tells an overlay from a group.</summary>
+    public const string SkillsFolder = "skills";
 
     public static SuiteDiscovery For(HarnessPaths paths) => new(paths.Suites, paths.ShippedCatalogue);
 
@@ -72,6 +86,21 @@ public sealed class SuiteDiscovery(string suitesRoot, string shippedCatalogue)
 
         return [.. Directory.GetDirectories(suitesRoot).Order(StringComparer.Ordinal).Select(Read)];
     }
+
+    /// <summary>
+    /// Issue #26. One suite by name, for a layer or a test that measures a named skill. It exists so
+    /// that naming a suite is the only thing a caller does: nobody spells out a folder, and a name
+    /// that is not on disk says so here rather than by way of a file-not-found three calls later.
+    /// </summary>
+    public DiscoveredSuite One(string name)
+    {
+        var all = Discover();
+        return all.SingleOrDefault(s => string.Equals(s.Name, name, StringComparison.Ordinal))
+            ?? throw new InvalidOperationException(
+                $"no suite named '{name}' under {suitesRoot}. Found: {(all.Count == 0 ? "nothing" : string.Join(", ", all.Select(s => s.Name)))}.");
+    }
+
+    public static DiscoveredSuite One(HarnessPaths paths, string name) => For(paths).One(name);
 
     private DiscoveredSuite Read(string dir)
     {

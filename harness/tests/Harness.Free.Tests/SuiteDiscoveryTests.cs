@@ -272,6 +272,28 @@ public class SuiteDiscoveryTests
         Assert.Equal("csharp-new-class", Assert.Single(SuiteDiscovery.For(paths).Discover()).Name);
     }
 
+    /// <summary>#26. Naming a suite is the only thing a caller does, so the name has to be checked.</summary>
+    [Fact]
+    public void One_returns_the_suite_with_that_name()
+    {
+        var root = TempDir();
+        Suite(root, "csharp-new-class");
+        Suite(root, "data-sql");
+
+        Assert.Equal("data-sql", Discovery(root).One("data-sql").Name);
+    }
+
+    [Fact]
+    public void One_throws_on_a_name_no_folder_declares_and_says_what_it_found()
+    {
+        var root = TempDir();
+        Suite(root, "csharp-new-class");
+
+        var ex = Assert.Throws<InvalidOperationException>(() => Discovery(root).One("csharp-new-clas"));
+        Assert.Contains("csharp-new-clas", ex.Message, StringComparison.Ordinal);
+        Assert.Contains("csharp-new-class", ex.Message, StringComparison.Ordinal);
+    }
+
     [Fact]
     public void A_break_overlay_resolves_by_identifier()
     {

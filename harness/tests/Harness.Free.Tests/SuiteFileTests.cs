@@ -6,6 +6,7 @@ namespace Harness.Free.Tests;
 public class SuiteFileTests
 {
     private static readonly HarnessPaths Paths = new();
+    private static readonly DiscoveredSuite Found = UnderTest.CsharpNewClass;
 
     private static string Written(string json)
     {
@@ -18,7 +19,7 @@ public class SuiteFileTests
     [Fact]
     public void The_case_file_loads_and_matches_issue_10()
     {
-        var suite = SuiteFile.Load(Path.Combine(Paths.Cases, "csharp-new-class.json"));
+        var suite = Found.Suite;
 
         Assert.Equal(10, suite.Firing.ShouldFire.Count);
         Assert.Equal(10, suite.Firing.ShouldNotFire.Count);
@@ -33,7 +34,7 @@ public class SuiteFileTests
     [Fact]
     public void Every_contract_case_names_an_assertion_set_that_exists()
     {
-        var suite = SuiteFile.Load(Path.Combine(Paths.Cases, "csharp-new-class.json"));
+        var suite = Found.Suite;
         foreach (var c in suite.Contract) Assert.NotNull(AssertionCatalogue.Resolve(c));
     }
 
@@ -41,7 +42,7 @@ public class SuiteFileTests
     [Fact]
     public void The_case_file_declares_where_its_skill_under_test_lives()
     {
-        var suite = SuiteFile.Load(Path.Combine(Paths.Cases, "csharp-new-class.json"));
+        var suite = Found.Suite;
 
         Assert.Equal(SkillSource.Fixture, suite.Source);
     }
@@ -77,7 +78,7 @@ public class SuiteFileTests
     [Fact]
     public void No_positive_prompt_names_the_skill_or_says_test_first()
     {
-        var suite = SuiteFile.Load(Path.Combine(Paths.Cases, "csharp-new-class.json"));
+        var suite = Found.Suite;
         foreach (var c in suite.Firing.ShouldFire)
         {
             Assert.DoesNotContain(suite.SkillUnderTest, c.Prompt, StringComparison.OrdinalIgnoreCase);

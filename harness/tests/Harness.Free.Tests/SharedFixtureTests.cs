@@ -60,14 +60,14 @@ public class SharedFixtureTests
     }
 
     /// <summary>
-    /// #25 draws one line and no more. A run record is written by a paid pass, and the long passes
-    /// resume by reading back what they wrote, so moving one costs money to discover.
+    /// The line #25 drew, from the other side. Only material every suite borrows lives here, so a
+    /// per-skill folder appearing under shared/ means one skill's fixture is being read as everyone's.
     /// </summary>
     [Fact]
-    public void Real_run_records_are_untouched_and_still_sit_in_captured()
+    public void Nothing_but_the_three_borrowed_fixtures_sits_under_shared()
     {
-        Assert.Equal(Path.Combine(Paths.Root, "captured"), Paths.Captured);
-        Assert.True(Directory.Exists(Path.Combine(Paths.Captured, "breakage-20260909-090853")));
-        Assert.True(File.Exists(Path.Combine(Paths.Captured, "calibration-run-1.jsonl")));
+        Assert.Equal(
+            ["catalogue", "repo", "streams"],
+            Directory.GetDirectories(Paths.Shared).Select(Path.GetFileName).Order());
     }
 }

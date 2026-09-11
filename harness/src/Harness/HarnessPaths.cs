@@ -16,13 +16,6 @@ public sealed class HarnessPaths
     public string Root { get; }
     public string Scratch { get; }
 
-    public string Fixtures => Path.Combine(Root, "fixtures");
-    public string GoodPlugin => Path.Combine(Fixtures, "good");
-    /// <summary>#6's break overlays. Sparse trees laid over a base fixture, never plugins in their own right.</summary>
-    public string Breaks => Path.Combine(Fixtures, "breaks");
-    public string BreakOverlay(string name) => Path.Combine(Breaks, name);
-    public string Cases => Path.Combine(Root, "cases");
-
     /// <summary>
     /// Issue #25. Material every suite borrows, kept apart from the material one skill owns. Three
     /// things qualify and nothing else does: the distractor catalogue layer 3 fires against, the bare
@@ -40,11 +33,11 @@ public sealed class HarnessPaths
     public string Stream(string name) => Path.Combine(Streams, name);
 
     /// <summary>
-    /// Real run records, written by the paid passes. NOT test data: #25 left these where they were,
-    /// because a long pass resumes by reading back what it wrote and a wrong path costs money to find.
+    /// Issue #24. One folder per skill under test, scanned by <see cref="SuiteDiscovery"/>. Everything
+    /// one skill is tested on hangs off its own folder: the suite file, the fixture plugin, the break
+    /// overlays and the records its paid passes wrote. Opening one folder answers what the skill is
+    /// tested on, which four top-level folders and a filename typed into fourteen files did not.
     /// </summary>
-    public string Captured => Path.Combine(Root, "captured");
-    /// <summary>Issue #24. One folder per skill under test, scanned by <see cref="SuiteDiscovery"/>.</summary>
     public string Suites => Path.Combine(Root, "skills");
 
     /// <summary>

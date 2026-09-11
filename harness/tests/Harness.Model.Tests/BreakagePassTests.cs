@@ -16,21 +16,25 @@ namespace Harness.Model.Tests;
 public class BreakagePassTests(ITestOutputHelper output)
 {
     private static readonly HarnessPaths Paths = new();
+    private static readonly DiscoveredSuite Found = UnderTest.CsharpNewClass;
 
     /// <summary>#11 fixed the suite ceiling at $50. Notional, but it still bounds a runaway.</summary>
     private static decimal Ceiling =>
         decimal.TryParse(Environment.GetEnvironmentVariable("SKILL_HARNESS_CEILING_USD"), out var c) ? c : 50.00m;
 
     /// <summary>
-    /// Resolved against the harness root, not the process working directory. MEASURED the hard way:
-    /// the test host runs from its own build output, so a relative override put an entire pass's
-    /// journals under bin/Debug where nobody would look for them.
+    /// Under the suite this pass measured, per #26. A run record is evidence about one skill, and a
+    /// shared folder read as everyone's.
+    ///
+    /// An override is resolved against the harness root, not the process working directory. MEASURED
+    /// the hard way: the test host runs from its own build output, so a relative override put an
+    /// entire pass's journals under bin/Debug where nobody would look for them.
     /// </summary>
     private static string RunDirectory
     {
         get
         {
-            var stamp = Path.Combine(Paths.Captured, $"breakage-{DateTime.UtcNow:yyyyMMdd-HHmmss}");
+            var stamp = Path.Combine(Found.RunRecords, $"breakage-{DateTime.UtcNow:yyyyMMdd-HHmmss}");
             if (Environment.GetEnvironmentVariable("SKILL_HARNESS_BREAK_DIR") is not { Length: > 0 } d) return stamp;
             return Path.IsPathRooted(d) ? d : Path.GetFullPath(Path.Combine(Paths.Root, d));
         }
@@ -39,11 +43,11 @@ public class BreakagePassTests(ITestOutputHelper output)
     [BreakageFact]
     public async Task Break_the_fixture_two_ways_and_see_which_layer_notices()
     {
-        var suite = SuiteFile.Load(Path.Combine(Paths.Cases, "csharp-new-class.json"));
+        var suite = Found.Suite;
         var dir = RunDirectory;
         Directory.CreateDirectory(dir);
 
-        var pass = new BreakagePass(Paths, suite);
+        var pass = new BreakagePass(Paths, Found);
         // One ledger across every arm. Four separate ceilings would let the pass spend four times
         // what #11 allowed while each arm reported itself as within budget.
         var ledger = new SpendLedger(Ceiling);

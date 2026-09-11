@@ -16,7 +16,7 @@ A Claude Code plugin marketplace for sharing agent skills across teams. Today th
 ```
 claude plugin validate .                        # marketplace manifest
 claude plugin validate ./plugins/core           # plugin manifest
-dotnet test harness/tests/Harness.Free.Tests    # 196 tests, no network, ~1s
+dotnet test harness/tests/Harness.Free.Tests    # 218 tests, no network, ~1s
 ```
 
 Run all three before you commit. `.github/workflows/free-gate.yml` runs them again on every push to `main` and every pull request, on a pinned runner with no credential. Layers 3 and 4 get no workflow, and the header of that file says why.
@@ -43,7 +43,7 @@ Run any of it only when the user asks for it, and report the cost the run prints
 
 ## `harness/` is the gate
 
-Layer 3 is red below 53 of 60 pooled should-fire runs, a gate measured twice across 120 runs against the frozen good fixture. `marketplace.json` does not reference it and nothing under `harness/fixtures/` is a real skill. Read `harness/README.md` before changing anything in there, and for what the other layers check.
+Layer 3 is red below 53 of 60 pooled should-fire runs, a gate measured twice across 120 runs against the frozen good fixture. `marketplace.json` does not reference it and nothing under `harness/skills/` or `harness/shared/` is a real skill. `harness/skills/` holds one folder per skill under test, with its suite file, its fixture plugin, its break overlays and its run records. Read `harness/README.md` before changing anything in there, and for what the other layers check.
 
 ## Writing a catalogue skill
 

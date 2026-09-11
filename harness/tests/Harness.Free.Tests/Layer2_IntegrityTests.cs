@@ -80,14 +80,15 @@ public class Layer2_IntegrityTests
     }
 
     /// <summary>
-    /// Issue #8 item 1: a fixture must never be mistaken for catalogue content. #25 split the fixtures
-    /// across two roots, so both are swept here. Sweeping one would have quietly stopped checking the
-    /// twelve distractors, which carry the names most likely to collide with a real skill.
+    /// Issue #8 item 1: a fixture must never be mistaken for catalogue content. Fixture skills sit in
+    /// two roots, the suite folders and the shared material, so both are swept here. Sweeping one
+    /// would quietly stop checking the twelve distractors, which carry the names most likely to
+    /// collide with a real skill.
     /// </summary>
     [Fact]
     public void No_fixture_skill_leaks_into_the_shipped_catalogue()
     {
-        var fixtures = new[] { Paths.Fixtures, Paths.Shared }
+        var fixtures = new[] { Paths.Suites, Paths.Shared }
             .SelectMany(Catalogue.Load).Select(s => s.Name).ToHashSet(StringComparer.Ordinal);
         Assert.NotEmpty(fixtures);
 

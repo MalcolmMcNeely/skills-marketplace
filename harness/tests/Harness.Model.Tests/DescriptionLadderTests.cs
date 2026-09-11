@@ -16,6 +16,7 @@ namespace Harness.Model.Tests;
 public class DescriptionLadderTests(ITestOutputHelper output)
 {
     private static readonly HarnessPaths Paths = new();
+    private static readonly DiscoveredSuite Found = UnderTest.CsharpNewClass;
 
     private static readonly string[] Candidates = ["vague-label", "boundary-inverted", "wrong-subject"];
 
@@ -25,7 +26,7 @@ public class DescriptionLadderTests(ITestOutputHelper output)
     [LadderFact]
     public async Task Screen_the_description_break_candidates()
     {
-        var suite = SuiteFile.Load(Path.Combine(Paths.Cases, "csharp-new-class.json"));
+        var suite = Found.Suite;
         var builder = new FixtureBuilder(Paths);
         var ledger = new SpendLedger(8.00m);
         var probe = suite.Firing.ShouldFire[0];
@@ -37,7 +38,7 @@ public class DescriptionLadderTests(ITestOutputHelper output)
 
         foreach (var candidate in Candidates)
         {
-            var overlay = Path.Combine(Paths.BreakOverlay("candidates"), candidate);
+            var overlay = Found.BreakOverlay($"candidates/{candidate}");
             var catalogue = builder.Build(Paths.StubCatalogue, overlay);
             var runner = new FiringRunner(Paths, catalogue);
 
@@ -48,7 +49,7 @@ public class DescriptionLadderTests(ITestOutputHelper output)
             var fired = valid.Count(s => s.Verdict == Verdict.Held);
             results.Add((candidate, fired, valid.Count, SpendTotal.Of(sample.Scores.Select(s => s.Cost))));
 
-            output.WriteLine($"{candidate,-18} fired {fired}/{valid.Count}  {FixtureBuilder.DescriptionOf(Path.Combine(overlay, "skills", "csharp-new-class", "SKILL.md"))}");
+            output.WriteLine($"{candidate,-18} fired {fired}/{valid.Count}  {FixtureBuilder.DescriptionOf(Path.Combine(overlay, "skills", suite.SkillUnderTest, "SKILL.md"))}");
             foreach (var s in sample.Scores) output.WriteLine($"    {s.Verdict,-9} {s.Detail}  {s.Cost}");
         }
 

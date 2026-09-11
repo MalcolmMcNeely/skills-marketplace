@@ -10,17 +10,18 @@ namespace Harness.Model.Tests;
 public class BreakageSmokeTests(ITestOutputHelper output)
 {
     private static readonly HarnessPaths Paths = new();
+    private static readonly DiscoveredSuite Found = UnderTest.CsharpNewClass;
 
     [LiveFact]
     public async Task The_broken_description_reaches_the_model_and_the_broken_body_reaches_disk()
     {
-        var suite = SuiteFile.Load(Path.Combine(Paths.Cases, "csharp-new-class.json"));
+        var suite = Found.Suite;
         var builder = new FixtureBuilder(Paths);
         var ledger = new SpendLedger(2.00m);
 
         // Layer 3, one run against the broken description. Expected to MISS, but the smoke test is
         // agnostic: what it proves is that a run completes and scores against the overlaid catalogue.
-        var catalogue = builder.Build(Paths.StubCatalogue, Paths.BreakOverlay("description-catalogue"));
+        var catalogue = builder.Build(Paths.StubCatalogue, Found.BreakOverlay("description/catalogue"));
         var positive = suite.Firing.ShouldFire[0];
         var firing = Scoring.ScoreFiring(
             await new FiringRunner(Paths, catalogue).RunAsync(positive.Prompt, CaseKind.ShouldFire), positive.Expect);
@@ -29,7 +30,7 @@ public class BreakageSmokeTests(ITestOutputHelper output)
 
         // Layer 4, one run against the broken body. This one has a definite expectation: the fixture
         // must still LOAD, or every run in the real pass voids on the same precondition.
-        var plugin = builder.Build(Paths.GoodPlugin, Paths.BreakOverlay("body-plugin"));
+        var plugin = builder.Build(Found.Plugin, Found.BreakOverlay("body/plugin"));
         var c = suite.Contract[0];
         var contract = Scoring.ScoreContract(
             await new ContractRunner(Paths).RunAsync(suite.SkillUnderTest, c.Task, plugin),

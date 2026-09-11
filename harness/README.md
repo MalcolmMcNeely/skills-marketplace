@@ -5,7 +5,7 @@ free and run on every push and every pull request. Layers 3 and 4 call a real mo
 run on a laptop when somebody asks for them.
 
 The harness is not shipped. `.claude-plugin/marketplace.json` does not reference it, and nothing
-under `fixtures/` is a real skill.
+under `skills/` or `shared/` is a real skill.
 
 ## What each layer checks
 
@@ -44,8 +44,9 @@ Two locks, because one is forgettable.
 
 The long passes carry a third lock each, so neither is tripped by running the project:
 `SKILL_HARNESS_CALIBRATE=1` for #12 (133 runs, 02:08:14 measured), `SKILL_HARNESS_BREAK=1` for #6
-(256 runs, 03:19:34 measured) and `SKILL_HARNESS_LADDER=1` for #6's 9-run screen. Both long passes
-resume: point `SKILL_HARNESS_JOURNAL` or `SKILL_HARNESS_BREAK_DIR` at the run that stopped.
+(256 runs, 03:19:34 measured) and `SKILL_HARNESS_LADDER=1` for #6's 9-run screen. The two long
+passes write into `skills/<name>/runs/`, beside the suite they measured, and both resume: point
+`SKILL_HARNESS_JOURNAL` or `SKILL_HARNESS_BREAK_DIR` at the run that stopped.
 **Give either an absolute path.** A relative one resolves against the test host's working
 directory, which is the build output folder, not the repo root.
 
@@ -56,14 +57,26 @@ directory, which is the build output folder, not the repo root.
 | `src/Harness/` | Stream parsing, verdicts, pooling, the two run shapes |
 | `tests/Harness.Free.Tests/` | Layers 1 and 2, plus offline parser tests against captured streams |
 | `tests/Harness.Model.Tests/` | Layers 3 and 4. Real `claude -p` runs |
-| `cases/` | Case files. Data |
-| `fixtures/good/` | The good `csharp-new-class` plugin, loaded with `--plugin-dir` |
-| `fixtures/breaks/` | #6's break overlays. Sparse trees laid over a base fixture at run time |
+| `skills/<name>/` | One folder per skill under test. Everything that skill is tested on |
 | `shared/catalogue/` | Twelve description-only stubs for layer 3 |
 | `shared/repo/` | The bare .NET fixture repo from `docs/baseline-test-first.md` |
 | `shared/streams/` | Real stream-json, so the parser tests need no model call |
-| `captured/` | Run records written by the paid passes |
 | `tools/probe/` | One-shot debugging runner |
+
+## What a suite folder holds
+
+`SuiteDiscovery` scans `skills/` and returns one suite per folder. Nothing else decides which skills
+are under test, and no layer spells out a path inside one.
+
+| Path | What |
+|---|---|
+| `suite.json` | The cases. Data |
+| `plugin/` | The skill under test as a loadable plugin, for `--plugin-dir`. Fixture suites only |
+| `breaks/` | #6's break overlays, grouped by the break. Sparse trees laid over a base at run time |
+| `runs/` | Journals and rendered reports written by this suite's paid passes |
+
+A suite declares where its skill lives, so `plugin/` is not always there. A `catalogue` suite reads
+the skill from `plugins/` at run time instead. See **What a case looks like** below.
 
 ## The exit-code trap, closed by construction
 

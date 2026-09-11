@@ -80,7 +80,8 @@ public class PlannedStopRuleTests
 {
     private static readonly HarnessPaths Paths = new();
 
-    private static SuiteFile Suite => SuiteFile.Load(Path.Combine(Paths.Cases, "csharp-new-class.json"));
+    private static readonly DiscoveredSuite Found = UnderTest.CsharpNewClass;
+    private static SuiteFile Suite => Found.Suite;
 
     [Fact]
     public void Every_step_of_a_full_plan_carries_the_stop_rule_its_kind_asks_for()

@@ -23,7 +23,7 @@ Three assumptions in the plan were wrong, and each was caught by running rather 
 | 3 | Reading the stream | Every `Skill` invocation is recorded, deduplicated, with the plugin prefix stripped. `FiredSkillsRaw` keeps the originals |
 | 4 | The exit-code trap | Closed by construction. Scoring takes a `ValidRun`, and the only way to obtain one is `RunOutcome.TryGetValid` |
 | 5 | Case format | JSON for the data, a named C# class for the assertions |
-| 6 | Fixture loading | `--plugin-dir`, one directory per fixture, under `harness/fixtures/` |
+| 6 | Fixture loading | `--plugin-dir`, one directory per fixture, under the suite that owns it in `harness/skills/` |
 | 7 | Two run shapes | `FiringRunner` and `ContractRunner` are separate types, so a case cannot reach the wrong one |
 | 8 | Verdicts and resampling | `Resampler.CollectAsync` runs until it has enough valid runs, capped, and now also stops on a suite-wide spend ceiling |
 

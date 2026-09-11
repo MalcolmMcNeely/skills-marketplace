@@ -7,6 +7,7 @@ namespace Harness.Model.Tests;
 public class Layer3_FiringTests(ITestOutputHelper output)
 {
     private static readonly HarnessPaths Paths = new();
+    private static readonly DiscoveredSuite Found = UnderTest.CsharpNewClass;
 
     /// <summary>Suite-wide hard stop. Ten void runs cost $2.28 on this ticket before the resample cap fired.</summary>
     private static decimal Ceiling =>
@@ -15,7 +16,7 @@ public class Layer3_FiringTests(ITestOutputHelper output)
     [LiveFact]
     public async Task One_positive_case_end_to_end()
     {
-        var suite = SuiteFile.Load(Path.Combine(Paths.Cases, "csharp-new-class.json"));
+        var suite = Found.Suite;
         var c = suite.Firing.ShouldFire[0];
         var runner = new FiringRunner(Paths);
 

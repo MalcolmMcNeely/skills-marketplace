@@ -280,7 +280,8 @@ public class CalibrationReportTests
 {
     private static readonly HarnessPaths Paths = new();
 
-    private static SuiteFile Suite => SuiteFile.Load(Path.Combine(Paths.Cases, "csharp-new-class.json"));
+    private static readonly DiscoveredSuite Found = UnderTest.CsharpNewClass;
+    private static SuiteFile Suite => Found.Suite;
 
     [Fact]
     public void P_good_pools_only_the_should_fire_runs()

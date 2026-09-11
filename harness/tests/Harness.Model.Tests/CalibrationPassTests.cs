@@ -16,6 +16,7 @@ namespace Harness.Model.Tests;
 public class CalibrationPassTests(ITestOutputHelper output)
 {
     private static readonly HarnessPaths Paths = new();
+    private static readonly DiscoveredSuite Found = UnderTest.CsharpNewClass;
 
     /// <summary>#11 fixed the suite ceiling at $50. Notional, but it still bounds a runaway.</summary>
     private static decimal Ceiling =>
@@ -24,12 +25,12 @@ public class CalibrationPassTests(ITestOutputHelper output)
     private static string JournalPath =>
         Environment.GetEnvironmentVariable("SKILL_HARNESS_JOURNAL") is { Length: > 0 } p
             ? p
-            : Path.Combine(Paths.Captured, $"calibration-{DateTime.UtcNow:yyyyMMdd-HHmmss}.jsonl");
+            : Path.Combine(Found.RunRecords, $"calibration-{DateTime.UtcNow:yyyyMMdd-HHmmss}.jsonl");
 
     [CalibrationFact]
     public async Task Calibrate_the_gate_against_the_good_fixture()
     {
-        var suite = SuiteFile.Load(Path.Combine(Paths.Cases, "csharp-new-class.json"));
+        var suite = Found.Suite;
         var journalPath = JournalPath;
         var pass = new CalibrationPass(Paths, suite);
         var ledger = new SpendLedger(Ceiling);

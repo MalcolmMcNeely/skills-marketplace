@@ -11,11 +11,13 @@ namespace Harness.Free.Tests;
 public class BreakOverlayTests
 {
     private static readonly HarnessPaths Paths = new();
+    private static readonly DiscoveredSuite Found = UnderTest.CsharpNewClass;
+    private static string Skill => Found.Suite.SkillUnderTest;
 
-    private static string Good => Path.Combine(Paths.GoodPlugin, "skills", "csharp-new-class", "SKILL.md");
-    private static string Stub => Path.Combine(Paths.StubCatalogue, "skills", "csharp-new-class", "SKILL.md");
-    private static string Overlay(string name) =>
-        Path.Combine(Paths.BreakOverlay(name), "skills", "csharp-new-class", "SKILL.md");
+    private static string Good => Found.SkillFile;
+    private static string Stub => Path.Combine(Paths.StubCatalogue, "skills", Skill, "SKILL.md");
+    private static string Overlay(string id) =>
+        Path.Combine(Found.BreakOverlay(id), "skills", Skill, "SKILL.md");
 
     /// <summary>
     /// The description break must change the DESCRIPTION and nothing else. If it moved the body too,
@@ -24,14 +26,14 @@ public class BreakOverlayTests
     [Fact]
     public void The_description_break_moves_only_the_description()
     {
-        Assert.NotEqual(FixtureBuilder.DescriptionOf(Stub), FixtureBuilder.DescriptionOf(Overlay("description-catalogue")));
-        Assert.Equal(FixtureBuilder.BodyOf(Stub), FixtureBuilder.BodyOf(Overlay("description-catalogue")));
+        Assert.NotEqual(FixtureBuilder.DescriptionOf(Stub), FixtureBuilder.DescriptionOf(Overlay("description/catalogue")));
+        Assert.Equal(FixtureBuilder.BodyOf(Stub), FixtureBuilder.BodyOf(Overlay("description/catalogue")));
 
         // The layer 4 half of the same break: the broken description, over a body that still works.
         Assert.Equal(
-            FixtureBuilder.DescriptionOf(Overlay("description-catalogue")),
-            FixtureBuilder.DescriptionOf(Overlay("description-plugin")));
-        Assert.Equal(FixtureBuilder.BodyOf(Good), FixtureBuilder.BodyOf(Overlay("description-plugin")));
+            FixtureBuilder.DescriptionOf(Overlay("description/catalogue")),
+            FixtureBuilder.DescriptionOf(Overlay("description/plugin")));
+        Assert.Equal(FixtureBuilder.BodyOf(Good), FixtureBuilder.BodyOf(Overlay("description/plugin")));
     }
 
     /// <summary>
@@ -41,15 +43,15 @@ public class BreakOverlayTests
     [Fact]
     public void The_body_break_moves_only_the_body()
     {
-        Assert.Equal(FixtureBuilder.DescriptionOf(Good), FixtureBuilder.DescriptionOf(Overlay("body-plugin")));
-        Assert.NotEqual(FixtureBuilder.BodyOf(Good), FixtureBuilder.BodyOf(Overlay("body-plugin")));
+        Assert.Equal(FixtureBuilder.DescriptionOf(Good), FixtureBuilder.DescriptionOf(Overlay("body/plugin")));
+        Assert.NotEqual(FixtureBuilder.BodyOf(Good), FixtureBuilder.BodyOf(Overlay("body/plugin")));
     }
 
     /// <summary>#4 asked for a SOFT break: the rule reversed and still argued for, not deleted.</summary>
     [Fact]
     public void The_body_break_is_soft_and_still_asks_for_both_files()
     {
-        var body = FixtureBuilder.BodyOf(Overlay("body-plugin"));
+        var body = FixtureBuilder.BodyOf(Overlay("body/plugin"));
 
         // Still asks for both files and a [Fact], so guards A3, A4 and A5 can still pass.
         Assert.Contains("src/Foo.cs", body, StringComparison.Ordinal);
@@ -64,11 +66,11 @@ public class BreakOverlayTests
 
     /// <summary>A control changes prose and nothing else. A control that moved a rule is a third break.</summary>
     [Theory]
-    [InlineData("control-catalogue")]
-    [InlineData("control-plugin")]
+    [InlineData("control/catalogue")]
+    [InlineData("control/plugin")]
     public void A_control_keeps_the_description_byte_identical(string overlay)
     {
-        var baseline = overlay == "control-catalogue" ? Stub : Good;
+        var baseline = overlay == "control/catalogue" ? Stub : Good;
         Assert.Equal(FixtureBuilder.DescriptionOf(baseline), FixtureBuilder.DescriptionOf(Overlay(overlay)));
         Assert.NotEqual(FixtureBuilder.BodyOf(baseline), FixtureBuilder.BodyOf(Overlay(overlay)));
     }
@@ -77,7 +79,7 @@ public class BreakOverlayTests
     [Fact]
     public void The_layer_4_control_keeps_both_rules()
     {
-        var body = FixtureBuilder.BodyOf(Overlay("control-plugin"));
+        var body = FixtureBuilder.BodyOf(Overlay("control/plugin"));
 
         Assert.Contains("must exist", body, StringComparison.Ordinal);
         Assert.Contains("before `src/Foo.cs`", body, StringComparison.Ordinal);
@@ -85,13 +87,22 @@ public class BreakOverlayTests
         Assert.DoesNotContain("Start with the class", body, StringComparison.Ordinal);
     }
 
+    /// <summary>
+    /// Built, not merely found. An identifier can resolve to a folder that is real and still wrong,
+    /// and #26's grouping added a second way for that to happen. Building each overlay over the base
+    /// its own arm runs it on is the only check that catches both, and it costs milliseconds.
+    /// </summary>
     [Fact]
-    public void Every_arm_in_the_plan_names_an_overlay_that_exists()
+    public void Every_arm_in_the_plan_applies_over_the_base_that_arm_runs_it_on()
     {
+        var builder = new FixtureBuilder(Paths);
+
         foreach (var arm in BreakageArm.Plan)
         {
-            foreach (var overlay in new[] { arm.FiringOverlay, arm.ContractOverlay }.Where(o => o is not null))
-                Assert.True(Directory.Exists(Paths.BreakOverlay(overlay!)), $"{arm.Id}: missing overlay {overlay}");
+            if (arm.FiringOverlay is { } firing)
+                builder.Build(Paths.StubCatalogue, Found.BreakOverlay(firing));
+            if (arm.ContractOverlay is { } contract)
+                builder.Build(Found.Plugin, Found.BreakOverlay(contract));
         }
     }
 
@@ -123,6 +134,7 @@ public class BreakOverlayTests
 public class FixtureBuilderTests
 {
     private static readonly HarnessPaths Paths = new();
+    private static readonly DiscoveredSuite Found = UnderTest.CsharpNewClass;
 
     private static string MakeBase()
     {
@@ -191,34 +203,35 @@ public class FixtureBuilderTests
 
     /// <summary>Every real overlay must apply cleanly over its declared base. Checked before any run.</summary>
     [Theory]
-    [InlineData("description-catalogue", false)]
-    [InlineData("control-catalogue", false)]
-    [InlineData("description-plugin", true)]
-    [InlineData("body-plugin", true)]
-    [InlineData("control-plugin", true)]
-    public void Every_real_overlay_applies_over_its_base(string overlay, bool overGoodPlugin)
+    [InlineData("description/catalogue", false)]
+    [InlineData("control/catalogue", false)]
+    [InlineData("description/plugin", true)]
+    [InlineData("body/plugin", true)]
+    [InlineData("control/plugin", true)]
+    public void Every_real_overlay_applies_over_its_base(string overlay, bool overSuitePlugin)
     {
         var builder = new FixtureBuilder(Paths);
-        var baseDir = overGoodPlugin ? Paths.GoodPlugin : Paths.StubCatalogue;
+        var baseDir = overSuitePlugin ? Found.Plugin : Paths.StubCatalogue;
+        var skill = Path.Combine("skills", Found.Suite.SkillUnderTest, "SKILL.md");
 
-        var built = builder.Build(baseDir, Paths.BreakOverlay(overlay));
+        var built = builder.Build(baseDir, Found.BreakOverlay(overlay));
 
         Assert.True(File.Exists(Path.Combine(built, ".claude-plugin", "plugin.json")));
         Assert.Equal(
-            File.ReadAllText(Path.Combine(Paths.BreakOverlay(overlay), "skills", "csharp-new-class", "SKILL.md")),
-            File.ReadAllText(Path.Combine(built, "skills", "csharp-new-class", "SKILL.md")));
+            File.ReadAllText(Path.Combine(Found.BreakOverlay(overlay), skill)),
+            File.ReadAllText(Path.Combine(built, skill)));
     }
 
-    /// <summary>body-plugin doubles as a layer 3 overlay, so it has to apply over the catalogue too.</summary>
+    /// <summary>The body break doubles as a layer 3 overlay, so it has to apply over the catalogue too.</summary>
     [Fact]
     public void The_body_break_applies_over_the_stub_catalogue_as_well()
     {
-        var built = new FixtureBuilder(Paths).Build(Paths.StubCatalogue, Paths.BreakOverlay("body-plugin"));
+        var built = new FixtureBuilder(Paths).Build(Paths.StubCatalogue, Found.BreakOverlay("body/plugin"));
 
         Assert.Equal(12, Directory.GetDirectories(Path.Combine(built, "skills")).Length);
         Assert.Equal(
-            FixtureBuilder.DescriptionOf(Path.Combine(Paths.GoodPlugin, "skills", "csharp-new-class", "SKILL.md")),
-            FixtureBuilder.DescriptionOf(Path.Combine(built, "skills", "csharp-new-class", "SKILL.md")));
+            FixtureBuilder.DescriptionOf(Found.SkillFile),
+            FixtureBuilder.DescriptionOf(Path.Combine(built, "skills", Found.Suite.SkillUnderTest, "SKILL.md")));
     }
 }
 
@@ -229,7 +242,8 @@ public class FixtureBuilderTests
 public class BreakageReportTests
 {
     private static readonly HarnessPaths Paths = new();
-    private static SuiteFile Suite => SuiteFile.Load(Path.Combine(Paths.Cases, "csharp-new-class.json"));
+    private static readonly DiscoveredSuite Found = UnderTest.CsharpNewClass;
+    private static SuiteFile Suite => Found.Suite;
 
     private static string Journal(params string[] lines)
     {
@@ -425,7 +439,8 @@ public class BreakageReportTests
 public class FiringPlanShapeTests
 {
     private static readonly HarnessPaths Paths = new();
-    private static SuiteFile Suite => SuiteFile.Load(Path.Combine(Paths.Cases, "csharp-new-class.json"));
+    private static readonly DiscoveredSuite Found = UnderTest.CsharpNewClass;
+    private static SuiteFile Suite => Found.Suite;
 
     private static int Runs(FiringPlanShape shape) =>
         new CalibrationPass(Paths, Suite, null, shape).Plan().Sum(s => s.Runs);
@@ -479,7 +494,8 @@ public class FiringPlanShapeTests
 public class CaseKindTests
 {
     private static readonly HarnessPaths Paths = new();
-    private static SuiteFile Suite => SuiteFile.Load(Path.Combine(Paths.Cases, "csharp-new-class.json"));
+    private static readonly DiscoveredSuite Found = UnderTest.CsharpNewClass;
+    private static SuiteFile Suite => Found.Suite;
     private static CalibrationPass Pass => new(Paths, Suite);
     private static List<CalibrationPass.Step> FullPlan => [.. Pass.Plan()];
 
