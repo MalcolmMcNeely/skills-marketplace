@@ -25,6 +25,8 @@ public sealed class HarnessPaths
     public string FixtureRepo => Path.Combine(Fixtures, "repo");
     public string Cases => Path.Combine(Root, "cases");
     public string Captured => Path.Combine(Root, "captured");
+    /// <summary>Issue #24. One folder per skill under test, scanned by <see cref="SuiteDiscovery"/>.</summary>
+    public string Suites => Path.Combine(Root, "skills");
 
     /// <summary>
     /// The repo the harness sits inside. Three callers were walking ".." by hand, which is the interface

@@ -13,13 +13,26 @@ public sealed record SuiteFile
 {
     [JsonPropertyName("suite")] public required string Suite { get; init; }
     [JsonPropertyName("skillUnderTest")] public required string SkillUnderTest { get; init; }
+    /// <summary>Issue #24. Where the skill under test lives. Declared, never inferred.</summary>
+    [JsonPropertyName("source")] public required SkillSource Source { get; init; }
     [JsonPropertyName("pGood")] public double PGood { get; init; } = 0.67;
     [JsonPropertyName("firing")] public FiringSuite Firing { get; init; } = new();
     [JsonPropertyName("contract")] public IReadOnlyList<ContractCase> Contract { get; init; } = [];
 
-    public static SuiteFile Load(string path) =>
-        JsonSerializer.Deserialize<SuiteFile>(File.ReadAllText(path), Options)
-        ?? throw new InvalidOperationException($"empty suite file: {path}");
+    public static SuiteFile Load(string path)
+    {
+        try
+        {
+            return JsonSerializer.Deserialize<SuiteFile>(File.ReadAllText(path), Options)
+                ?? throw new InvalidOperationException($"empty suite file: {path}");
+        }
+        // A missing field or an unknown source reads as a type name and no path, which names nothing
+        // useful when discovery is reading one suite folder out of several.
+        catch (JsonException ex)
+        {
+            throw new InvalidOperationException($"unreadable suite file: {path}. {ex.Message}", ex);
+        }
+    }
 
     private static readonly JsonSerializerOptions Options = new()
     {
@@ -27,6 +40,20 @@ public sealed record SuiteFile
         AllowTrailingCommas = true,
         PropertyNameCaseInsensitive = true,
     };
+}
+
+/// <summary>
+/// Issue #24. Where a suite's skill under test lives. Two values, and neither is inferred.
+///
+/// A fixture skill sits inside the suite folder, so a deliberately broken one can never be mistaken
+/// for catalogue content. A catalogue skill is read from <c>plugins/</c> at run time and never
+/// copied, because a copy drifts the moment the original is edited.
+/// </summary>
+[JsonConverter(typeof(JsonStringEnumConverter<SkillSource>))]
+public enum SkillSource
+{
+    Fixture,
+    Catalogue,
 }
 
 /// <summary>

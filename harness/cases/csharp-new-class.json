@@ -1,6 +1,7 @@
 {
   "suite": "csharp-new-class",
   "skillUnderTest": "csharp-new-class",
+  "source": "fixture",
   "pGood": 0.940,
 
   "firing": {

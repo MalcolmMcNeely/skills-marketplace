@@ -1,0 +1,154 @@
+namespace Harness;
+
+/// <summary>
+/// Issue #24. One suite, as found on disk: the name, the parsed file, and every path the suite owns.
+///
+/// A layer asks this for a path and never assembles one. That is the whole point of the type: the
+/// suite folder shape is known in one place, so the next layout change is one file.
+/// </summary>
+public sealed record DiscoveredSuite
+{
+    /// <summary>The folder name, which is also the declared suite name. Discovery refuses a disagreement.</summary>
+    public required string Name { get; init; }
+    public required string Root { get; init; }
+    public required SuiteFile Suite { get; init; }
+
+    /// <summary>The loadable plugin root, for <c>--plugin-dir</c>.</summary>
+    public required string Plugin { get; init; }
+
+    /// <summary>The folder holding the SKILL.md under test.</summary>
+    public required string Skill { get; init; }
+
+    public string SkillFile => Path.Combine(Skill, SuiteDiscovery.SkillFileName);
+    public string Breaks => Path.Combine(Root, SuiteDiscovery.BreaksFolder);
+
+    /// <summary>Where a pass writes its journal and its rendered report. Created by the pass, not by discovery.</summary>
+    public string RunRecords => Path.Combine(Root, SuiteDiscovery.RunsFolder);
+
+    /// <summary>
+    /// A break overlay, by the identifier an arm names. Unknown throws, for the reason the overlay
+    /// builder throws on a path that matches nothing: a break that quietly resolves to the wrong
+    /// material runs the wrong fixture and reports it under this suite's name.
+    /// </summary>
+    public string BreakOverlay(string id)
+    {
+        var resolved = Path.GetFullPath(Path.Combine(Breaks, id));
+        var inside = Path.GetFullPath(Breaks) + Path.DirectorySeparatorChar;
+
+        if (!resolved.StartsWith(inside, StringComparison.Ordinal) || !Directory.Exists(resolved))
+            throw new InvalidOperationException(
+                $"suite '{Name}' has no break overlay '{id}'. Overlays are resolved inside {Breaks}.");
+
+        return resolved;
+    }
+}
+
+/// <summary>
+/// Issue #24. Folder to suite. Every layer, every long pass and every free test that reads a suite
+/// comes through here, so the set of skills under test is decided by the filesystem rather than by a
+/// filename typed into fourteen test files.
+///
+/// STRICT on purpose. A folder with no suite file, a declared name that disagrees with its folder, a
+/// suite with no cases and a suite naming an assertion that does not exist are each an error rather
+/// than a skip. Every one of them is a silent pass waiting to happen, which is the failure this
+/// harness exists to prevent.
+/// </summary>
+public sealed class SuiteDiscovery(string suitesRoot, string shippedCatalogue)
+{
+    public const string SuiteFileName = "suite.json";
+    public const string SkillFileName = "SKILL.md";
+    public const string PluginFolder = "plugin";
+    public const string BreaksFolder = "breaks";
+    public const string RunsFolder = "runs";
+
+    public static SuiteDiscovery For(HarnessPaths paths) => new(paths.Suites, paths.ShippedCatalogue);
+
+    public IReadOnlyList<DiscoveredSuite> Discover()
+    {
+        // A root that is not there is a misconfiguration, and returning nothing would read as a green
+        // gate over zero skills. An empty root is a different thing and is allowed to be empty.
+        if (!Directory.Exists(suitesRoot))
+            throw new DirectoryNotFoundException($"suites root not found: {suitesRoot}");
+
+        return [.. Directory.GetDirectories(suitesRoot).Order(StringComparer.Ordinal).Select(Read)];
+    }
+
+    private DiscoveredSuite Read(string dir)
+    {
+        var folder = Path.GetFileName(dir);
+        var file = Path.Combine(dir, SuiteFileName);
+
+        if (!File.Exists(file))
+            throw new InvalidOperationException($"suite folder '{folder}' has no {SuiteFileName}: {dir}");
+
+        var suite = SuiteFile.Load(file);
+
+        if (!string.Equals(suite.Suite, folder, StringComparison.Ordinal))
+            throw new InvalidOperationException(
+                $"suite folder '{folder}' holds a suite declaring the name '{suite.Suite}'. A suite is named by its "
+                + $"folder, so one of the two is a copy-paste: {file}");
+
+        var cases = suite.Firing.ShouldFire.Count + suite.Firing.ShouldNotFire.Count
+                  + suite.Firing.Watch.Count + suite.Contract.Count;
+        if (cases == 0)
+            throw new InvalidOperationException(
+                $"suite '{folder}' has no cases. An empty suite passes every layer by running nothing: {file}");
+
+        foreach (var c in suite.Contract) CheckAssertions(folder, c, file);
+
+        // A fixture skill lives inside its own suite, so a deliberately broken one can never be
+        // mistaken for catalogue content. A catalogue skill is read from plugins/ at run time and
+        // never copied, because a copy drifts the moment the original is edited.
+        var (plugin, skill) = suite.Source switch
+        {
+            SkillSource.Fixture => Locate(suite, folder, Path.Combine(dir, PluginFolder), [Path.Combine(dir, PluginFolder)]),
+            SkillSource.Catalogue => Locate(suite, folder, shippedCatalogue, PluginsIn(shippedCatalogue)),
+            _ => throw new NotSupportedException($"suite '{folder}': unknown source '{suite.Source}'"),
+        };
+
+        return new DiscoveredSuite { Name = folder, Root = dir, Suite = suite, Plugin = plugin, Skill = skill };
+    }
+
+    /// <summary>#23 item 29. A typo here costs a second. Found at layer 4 it costs a paid pass.</summary>
+    private static void CheckAssertions(string name, ContractCase c, string file)
+    {
+        try
+        {
+            AssertionCatalogue.Resolve(c);
+        }
+        catch (Exception ex) when (ex is NotSupportedException or KeyNotFoundException)
+        {
+            throw new InvalidOperationException(
+                $"suite '{name}' case '{c.Id}' names the assertion set '{c.Assertions}', which does not resolve "
+                + $"({ex.Message}). Known sets: {string.Join(", ", AssertionCatalogue.Known)}. {file}", ex);
+        }
+    }
+
+    private static IReadOnlyList<string> PluginsIn(string root) =>
+        Directory.Exists(root) ? Directory.GetDirectories(root) : [];
+
+    /// <summary>
+    /// The skill under test, found by name among the plugins the source offers. Both sources go
+    /// through the catalogue loader, so "the skill named X" means one thing in this harness: the
+    /// name its frontmatter declares, not the name of the folder somebody put it in.
+    /// </summary>
+    private static (string Plugin, string Skill) Locate(
+        SuiteFile suite, string name, string where, IReadOnlyList<string> plugins)
+    {
+        List<(string Plugin, string Skill)> found =
+            [.. plugins.SelectMany(p => Catalogue.Load(p)
+                .Where(s => string.Equals(s.Name, suite.SkillUnderTest, StringComparison.Ordinal))
+                .Select(s => (Plugin: p, Skill: Path.GetDirectoryName(s.File)!)))];
+
+        return found.Count switch
+        {
+            1 => found[0],
+            0 => throw new InvalidOperationException(
+                $"suite '{name}' declares source {suite.Source.ToString().ToLowerInvariant()}, but nothing in "
+                + $"{where} declares a skill named '{suite.SkillUnderTest}'."),
+            _ => throw new InvalidOperationException(
+                $"suite '{name}': more than one plugin in {where} declares a skill named '{suite.SkillUnderTest}' "
+                + $"({string.Join(", ", found.Select(f => Path.GetFileName(f.Plugin)))}), so the suite cannot say which it tests."),
+        };
+    }
+}

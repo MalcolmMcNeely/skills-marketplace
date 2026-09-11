@@ -75,6 +75,12 @@ Data in JSON, assertions in C#. `"assertions": "TestFirstFilesOnly"` names a cla
 `AssertionCatalogue`. Ordering ("test written before class") cannot be expressed in JSON
 without inventing a DSL, and a prompt list should not need a compiler to edit.
 
+`"source"` says where the skill under test lives, and takes one of two values. `fixture` reads it
+from the suite's own material, so a deliberately broken skill can never be mistaken for catalogue
+content. `catalogue` reads it from `plugins/` at run time and never copies it, because a copy drifts
+the moment the original is edited and then tests text nobody ships. There is no default: a suite
+that does not say is refused by `SuiteFile.Load`.
+
 ## Measured on this machine
 
 Claude Code 2.1.248, `claude-opus-5[1m]`, 2 September 2026.
