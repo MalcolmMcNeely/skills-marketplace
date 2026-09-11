@@ -11,15 +11,12 @@
     "list": [
       {
         "name": "skill",
-        "label": "Skill",
-        "type": "query",
-        "datasource": { "type": "loki", "uid": "claude-loki" },
-        "query": "label_values({service_name=\"claude-code\"} | event_name=\"skill_activated\", skill_name)",
-        "refresh": 2,
-        "includeAll": true,
-        "allValue": ".*",
-        "multi": true,
-        "current": { "text": "All", "value": "$__all" }
+        "label": "Skill (regex)",
+        "description": "skill_name is structured metadata, not an index label, so Loki cannot list its values. Type a regex instead.",
+        "type": "textbox",
+        "query": ".*",
+        "current": { "text": ".*", "value": ".*" },
+        "options": []
       }
     ]
   },

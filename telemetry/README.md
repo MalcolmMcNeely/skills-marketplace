@@ -63,6 +63,7 @@ Nothing here ships. See [docs/research/what-to-measure.md](../docs/research/what
 - **Git Bash mangles podman mount paths.** Run the scripts in PowerShell
 - **Grafana drops `legendFormat` on Loki instant queries.** Every label-driven panel showed `Value #A` instead of the skill name. Name the series with `fieldConfig.defaults.displayName` set to `${__field.labels.<label>}` instead
 - **`count()` is not the `count` reducer.** Counting distinct skills needs `count(sum by (skill_name) (...))` in the query. A stat panel reducing with `count` counts datapoints per series, which is always 1
+- **Only `service_name` is an index label.** Everything else, `skill_name` included, is structured metadata. It filters and groups fine, but `label_values()` cannot list it, so a dropdown of skill names is not possible. The skill filter is a regex textbox. A `label_values` query with a pipeline in it fails with "only label matchers are supported"
 - **`user.email` is on by default.** Expand a row in the Raw activations panel and you will see it. Decide about that before any org rollout
 
 ## Measured field names
