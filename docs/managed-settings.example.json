@@ -1,0 +1,22 @@
+{
+  "extraKnownMarketplaces": {
+    "skills-marketplace": {
+      "source": { "source": "github", "repo": "yourorg/skills-marketplace" },
+      "autoUpdate": true
+    }
+  },
+  "pluginSuggestionMarketplaces": ["skills-marketplace"],
+  "enabledPlugins": {
+    "core@skills-marketplace": true
+  },
+  "env": {
+    "CLAUDE_CODE_ENABLE_TELEMETRY": "1",
+    "OTEL_LOGS_EXPORTER": "otlp",
+    "OTEL_EXPORTER_OTLP_PROTOCOL": "http/protobuf",
+    "OTEL_EXPORTER_OTLP_ENDPOINT": "https://otel.yourorg.internal",
+    "OTEL_LOG_TOOL_DETAILS": "1",
+    "FORCE_AUTOUPDATE_PLUGINS": "1",
+    "CLAUDE_CODE_ENABLE_FEEDBACK_SURVEY_FOR_OTEL": "1"
+  },
+  "cleanupPeriodDays": 90
+}

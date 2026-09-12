@@ -30,6 +30,7 @@ Start with the plan, then follow a link when you want the working.
 | Document | What it answers |
 |---|---|
 | [What we should build, and how](docs/recommendation.md) | The plan. Start here |
+| [Rolling it out, and measuring it](docs/rollout.md) | How the catalogue reaches every machine, and what it costs once it is there |
 | [Findings](docs/findings.md) | What eight companies actually do, and what we verified |
 | [Evals](docs/evals.md) | How to verify a skill change helped, and where "eval" is the wrong word |
 | [Scoring](docs/scoring.md) | How a run becomes a verdict, and where the pass mark goes |
