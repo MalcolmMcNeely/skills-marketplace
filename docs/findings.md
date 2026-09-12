@@ -27,7 +27,7 @@ Sources: [AutoScout24](https://tech.autoscout24.com/blog/posts/designing-a-codin
 
 ### Patterns that recur
 
-- **Two tiers.** Central for cross-cutting work, team-local for the rest. Commonwealth Bank calls the split a core design principle. LinkedIn, AutoScout24, Uber and GitLab all do the same.
+- **Two tiers.** Central for cross-cutting work, team-local for the rest. LinkedIn, AutoScout24, Uber and GitLab all do it. (**Corrected on 11 September 2026**, in [who-measures-skill-usage.md](research/who-measures-skill-usage.md). This line previously credited Commonwealth Bank with calling the split a core design principle. Their published material describes no central catalogue at all. The nearest sentence is a lead-team-first pattern inside each domain, which is a different claim, so the citation is withdrawn. The pattern still holds on the other four.)
 - **A linter as a required CI check** does the gating, not human review. AutoScout24 puts it plainly: the PR cannot merge unless the linter passes, regardless of who approved it.
 - **Auto-install beats browse.** Duolingo built a browsable internal directory and killed it. One click of friction was too much.
 - **Everyone started grassroots.** Nobody designed the registry first, then filled it.

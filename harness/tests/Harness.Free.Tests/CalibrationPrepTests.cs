@@ -157,7 +157,7 @@ public class SkillCallOrdinalTests
     [Fact]
     public void Every_skill_call_keeps_its_position_in_the_run()
     {
-        var stream = File.ReadAllText(Path.Combine(Paths.Captured, "two-skills-fired.jsonl"));
+        var stream = File.ReadAllText(Paths.Stream("two-skills-fired.jsonl"));
         var (t, _) = StreamParser.Parse(stream);
 
         // MEASURED against this capture: three Skill calls, two distinct skills, the third a repeat
@@ -172,7 +172,7 @@ public class SkillCallOrdinalTests
     [Fact]
     public void A_skill_that_fired_first_has_nothing_before_it()
     {
-        var stream = File.ReadAllText(Path.Combine(Paths.Captured, "two-skills-fired.jsonl"));
+        var stream = File.ReadAllText(Paths.Stream("two-skills-fired.jsonl"));
         var (t, _) = StreamParser.Parse(stream);
 
         Assert.Equal(0, t.SkillsFiredBefore(t.FiredSkills[0]));
@@ -280,7 +280,8 @@ public class CalibrationReportTests
 {
     private static readonly HarnessPaths Paths = new();
 
-    private static SuiteFile Suite => SuiteFile.Load(Path.Combine(Paths.Cases, "csharp-new-class.json"));
+    private static readonly DiscoveredSuite Found = UnderTest.CsharpNewClass;
+    private static SuiteFile Suite => Found.Suite;
 
     [Fact]
     public void P_good_pools_only_the_should_fire_runs()

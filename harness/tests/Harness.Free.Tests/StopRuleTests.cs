@@ -12,7 +12,7 @@ public class StopRuleTests
 {
     private static readonly HarnessPaths Paths = new();
 
-    private static RunSpec Spec(CaseKind kind) => new FiringRunner(Paths).SpecFor("build me a thing", kind);
+    private static RunSpec Spec(CaseKind kind) => new FiringRunner(Paths, UnderTest.CsharpNewClass).SpecFor("build me a thing", kind);
 
     /// <summary>
     /// #11 parked this on the grounds that a decoy firing first would hide a later fire of the skill
@@ -80,13 +80,14 @@ public class PlannedStopRuleTests
 {
     private static readonly HarnessPaths Paths = new();
 
-    private static SuiteFile Suite => SuiteFile.Load(Path.Combine(Paths.Cases, "csharp-new-class.json"));
+    private static readonly DiscoveredSuite Found = UnderTest.CsharpNewClass;
+    private static SuiteFile Suite => Found.Suite;
 
     [Fact]
     public void Every_step_of_a_full_plan_carries_the_stop_rule_its_kind_asks_for()
     {
-        var runner = new FiringRunner(Paths);
-        var plan = new CalibrationPass(Paths, Suite).Plan().ToList();
+        var runner = new FiringRunner(Paths, Found);
+        var plan = new CalibrationPass(Paths, Found).Plan().ToList();
 
         Assert.Contains(plan, s => s.Kind == CaseKind.ShouldFire);
         Assert.Contains(plan, s => s.Kind == CaseKind.ShouldNotFire);
@@ -104,7 +105,7 @@ public class PlannedStopRuleTests
     public void The_early_stop_covers_every_should_not_fire_run_and_no_other()
     {
         var suite = Suite;
-        var plan = new CalibrationPass(Paths, suite).Plan().ToList();
+        var plan = new CalibrationPass(Paths, Found).Plan().ToList();
         var total = plan.Sum(s => s.Runs);
 
         var early = plan.Where(s => FiringRunner.StopRuleFor(s.Kind) == StopMode.FirstDecision).Sum(s => s.Runs);

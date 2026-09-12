@@ -4,11 +4,14 @@ namespace Harness;
 /// Issue #8 item 7: layer 3 and layer 4 are two different run shapes and must not be confused.
 /// They are separate types so a case cannot be handed to the wrong one.
 /// </summary>
-public sealed class FiringRunner(HarnessPaths paths, string? catalogueDir = null)
+public sealed class FiringRunner(HarnessPaths paths, DiscoveredSuite suite, string? catalogueDir = null)
 {
     // #6 lays a break overlay over the stub catalogue in scratch. Null is the unbroken catalogue.
     // Held as one instance so two specs from this runner differ only where they are meant to.
-    private readonly string[] _pluginDirs = [catalogueDir ?? paths.StubCatalogue];
+    //
+    // #30: the suite's own listing plugins come after the distractors, because a skill the
+    // distractors do not stub is otherwise absent from the listing the run is decided on.
+    private readonly string[] _pluginDirs = [catalogueDir ?? paths.StubCatalogue, .. suite.ListingPlugins];
 
     /// <summary>Natural-language prompt against the description-only stub catalogue.</summary>
     public Task<RunOutcome> RunAsync(string prompt, CaseKind kind, CancellationToken ct = default) =>

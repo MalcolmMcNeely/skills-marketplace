@@ -23,7 +23,7 @@ Three assumptions in the plan were wrong, and each was caught by running rather 
 | 3 | Reading the stream | Every `Skill` invocation is recorded, deduplicated, with the plugin prefix stripped. `FiredSkillsRaw` keeps the originals |
 | 4 | The exit-code trap | Closed by construction. Scoring takes a `ValidRun`, and the only way to obtain one is `RunOutcome.TryGetValid` |
 | 5 | Case format | JSON for the data, a named C# class for the assertions |
-| 6 | Fixture loading | `--plugin-dir`, one directory per fixture, under `harness/fixtures/` |
+| 6 | Fixture loading | `--plugin-dir`, one directory per fixture, under the suite that owns it in `harness/skills/` |
 | 7 | Two run shapes | `FiringRunner` and `ContractRunner` are separate types, so a case cannot reach the wrong one |
 | 8 | Verdicts and resampling | `Resampler.CollectAsync` runs until it has enough valid runs, capped, and now also stops on a suite-wide spend ceiling |
 
@@ -94,7 +94,7 @@ The runs were healthy. Their streams were not kept, so the evidence comes from t
 
 > Empty project ... Writing the test first per the rule.
 
-The other ran to completion. It wrote `tests/DiscountTests.cs` first, then `src/Discount.cs`, and never executed `dotnet test`. In both, the `slash_commands` field of the `init` line listed `harness-fixture-good:csharp-new-class`, so the plugin loaded. The CLI had expanded the slash command inline rather than routing it through the `Skill` tool. Both captures are committed under `harness/captured/`, and a free test scores the complete one `Held` on both signal assertions.
+The other ran to completion. It wrote `tests/DiscountTests.cs` first, then `src/Discount.cs`, and never executed `dotnet test`. In both, the `slash_commands` field of the `init` line listed `harness-fixture-good:csharp-new-class`, so the plugin loaded. The CLI had expanded the slash command inline rather than routing it through the `Skill` tool. Both captures are committed under `harness/shared/streams/`, and a free test scores the complete one `Held` on both signal assertions.
 
 | Shell the CLI was launched from | `Skill` tool calls |
 |---|---|

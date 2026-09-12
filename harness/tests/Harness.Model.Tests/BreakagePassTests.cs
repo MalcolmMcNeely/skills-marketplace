@@ -4,14 +4,22 @@ using Xunit.Abstractions;
 namespace Harness.Model.Tests;
 
 /// <summary>
-/// Issue #6. Four arms. Planned at 149 runs; the measured pass took 256 and 03:19:34 of continuous calling.
+/// Issue #6. Four arms. Planned at 149 runs; the measured pass took 256 and 03:19:34 of continuous
+/// calling against one skill.
 ///
 /// Triple-locked like the calibration pass, and for the same reason: SKILL_HARNESS_LIVE=1 gets you
 /// into the project, SKILL_HARNESS_BREAK=1 gets you into this test.
 ///
-/// Resumable per ARM. Each arm keeps its own journal in the run directory, and an arm whose cases
-/// already have enough valid runs on disk is skipped. Point SKILL_HARNESS_BREAK_DIR at an existing
-/// directory to continue a pass a usage limit cut short, rather than paying for it twice.
+/// #27. Every discovered suite, four arms each, planned from what discovery returns rather than from
+/// one loaded file. The arm plan itself is shared and names its overlays relative to the suite that
+/// owns them, so a suite takes part by declaring those breaks and says so loudly if it has not.
+///
+/// It stays ONE test that loops rather than a theory, because the ledger is shared: a theory would
+/// hand each suite a fresh copy of the ceiling #11 fixed once.
+///
+/// Resumable per arm. Each arm keeps its own journal in the suite's run directory, and an arm whose
+/// cases already have enough valid runs on disk is skipped. Point SKILL_HARNESS_BREAK_DIR at an
+/// existing run directory to continue a pass a usage limit cut short, rather than paying twice.
 /// </summary>
 public class BreakagePassTests(ITestOutputHelper output)
 {
@@ -21,75 +29,103 @@ public class BreakagePassTests(ITestOutputHelper output)
     private static decimal Ceiling =>
         decimal.TryParse(Environment.GetEnvironmentVariable("SKILL_HARNESS_CEILING_USD"), out var c) ? c : 50.00m;
 
-    /// <summary>
-    /// Resolved against the harness root, not the process working directory. MEASURED the hard way:
-    /// the test host runs from its own build output, so a relative override put an entire pass's
-    /// journals under bin/Debug where nobody would look for them.
-    /// </summary>
-    private static string RunDirectory
-    {
-        get
-        {
-            var stamp = Path.Combine(Paths.Captured, $"breakage-{DateTime.UtcNow:yyyyMMdd-HHmmss}");
-            if (Environment.GetEnvironmentVariable("SKILL_HARNESS_BREAK_DIR") is not { Length: > 0 } d) return stamp;
-            return Path.IsPathRooted(d) ? d : Path.GetFullPath(Path.Combine(Paths.Root, d));
-        }
-    }
-
     [BreakageFact]
     public async Task Break_the_fixture_two_ways_and_see_which_layer_notices()
     {
-        var suite = SuiteFile.Load(Path.Combine(Paths.Cases, "csharp-new-class.json"));
-        var dir = RunDirectory;
-        Directory.CreateDirectory(dir);
-
-        var pass = new BreakagePass(Paths, suite);
-        // One ledger across every arm. Four separate ceilings would let the pass spend four times
-        // what #11 allowed while each arm reported itself as within budget.
+        var suites = SuitesUnderTest.All(Paths);
+        // An override is resolved against the harness root, not the process working directory. MEASURED
+        // the hard way: the test host runs from its own build output, so a relative override put an
+        // entire pass's journals under bin/Debug where nobody would look for them. #27 added the second
+        // half of the answer: the suite it resumes is the one whose run records it sits under.
+        var resume = ResumeOverride.Resolve(
+            Environment.GetEnvironmentVariable("SKILL_HARNESS_BREAK_DIR"), suites, Paths.Root);
+        // One ledger across every arm of every suite. Separate ceilings would let the pass spend what
+        // #11 allowed many times over while each arm reported itself as within budget.
         var ledger = new SpendLedger(Ceiling);
-        var started = DateTimeOffset.UtcNow;
-        var journals = new List<(string Arm, string Journal)>();
-        var reports = new List<ArmReport>();
+        var stamp = $"{DateTime.UtcNow:yyyyMMdd-HHmmss}";
+        var measured = new List<(DiscoveredSuite Suite, BreakageReport Report)>();
         CalibrationOutcome? stopped = null;
 
-        output.WriteLine($"breakage pass, {RunEnvironment.Current}, run directory {dir}");
+        output.WriteLine($"breakage pass, {RunEnvironment.Current}, {suites.Count} suite(s): {string.Join(", ", suites.Select(s => s.Name))}");
 
-        foreach (var arm in BreakageArm.Plan)
+        foreach (var found in suites)
         {
-            var journalPath = Path.Combine(dir, $"break-{arm.Id}.jsonl");
-            journals.Add((arm.Id, journalPath));
-
-            if (stopped is null)
+            // Whole suites, not just the arms left in one. A stopped pass that carried on would leave
+            // a run directory of empty journals under a suite it never measured.
+            if (stopped is not null)
             {
-                using var journal = new RunJournal(journalPath);
-                var outcome = await pass.RunArmAsync(arm, journal, ledger, output.WriteLine, CancellationToken.None);
-                if (outcome.Stopped) stopped = outcome;
+                output.WriteLine($"{found.Name,-20} not run, the pass already stopped");
+                continue;
             }
-            else output.WriteLine($"{arm.Id,-12} not run, the pass already stopped");
 
-            reports.Add(ArmReport.FromJournal(arm, journalPath, suite));
+            // #30. Every arm names an overlay, and a suite takes part by declaring them. One that
+            // declares none has no break to measure, so it is skipped here rather than left to throw
+            // on the first overlay and take every suite after it down with the pass.
+            if (!found.DeclaresBreaks)
+            {
+                output.WriteLine($"{found.Name,-20} declares no break overlays, so there is nothing to break");
+                continue;
+            }
+
+            // Under the suite this pass measured, per #26. A run record is evidence about one skill,
+            // and a shared folder read as everyone's.
+            var dir = ResumeOverride.PathFor(resume, found, Path.Combine(found.RunRecords, $"breakage-{stamp}"));
+            Directory.CreateDirectory(dir);
+            output.WriteLine($"{found.Name}: run directory {dir}");
+
+            // Per suite, not per pass. One clock across the loop would bill every suite for the
+            // time the ones before it took, and the report quotes that figure as a measurement.
+            var started = DateTimeOffset.UtcNow;
+            var pass = new BreakagePass(Paths, found);
+            var journals = new List<(string Arm, string Journal)>();
+            var reports = new List<ArmReport>();
+
+            foreach (var arm in BreakageArm.Plan)
+            {
+                var journalPath = Path.Combine(dir, $"break-{arm.Id}.jsonl");
+                journals.Add((arm.Id, journalPath));
+
+                if (stopped is null)
+                {
+                    using var journal = new RunJournal(journalPath);
+                    var outcome = await pass.RunArmAsync(arm, journal, ledger, output.WriteLine, CancellationToken.None);
+                    if (outcome.Stopped) stopped = outcome;
+                }
+                else output.WriteLine($"{arm.Id,-12} not run, the pass already stopped");
+
+                reports.Add(ArmReport.FromJournal(arm, journalPath, found.Suite));
+            }
+
+            var report = new BreakageReport(RunEnvironment.Current, reports);
+            var reportPath = Path.Combine(dir, "breakage.md");
+            File.WriteAllText(reportPath, BreakageMarkdown.Render(report, DateTimeOffset.UtcNow - started, journals));
+
+            output.WriteLine(File.ReadAllText(reportPath));
+            output.WriteLine($"{found.Name}: report written to {reportPath}");
+            measured.Add((found, report));
         }
-
-        var report = new BreakageReport(RunEnvironment.Current, reports);
-        var markdown = BreakageMarkdown.Render(report, DateTimeOffset.UtcNow - started, journals);
-
-        var reportPath = Path.Combine(dir, "breakage.md");
-        File.WriteAllText(reportPath, markdown);
-        output.WriteLine(markdown);
-        output.WriteLine($"report written to {reportPath}");
 
         // #6 asks a question, and both answers are findings. A harness that fails to catch its own
         // break is the single most valuable result this ticket can produce, so it must reach the
         // report rather than die as a red assertion. The pass fails only when it measured nothing.
         Assert.True(stopped is null,
-            $"pass stopped early: {stopped?.Reason}. Journals kept in {dir}; re-run with SKILL_HARNESS_BREAK_DIR set to resume.");
+            $"pass stopped early: {stopped?.Reason}. Journals are kept beside the suites they measured; re-run with SKILL_HARNESS_BREAK_DIR set to resume.");
 
-        foreach (var arm in report.Arms)
-        {
-            if (arm.Arm.RunFiring)
-                Assert.True(arm.FiringValid > 0, $"{arm.Arm.Id}: no valid layer 3 runs, so layer 3 has no verdict to give");
-            Assert.True(arm.ContractValid > 0, $"{arm.Arm.Id}: no valid layer 4 runs, so layer 4 has no verdict to give");
-        }
+        // A pass that measured no suite at all has answered #6's question about nothing, and the
+        // assertions below would sweep an empty list and report it as four arms holding.
+        Assert.NotEmpty(measured);
+
+        foreach (var (found, report) in measured)
+            foreach (var arm in report.Arms)
+            {
+                if (arm.Arm.RunFiring)
+                    Assert.True(arm.FiringValid > 0, $"{found.Name}/{arm.Arm.Id}: no valid layer 3 runs, so layer 3 has no verdict to give");
+                // #30. A suite is asked for a layer 4 verdict only if it wrote a contract case. The
+                // two halves are declared separately, so demanding one because the other is there
+                // reddens a suite for measuring exactly what it said it would.
+                if (found.Suite.Contract.Count > 0)
+                    Assert.True(arm.ContractValid > 0, $"{found.Name}/{arm.Arm.Id}: no valid layer 4 runs, so layer 4 has no verdict to give");
+            }
     }
 }
 

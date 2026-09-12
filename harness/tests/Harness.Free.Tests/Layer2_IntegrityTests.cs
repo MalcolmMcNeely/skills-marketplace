@@ -79,15 +79,66 @@ public class Layer2_IntegrityTests
                 $"{skill.Name}: {skill.Description.Length} characters, limit is {Catalogue.MaxDescriptionChars}");
     }
 
-    /// <summary>Issue #8 item 1: a fixture must never be mistaken for catalogue content.</summary>
+    /// <summary>
+    /// Issue #8 item 1: a fixture must never be mistaken for catalogue content. Fixture skills sit in
+    /// two roots, the suite folders and the shared material, so both are swept here. Sweeping one
+    /// would quietly stop checking the twelve distractors, which carry the names most likely to
+    /// collide with a real skill.
+    /// </summary>
     [Fact]
     public void No_fixture_skill_leaks_into_the_shipped_catalogue()
     {
-        var fixtures = Catalogue.Load(Paths.Fixtures).Select(s => s.Name).ToHashSet(StringComparer.Ordinal);
+        var fixtures = new[] { Paths.Suites, Paths.Shared }
+            .SelectMany(Catalogue.Load).Select(s => s.Name).ToHashSet(StringComparer.Ordinal);
         Assert.NotEmpty(fixtures);
 
         foreach (var skill in Shipped)
             Assert.DoesNotContain(skill.Name, fixtures);
+    }
+
+    /// <summary>
+    /// Issue #28. An engine is model-invocable, so it fires on its own and its description spends
+    /// listing context on every request. Shipping one nothing measures is shipping behaviour nobody
+    /// has checked. An entry point is exempt: it carries <c>disable-model-invocation: true</c>, a
+    /// developer types it, and there is no firing behaviour to measure.
+    ///
+    /// RED ON PURPOSE, and that is what the assertion is for. The green half of the rule is proven in
+    /// <see cref="CatalogueCoverageTests"/>, against catalogues built in a temp folder. #30 tracks the
+    /// suites that turn this one green, because writing them costs model runs and this does not.
+    /// </summary>
+    [Fact]
+    public void Every_engine_in_the_catalogue_has_a_suite()
+    {
+        var uncovered = CatalogueCoverage.EnginesWithNoSuite(Paths);
+
+        Assert.True(uncovered.Count == 0,
+            $"{uncovered.Count} engine(s) ship with nothing measuring them. "
+            + "An engine is model-invocable, so it fires unasked and nobody has checked that it fires right. "
+            + "Add a suite folder for each, holding a suite.json that declares source catalogue:\n"
+            + string.Join('\n', uncovered.Select(e => $"  {e.Skill} wants {e.SuiteFolder}")));
+    }
+
+    /// <summary>
+    /// Issue #29. Why the repo sweeps its own prose at all is argued in `docs/layer-2.md`.
+    ///
+    /// Green the day it lands, so the red half is proven in <see cref="DocumentedPathsTests"/>
+    /// against documents built in a temp folder.
+    /// </summary>
+    [Fact]
+    public void No_document_quotes_a_harness_path_that_is_not_there()
+    {
+        var quoted = DocumentedPaths.Quoted(Paths);
+
+        // A rule matching nothing reports nothing dead and reads as a pass, which is the vacuous
+        // green The_catalogue_is_not_empty guards above.
+        Assert.NotEmpty(quoted);
+
+        var dead = DocumentedPaths.Dead(quoted);
+
+        Assert.True(dead.Count == 0,
+            $"{dead.Count} document reference(s) point at a harness path that is not on disk. "
+            + "Update the document, or restore the path:\n"
+            + string.Join('\n', dead.Select(d => $"  {d}")));
     }
 
     [Fact]
@@ -185,7 +236,7 @@ public class SlashFormTests
     {
         // Without this, any path containing an engine's name reads as a slash reference to it.
         Assert.Empty(SlashForms.InProse("Write it to plugins/core/skills/skill-authoring/SKILL.md"));
-        Assert.Empty(SlashForms.InProse("See harness/fixtures/catalogue and docs/evals.md"));
+        Assert.Empty(SlashForms.InProse("See harness/shared/catalogue and docs/evals.md"));
     }
 
     [Fact]

@@ -4,7 +4,7 @@
 [#12](https://github.com/MalcolmMcNeely/skills-marketplace/issues/12).
 
 Date: 2026-09-08. Claude Code 2.1.248, model `claude-opus-5[1m]`. Every number here was measured on this
-machine. The raw journal is `harness/captured/calibration-run-1.jsonl`, one line per run.
+machine. The raw journal is `harness/skills/csharp-new-class/runs/calibration-run-1.jsonl`, one line per run.
 
 ## What the pass was
 

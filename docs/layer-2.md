@@ -159,8 +159,53 @@ exceptions than cases, the check is wrong.
 | Every description under 1,024 characters | Budget |
 | No fixture skill shares a name with a shipped skill | Isolation, from [#8](https://github.com/MalcolmMcNeely/skills-marketplace/issues/8) |
 | `marketplace.json` never mentions the harness | Isolation, from #8 |
+| Every engine has a suite folder under `harness/skills/` | Coverage, from [#28](https://github.com/MalcolmMcNeely/skills-marketplace/issues/28) |
+| Every harness path a document quotes is on disk | Coverage, from [#29](https://github.com/MalcolmMcNeely/skills-marketplace/issues/29) |
 
-81 tests, no network, no model calls, under half a second.
+81 tests, no network, no model calls, under half a second, measured on this machine on 2026-09-07.
+The last two rows arrived later: 272 tests in about a second, measured on this machine on
+2026-09-12 against Claude Code 2.1.248.
+
+### The coverage row was red for four days, and that is the assertion working
+
+`skill-authoring` is model-invocable and shipped with no suite, so from 2026-09-08 the run was
+**260 of 261**. Nothing else in the repo noticed that, because every other rule here reads the
+catalogue alone and every discovery rule reads the suites alone. This one reads both.
+
+Writing the missing suite cost model runs, which is why it was separate work on
+[#30](https://github.com/MalcolmMcNeely/skills-marketplace/issues/30) rather than part of the
+assertion. The red was the reminder for as long as it took, and the rule has not changed: ship a
+model-invocable skill with nothing measuring it and the free gate says so on the next push, for
+nothing, in about a second.
+
+`new-skill`, the catalogue's other skill, stays exempt. It carries `disable-model-invocation: true`,
+so a developer types it and there is no firing decision to measure.
+
+### Why the gate reads documents at all
+
+[#23](https://github.com/MalcolmMcNeely/skills-marketplace/issues/23) moved four top-level harness
+folders into one per skill, and six documents quoted the old names. Nothing went red, because no rule
+here read prose. A document pointing at a folder that is not there is worse than no document: it
+reads as current, and the reader loses the time before working out that it is not.
+
+The sweep reads every Markdown file in the repo except those under `.claude/`. That is the same
+exclusion this document argues for above. Vendored tooling is somebody else's prose, and a gate that
+reddens on an upstream phrasing is one people learn to ignore.
+
+A `<name>` placeholder ends a match, so the document explaining the suite folder shape is checked
+only as far as the shape it describes.
+
+**A suite's `runs/` folder is exempt, and this is the subtle one.** A paid pass renders a report
+naming the folders it read. A report written before a layout change therefore describes the layout
+of its own day, correctly, for good. Sweeping those would redden the free gate for a record being
+accurate about history, and the only way back to green would be to falsify the record. The
+breakage report of 9 September 2026 already names the top-level captured folder that
+[#23](https://github.com/MalcolmMcNeely/skills-marketplace/issues/23) deleted, and it is right to.
+
+That leaves one cost worth naming, because this document paid it. A document explaining the rule
+cannot quote a dead path as an example, since the sweep reads prose and fences alike and cannot
+tell an example from a claim. Describe the dead folder instead of typing it. The alternative is an
+escape hatch, and an escape hatch in a gate is a hole.
 
 ```
 dotnet test harness/tests/Harness.Free.Tests

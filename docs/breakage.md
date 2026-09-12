@@ -38,13 +38,13 @@ untested.
 
 | Overlay | Base | Description | Body |
 |---|---|---|---|
-| `description-catalogue` | `fixtures/catalogue` | broken | stub, unchanged |
-| `description-plugin` | `fixtures/good` | broken | byte-identical to good |
-| `body-plugin` | `fixtures/good` | byte-identical to good | rule reversed |
-| `control-catalogue` | `fixtures/catalogue` | byte-identical to good | stub prose reworded |
-| `control-plugin` | `fixtures/good` | byte-identical to good | prose reworded, rule intact |
+| `description/catalogue` | `shared/catalogue` | broken | stub, unchanged |
+| `description/plugin` | the suite's `plugin/` | broken | byte-identical to good |
+| `body/plugin` | the suite's `plugin/` | byte-identical to good | rule reversed |
+| `control/catalogue` | `shared/catalogue` | byte-identical to good | stub prose reworded |
+| `control/plugin` | the suite's `plugin/` | byte-identical to good | prose reworded, rule intact |
 
-`body-plugin` doubles as a layer 3 overlay. Its description is byte-identical to the good one, so
+`body/plugin` doubles as a layer 3 overlay. Its description is byte-identical to the good one, so
 layer 3 must not move when only the body changed.
 
 ## 2. A description only stops firing when its subject changes
@@ -73,8 +73,8 @@ measured that a negative boundary is worth more than any other wording change, b
 about **over**-firing: a boundary keeps a skill out of a broad request. Nothing in it says the
 boundary holds up the skill's own targeting. These nine runs say it does not.
 
-All three candidates sit in `harness/fixtures/breaks/candidates/`. The third is the arm, because
-#6 asks for a description that stops the skill firing and only the third one does.
+All three candidates sit in `harness/skills/csharp-new-class/breaks/candidates/`. The third is
+the arm, because #6 asks for a description that stops the skill firing and only the third one does.
 
 ### The break shows as silence
 

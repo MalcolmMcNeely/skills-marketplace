@@ -3,7 +3,13 @@ using Xunit.Abstractions;
 
 namespace Harness.Model.Tests;
 
-/// <summary>Layer 3: does the DESCRIPTION fire? Stub catalogue, natural prompt, killed at the first tool call.</summary>
+/// <summary>
+/// Layer 3: does the DESCRIPTION fire? Stub catalogue, natural prompt, killed at the first tool call.
+///
+/// #27. One case per discovered suite, not one case for one named suite. A skill folder landing in
+/// skills/ widens this layer by being there, and a run over no suites at all fails rather than
+/// passes, because xUnit refuses a theory that finds no data.
+/// </summary>
 public class Layer3_FiringTests(ITestOutputHelper output)
 {
     private static readonly HarnessPaths Paths = new();
@@ -12,12 +18,24 @@ public class Layer3_FiringTests(ITestOutputHelper output)
     private static decimal Ceiling =>
         decimal.TryParse(Environment.GetEnvironmentVariable("SKILL_HARNESS_CEILING_USD"), out var c) ? c : 5.00m;
 
-    [LiveFact]
-    public async Task One_positive_case_end_to_end()
+    [LiveTheory]
+    [MemberData(nameof(SuitesUnderTest.Rows), MemberType = typeof(SuitesUnderTest))]
+    public async Task One_positive_case_end_to_end(string suiteName)
     {
-        var suite = SuiteFile.Load(Path.Combine(Paths.Cases, "csharp-new-class.json"));
+        var found = SuiteDiscovery.One(Paths, suiteName);
+        var suite = found.Suite;
+
+        // A suite may be graded on its body alone, and discovery allows one. No should-fire case is a
+        // fact that suite declared, not this layer finding nothing: the free gate is what holds the
+        // layer to every suite, and it cannot hold a suite to cases it never wrote.
+        if (suite.Firing.ShouldFire.Count == 0)
+        {
+            output.WriteLine($"{suiteName}: declares no should-fire case, so layer 3 has nothing to run");
+            return;
+        }
+
         var c = suite.Firing.ShouldFire[0];
-        var runner = new FiringRunner(Paths);
+        var runner = new FiringRunner(Paths, found);
 
         var runs = int.TryParse(Environment.GetEnvironmentVariable("SKILL_HARNESS_RUNS"), out var n) ? n : c.Runs;
         var ledger = new SpendLedger(Ceiling);
@@ -29,6 +47,6 @@ public class Layer3_FiringTests(ITestOutputHelper output)
 
         Assert.Null(sample.Failure);
         var pool = Pooling.Pool([new CaseResult(c.Id, sample.Scores)], suite.PGood);
-        output.WriteLine($"pooled {pool.PooledPassed}/{pool.PooledValid} gate>={pool.GateK} total {pool.Cost}");
+        output.WriteLine($"{suiteName} pooled {pool.PooledPassed}/{pool.PooledValid} gate>={pool.GateK} total {pool.Cost}");
     }
 }
