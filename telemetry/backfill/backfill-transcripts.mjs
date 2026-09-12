@@ -8,12 +8,18 @@
 //   node telemetry/backfill/backfill-transcripts.mjs --dry-run  count only
 //   node telemetry/backfill/backfill-transcripts.mjs --days 7   narrow the window
 //
-// Two honesty rules are baked in.
+// A skill reaches the transcript by two different routes, and reading only one
+// of them produces a badly wrong answer. Reading only Skill tool calls reported
+// /implement as never used when a developer had typed it 100 times.
 //
-// A transcript records WHICH skill ran, never WHY. There is no way to tell a
-// model-chosen activation from a typed slash command after the fact, so this
-// emits no invocation_trigger at all rather than guessing one. The donut panel
-// filters those rows out, so backfilled data never invents a trigger split.
+//   Skill tool call        an assistant tool_use named "Skill". The model chose
+//                          it, or another skill called it. The trigger cannot be
+//                          recovered, so none is emitted.
+//   Typed slash command    a user message carrying <command-name>/foo</command-name>.
+//                          Here the trigger IS known, so the record says
+//                          invocation_trigger=user-slash.
+//
+// The two routes do not overlap: a typed command produces no Skill tool_use.
 //
 // Every backfilled record carries origin="backfill" so it can be told apart
 // from anything Claude Code sent live.
@@ -35,11 +41,24 @@ const cutoff = Date.now() - days * 86400_000;
 
 const str = (v) => ({ stringValue: String(v) });
 
+// Claude Code's own commands are not skills. Without this, /clear alone would
+// add 199 phantom activations.
+const BUILT_IN = new Set([
+  "add-dir", "agents", "artifacts", "bug", "clear", "compact", "config", "context",
+  "cost", "doctor", "exit", "export", "fast", "feedback", "help", "hooks", "ide",
+  "init", "install-github-app", "login", "logout", "mcp", "memory", "model",
+  "output-style", "permissions", "plugin", "pr-comments", "privacy-settings",
+  "release-notes", "reload-skills", "resume", "review", "rewind", "schedule",
+  "security-review", "skill-doctor", "skills", "status", "statusline", "tasks",
+  "terminal-setup", "todos", "usage", "vim", "workflows",
+]);
+
 function record(a) {
   const attrs = [
     ["event.name", "skill_activated"],
     ["skill.name", a.skill],
     ["origin", "backfill"],
+    ["invocation_trigger", a.trigger],
     ["session.id", a.sessionId],
     ["repo", a.repo],
     ["git.branch", a.branch],
@@ -82,12 +101,28 @@ async function* transcripts(dir) {
   }
 }
 
+// Text of a user message, whichever shape it arrived in.
+function textOf(content) {
+  if (typeof content === "string") return content;
+  if (Array.isArray(content)) return content.map((b) => b?.text ?? "").join(" ");
+  return "";
+}
+
 const counts = new Map();
+const byRoute = { tool: 0, typed: 0 };
 let files = 0;
-let scanned = 0;
 let found = 0;
 let skipped = 0;
+let ignoredBuiltIn = 0;
 let batch = [];
+
+const note = (skill, route) => {
+  found += 1;
+  byRoute[route] += 1;
+  const c = counts.get(skill) ?? { tool: 0, typed: 0 };
+  c[route] += 1;
+  counts.set(skill, c);
+};
 
 for await (const path of transcripts(ROOT)) {
   const info = await stat(path);
@@ -96,43 +131,63 @@ for await (const path of transcripts(ROOT)) {
 
   const rl = createInterface({ input: createReadStream(path), crlfDelay: Infinity });
   for await (const line of rl) {
-    if (!line.includes('"Skill"')) continue; // cheap pre-filter, the files are large
-    scanned += 1;
+    // Cheap pre-filter. These files run to hundreds of megabytes.
+    const maybeTool = line.includes('"Skill"');
+    const maybeTyped = line.includes("<command-name>");
+    if (!maybeTool && !maybeTyped) continue;
 
     let rec;
     try { rec = JSON.parse(line); } catch { continue; }
 
-    const content = rec?.message?.content;
-    if (!Array.isArray(content)) continue;
-
     const at = Date.parse(rec.timestamp ?? "");
     if (!Number.isFinite(at) || at < cutoff) continue;
 
-    for (const block of content) {
-      if (block?.type !== "tool_use" || block?.name !== "Skill") continue;
-      const skill = block?.input?.skill;
-      if (!skill) continue;
+    const common = {
+      at,
+      sessionId: rec.sessionId ?? rec.session_id,
+      repo: rec.cwd ? basename(rec.cwd) : undefined,
+      branch: rec.gitBranch,
+      version: rec.version,
+    };
 
-      found += 1;
-      counts.set(skill, (counts.get(skill) ?? 0) + 1);
-      batch.push({
-        skill,
-        at,
-        sessionId: rec.sessionId ?? rec.session_id,
-        repo: rec.cwd ? basename(rec.cwd) : undefined,
-        branch: rec.gitBranch,
-        version: rec.version,
-      });
+    // Route one: the model, or another skill, called the Skill tool.
+    if (maybeTool && Array.isArray(rec?.message?.content)) {
+      for (const block of rec.message.content) {
+        if (block?.type !== "tool_use" || block?.name !== "Skill") continue;
+        const skill = block?.input?.skill;
+        if (!skill) continue;
+        note(skill, "tool");
+        batch.push({ skill, ...common });
+        if (batch.length >= BATCH) { await push(batch); batch = []; }
+      }
+    }
 
-      if (batch.length >= BATCH) { await push(batch); batch = []; }
+    // Route two: a developer typed it. The trigger is known here.
+    if (maybeTyped) {
+      for (const m of textOf(rec?.message?.content).matchAll(/<command-name>\/?([^<]+)<\/command-name>/g)) {
+        const skill = m[1].trim();
+        if (!skill) continue;
+        if (BUILT_IN.has(skill)) { ignoredBuiltIn += 1; continue; }
+        note(skill, "typed");
+        batch.push({ skill, trigger: "user-slash", ...common });
+        if (batch.length >= BATCH) { await push(batch); batch = []; }
+      }
     }
   }
 }
 await push(batch);
 
-const ranked = [...counts].sort((a, b) => b[1] - a[1]);
+const total = (c) => c.tool + c.typed;
+const ranked = [...counts].sort((a, b) => total(b[1]) - total(a[1]));
+
 console.log(`${files} transcripts read, ${skipped} older than ${days} days skipped`);
-console.log(`${scanned} candidate lines, ${found} skill activations across ${counts.size} skills`);
+console.log(`${found} activations across ${counts.size} skills`);
+console.log(`  ${byRoute.tool} Skill tool calls, trigger unknown`);
+console.log(`  ${byRoute.typed} typed slash commands, trigger user-slash`);
+console.log(`  ${ignoredBuiltIn} built-in commands ignored, /clear and friends are not skills`);
 console.log(dryRun ? "\n--dry-run, nothing pushed\n" : `\npushed to ${ENDPOINT}\n`);
-for (const [name, n] of ranked.slice(0, 20)) console.log(`  ${String(n).padStart(5)}  ${name}`);
+console.log(`  ${"TOOL".padStart(6)} ${"TYPED".padStart(6)}  SKILL`);
+for (const [name, c] of ranked.slice(0, 20)) {
+  console.log(`  ${String(c.tool).padStart(6)} ${String(c.typed).padStart(6)}  ${name}`);
+}
 if (ranked.length > 20) console.log(`  ... and ${ranked.length - 20} more`);

@@ -39,9 +39,46 @@ Live telemetry only counts from the moment you switch it on. Your transcripts al
 
 What backfill gives that live events do not: `repo` and `git.branch`, read from the transcript's `cwd` and `gitBranch`.
 
-What it cannot give: **`invocation_trigger`**. A transcript records which skill ran, never why. There is no way to tell a model-chosen activation from a typed slash command after the fact, so the script emits no trigger rather than guessing, and the donut panel excludes those rows. Backfill answers "what gets used". Only live events answer "did the description work".
+A skill reaches the transcript by two routes, and reading one of them alone is badly wrong. Reading only `Skill` tool calls reported `/implement` as never used when a developer had typed it **100 times**.
+
+| Route | Shape in the transcript | Trigger |
+|---|---|---|
+| Skill tool call | assistant `tool_use` named `Skill` | not recoverable, emitted blank |
+| Typed slash command | user message with `<command-name>/foo</command-name>` | known, emitted as `user-slash` |
+
+The two do not overlap. A typed command produces no `Skill` tool call.
+
+So backfill can prove a developer typed a skill, and cannot prove the model chose one. `claude-proactive` only ever comes from live telemetry, which is why the donut excludes backfilled rows.
+
+Claude Code's own commands are filtered out by name. Without that, `/clear` alone adds 199 phantom activations.
 
 Every backfilled row carries `origin="backfill"`.
+
+## Step 4: the per-skill report
+
+The dashboard answers "is anyone using skills". This answers "what do I do about skill number seven", which is the question a maintainer actually has.
+
+- `node telemetry/report/skill-report.mjs`
+- `--days 7` narrows the window, `--sort uses|cost|name`, `--json` for a machine
+- Reads every `SKILL.md` under `.claude/skills/` and `plugins/*/skills/`, then joins it against Loki
+
+One row per skill, with the columns that drive a decision:
+
+| Column | What it tells you |
+|---|---|
+| `USES` | activations in the window |
+| `TOOL` | the model called it, or another skill did |
+| `TYPED` | a developer typed the slash command |
+| `SESS` | distinct sessions, so one power user does not look like broad adoption |
+| `REPO` | how many repositories, so you can see if a technology-specific skill stayed in its lane |
+| `CTX` | approximate tokens the listing costs **every turn**, used or not |
+| `NOTE` | only where something looks off |
+
+**Why this cannot come from the dashboard.** A query can only return skills that fired. The zero rows are the whole point of the report, and they need the list of skills on disk to exist at all.
+
+Measured here: 28 skills on disk, 18 fired, 10 did not, about 1,235 listing tokens per turn of which 350 went to skills that never fired.
+
+A zero row is a prompt to look, never a delete order. A merge-conflict skill with no activations may only mean a quiet month.
 
 ## What the stack is
 
