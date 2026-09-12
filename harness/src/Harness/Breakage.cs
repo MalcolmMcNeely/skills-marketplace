@@ -114,7 +114,7 @@ public sealed class BreakagePass(HarnessPaths paths, DiscoveredSuite suite)
         if (arm.RunFiring)
         {
             var catalogue = builder.Build(paths.StubCatalogue, Overlay(arm.FiringOverlay));
-            var pass = new CalibrationPass(paths, Cases, new FiringRunner(paths, catalogue), arm.FiringShape);
+            var pass = new CalibrationPass(paths, suite, new FiringRunner(paths, suite, catalogue), arm.FiringShape);
             var firing = await pass.RunAsync(journal, ledger, log, ct);
             if (firing.Stopped) return firing with { Started = started };
         }

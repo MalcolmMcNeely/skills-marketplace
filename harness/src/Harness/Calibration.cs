@@ -21,9 +21,16 @@ public enum FiringPlanShape
 /// The pass writes a journal and nothing else. Every number is derived from the journal afterwards by
 /// <see cref="CalibrationReport"/>, so a pass stopped at run 110 still reports on the 110 it got.
 /// </summary>
-public sealed class CalibrationPass(HarnessPaths paths, SuiteFile suite, FiringRunner? runner = null, FiringPlanShape shape = FiringPlanShape.Full)
+public sealed class CalibrationPass(HarnessPaths paths, DiscoveredSuite suite, FiringRunner? runner = null, FiringPlanShape shape = FiringPlanShape.Full)
 {
     public const int FiringLayer = 3;
+
+    /// <summary>
+    /// The case data. #30 gave the pass the DISCOVERED suite rather than the parsed file, for the
+    /// reason <see cref="BreakagePass"/> already took one: a firing run loads what the suite's own
+    /// folder says it loads, and a bare file cannot say.
+    /// </summary>
+    private SuiteFile Cases => suite.Suite;
 
     /// <summary>Runs every firing case the journal does not already satisfy.</summary>
     public async Task<CalibrationOutcome> RunAsync(
@@ -32,7 +39,7 @@ public sealed class CalibrationPass(HarnessPaths paths, SuiteFile suite, FiringR
         Action<string>? log = null,
         CancellationToken ct = default)
     {
-        var firing = runner ?? new FiringRunner(paths);
+        var firing = runner ?? new FiringRunner(paths, suite);
         var already = ValidRunsByCase(journal.Path);
         var started = DateTimeOffset.UtcNow;
         log?.Invoke($"calibration pass, {RunEnvironment.Current}, journal {journal.Path}");
@@ -91,7 +98,7 @@ public sealed class CalibrationPass(HarnessPaths paths, SuiteFile suite, FiringR
     public RunScore Score(Step step, RunOutcome outcome) => step.Kind switch
     {
         CaseKind.ShouldFire => Scoring.ScoreFiring(outcome, step.Expect),
-        _ => Scoring.ScoreQuiet(outcome, suite.SkillUnderTest),
+        _ => Scoring.ScoreQuiet(outcome, Cases.SkillUnderTest),
     };
 
     /// <summary>
@@ -108,15 +115,15 @@ public sealed class CalibrationPass(HarnessPaths paths, SuiteFile suite, FiringR
         FiringPlanShape.ShortPositives => Positives().Take(ShortCases)
             .Select(s => s with { Runs = ShortRuns, Cap = ShortRuns * 2 }),
         _ => Positives()
-            .Concat(Quiet(suite.Firing.ShouldNotFire, CaseKind.ShouldNotFire))
-            .Concat(Quiet(suite.Firing.Watch, CaseKind.Watch)),
+            .Concat(Quiet(Cases.Firing.ShouldNotFire, CaseKind.ShouldNotFire))
+            .Concat(Quiet(Cases.Firing.Watch, CaseKind.Watch)),
     };
 
     public const int ShortCases = 3;
     public const int ShortRuns = 2;
 
     private IEnumerable<Step> Positives() =>
-        suite.Firing.ShouldFire.Select(c => new Step(c.Id, c.Prompt, c.Runs, c.Cap, CaseKind.ShouldFire, c.Expect));
+        Cases.Firing.ShouldFire.Select(c => new Step(c.Id, c.Prompt, c.Runs, c.Cap, CaseKind.ShouldFire, c.Expect));
 
     private static IEnumerable<Step> Quiet(IEnumerable<NegativeCase> cases, CaseKind kind) =>
         cases.Select(c => new Step(c.Id, c.Prompt, c.Runs, c.Cap, kind, []));

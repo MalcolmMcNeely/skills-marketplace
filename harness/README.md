@@ -21,6 +21,10 @@ folder landing in `skills/` widens all of them by being there, with nothing to w
 holds them to it, because a layer that narrowed back to one skill would stay green while it stopped
 measuring the rest.
 
+Each of them reports what a suite has not declared rather than failing on it. A suite with no
+should-fire case, no contract case or no break overlays says so in the run output and the pass moves
+on, so a suite that measures one half of a skill does not take the other suites down with it.
+
 Layers 3 and 4 are independent on purpose. Layer 3 owns the description and layer 4 owns the body,
 so a red layer names which half broke. [breakage.md](../docs/breakage.md) measured that separation:
 a broken description reddened layer 3 at 25 of 60 while layer 4 held at 5 of 5, and a broken body
@@ -36,14 +40,13 @@ types it by name, and there is no firing decision to measure, so it is exempt.
 A suite covers an engine when the file it resolves is the shipped file, which only a `catalogue`
 suite can be. A fixture suite of the same name tests a copy, and a copy drifts.
 
-**This assertion is red today.** `skill-authoring` ships with no suite, and writing one costs model
-runs, so [#30](https://github.com/MalcolmMcNeely/skills-marketplace/issues/30) tracks it. The red is
-the point: ship a model-invocable skill with no tests and the free gate says so on the next push, for
-nothing, in about a second.
+**This assertion was red until [#30](https://github.com/MalcolmMcNeely/skills-marketplace/issues/30).**
+`skill-authoring` shipped with no suite for four days, and the gate said so on every push for
+nothing, in about a second. That is what the rule is for: ship a model-invocable skill with no tests
+and it reddens again the next time somebody pushes.
 
-The folder shape says the same thing without running anything. `skills/` sits beside
-`plugins/core/skills/` and holds one entry against two shipped skills, so the gap is visible in a
-directory listing before any test reports it.
+The catalogue's other skill, `new-skill`, is an entry point and stays exempt. A developer types it,
+so there is no firing decision to measure and a firing case for it could never fail.
 
 ## The gate
 
@@ -98,10 +101,11 @@ are under test, no layer spells out a path inside one, and no layer names one. A
 all there is to adding a skill. Every layer, both long passes and the screen widen to cover it, with
 nothing to wire in.
 
-`skills/csharp-new-class/` is the worked example. It is the only suite that exists and it carries
-all four parts, so read it alongside this section. Copy its `suite.json` for the case shapes, but
-not its `"source"`: it is a `fixture` suite testing a skill nobody ships, and a suite for a real
-skill needs `catalogue`. See **Choosing a source** below.
+`skills/csharp-new-class/` is the worked example. It carries all four parts, so read it alongside
+this section. Copy its `suite.json` for the case shapes, but not its `"source"`: it is a `fixture`
+suite testing a skill nobody ships, and a suite for a real skill needs `catalogue`. See
+**Choosing a source** below. `skills/skill-authoring/` is the shorter example of a catalogue suite:
+a `suite.json` and nothing else, because the skill it tests is read from `plugins/`.
 
 | Path | Required | What |
 |---|---|---|
@@ -155,6 +159,22 @@ is refused at discovery, so a typo costs a second rather than a paid pass.
 
 A fixture suite named after a shipped skill does not cover it. A copy drifts the moment the original
 is edited, and then the suite tests text nobody ships.
+
+### What a firing run puts in front of the model
+
+Layer 3 decides from the **listing**, so the skill under test has to be in it. Discovery works that
+out per suite. The distractor catalogue always loads, and the suite's own plugin loads beside it
+whenever the distractors do not already declare that name.
+
+That was free while the only suite was a fixture one. The distractor catalogue carries a
+description-only stub of `csharp-new-class`, so the distractors and the skill under test arrived in
+the same folder and nobody had to think about it. A catalogue skill is never copied, so nothing puts
+it among the distractors. A run loading the distractors alone would show the model twelve skills
+unrelated to the prompt, miss every time, and report it as a description that will not fire.
+
+The question is asked of the distractors, not of the `"source"`. A fixture suite whose skill nobody
+stubbed needs its plugin loaded for the same reason a catalogue suite does, and loading a plugin the
+distractors already speak for would put two skills of one name in the listing.
 
 ## The exit-code trap, closed by construction
 

@@ -67,7 +67,7 @@ public class CalibrationPassTests(ITestOutputHelper output)
             CalibrationOutcome outcome;
             using (var journal = new RunJournal(journalPath))
             {
-                outcome = await new CalibrationPass(Paths, found.Suite)
+                outcome = await new CalibrationPass(Paths, found)
                     .RunAsync(journal, ledger, output.WriteLine, CancellationToken.None);
             }
             if (outcome.Stopped) stopped = outcome;

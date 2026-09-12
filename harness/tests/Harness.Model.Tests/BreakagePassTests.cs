@@ -58,6 +58,15 @@ public class BreakagePassTests(ITestOutputHelper output)
                 continue;
             }
 
+            // #30. Every arm names an overlay, and a suite takes part by declaring them. One that
+            // declares none has no break to measure, so it is skipped here rather than left to throw
+            // on the first overlay and take every suite after it down with the pass.
+            if (!found.DeclaresBreaks)
+            {
+                output.WriteLine($"{found.Name,-20} declares no break overlays, so there is nothing to break");
+                continue;
+            }
+
             // Under the suite this pass measured, per #26. A run record is evidence about one skill,
             // and a shared folder read as everyone's.
             var dir = ResumeOverride.PathFor(resume, found, Path.Combine(found.RunRecords, $"breakage-{stamp}"));
@@ -111,7 +120,11 @@ public class BreakagePassTests(ITestOutputHelper output)
             {
                 if (arm.Arm.RunFiring)
                     Assert.True(arm.FiringValid > 0, $"{found.Name}/{arm.Arm.Id}: no valid layer 3 runs, so layer 3 has no verdict to give");
-                Assert.True(arm.ContractValid > 0, $"{found.Name}/{arm.Arm.Id}: no valid layer 4 runs, so layer 4 has no verdict to give");
+                // #30. A suite is asked for a layer 4 verdict only if it wrote a contract case. The
+                // two halves are declared separately, so demanding one because the other is there
+                // reddens a suite for measuring exactly what it said it would.
+                if (found.Suite.Contract.Count > 0)
+                    Assert.True(arm.ContractValid > 0, $"{found.Name}/{arm.Arm.Id}: no valid layer 4 runs, so layer 4 has no verdict to give");
             }
     }
 }

@@ -28,6 +28,10 @@ public class CatalogueCoverageTests : IDisposable
         // Discovery refuses a missing suites root, which is a misconfiguration rather than an empty
         // catalogue. A repo shipping skills and testing none of them has the folder, empty.
         Directory.CreateDirectory(_paths.Suites);
+
+        // It refuses a missing distractor catalogue for the same reason. Coverage says nothing about
+        // distractors, but it comes through the same discovery, so the folder has to be there.
+        Directory.CreateDirectory(_paths.StubCatalogue);
     }
 
     private static void Write(string path, string content)

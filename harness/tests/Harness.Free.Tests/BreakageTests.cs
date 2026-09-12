@@ -443,19 +443,19 @@ public class FiringPlanShapeTests
     private static SuiteFile Suite => Found.Suite;
 
     private static int Runs(FiringPlanShape shape) =>
-        new CalibrationPass(Paths, Suite, null, shape).Plan().Sum(s => s.Runs);
+        new CalibrationPass(Paths, Found, null, shape).Plan().Sum(s => s.Runs);
 
     [Fact]
     public void Full_is_still_issue_10s_125_run_pass()
     {
         Assert.Equal(125, Runs(FiringPlanShape.Full));
-        Assert.Equal(23, new CalibrationPass(Paths, Suite).Plan().Count());
+        Assert.Equal(23, new CalibrationPass(Paths, Found).Plan().Count());
     }
 
     [Fact]
     public void Positives_only_is_60_runs_and_every_case_expects_a_set()
     {
-        var plan = new CalibrationPass(Paths, Suite, null, FiringPlanShape.PositivesOnly).Plan().ToList();
+        var plan = new CalibrationPass(Paths, Found, null, FiringPlanShape.PositivesOnly).Plan().ToList();
 
         Assert.Equal(10, plan.Count);
         Assert.Equal(60, plan.Sum(s => s.Runs));
@@ -465,7 +465,7 @@ public class FiringPlanShapeTests
     [Fact]
     public void Short_positives_is_6_runs_and_is_a_probe_not_a_measurement()
     {
-        var plan = new CalibrationPass(Paths, Suite, null, FiringPlanShape.ShortPositives).Plan().ToList();
+        var plan = new CalibrationPass(Paths, Found, null, FiringPlanShape.ShortPositives).Plan().ToList();
 
         Assert.Equal(CalibrationPass.ShortCases, plan.Count);
         Assert.Equal(6, plan.Sum(s => s.Runs));
@@ -495,8 +495,7 @@ public class CaseKindTests
 {
     private static readonly HarnessPaths Paths = new();
     private static readonly DiscoveredSuite Found = UnderTest.CsharpNewClass;
-    private static SuiteFile Suite => Found.Suite;
-    private static CalibrationPass Pass => new(Paths, Suite);
+    private static CalibrationPass Pass => new(Paths, Found);
     private static List<CalibrationPass.Step> FullPlan => [.. Pass.Plan()];
 
     [Fact]
@@ -523,7 +522,7 @@ public class CaseKindTests
     [Fact]
     public void A_narrower_shape_keeps_the_kind_it_narrowed()
     {
-        var shortened = new CalibrationPass(Paths, Suite, null, FiringPlanShape.ShortPositives).Plan();
+        var shortened = new CalibrationPass(Paths, Found, null, FiringPlanShape.ShortPositives).Plan();
         Assert.All(shortened, s => Assert.Equal(CaseKind.ShouldFire, s.Kind));
     }
 

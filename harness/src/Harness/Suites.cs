@@ -19,8 +19,27 @@ public sealed record DiscoveredSuite
     /// <summary>The folder holding the SKILL.md under test.</summary>
     public required string Skill { get; init; }
 
+    /// <summary>
+    /// Issue #30. What a firing run loads BESIDE the distractor catalogue, so the skill under test is
+    /// in the listing layer 3 decides from. Empty when the distractors already declare it.
+    ///
+    /// The distractor catalogue carries a description-only stub of every fixture skill, so the first
+    /// suite needed nothing here and the requirement was invisible. A catalogue skill is read from
+    /// plugins/ and never copied, so nothing puts it among the distractors: a run that loaded the
+    /// distractors alone would show the model twelve skills unrelated to the prompt, miss every time,
+    /// and report it as a description that will not fire.
+    /// </summary>
+    public required IReadOnlyList<string> ListingPlugins { get; init; }
+
     public string SkillFile => Path.Combine(Skill, SuiteDiscovery.SkillFileName);
     public string Breaks => Path.Combine(Root, SuiteDiscovery.BreaksFolder);
+
+    /// <summary>
+    /// Does this suite declare break overlays at all? #6's differential has nothing to lay without
+    /// them. An empty <c>breaks/</c> folder declares none: the arms name groups inside it, and a
+    /// folder holding no group answers every one of them with nothing.
+    /// </summary>
+    public bool DeclaresBreaks => Directory.Exists(Breaks) && Directory.GetDirectories(Breaks).Length > 0;
 
     /// <summary>Where a pass writes its journal and its rendered report. Created by the pass, not by discovery.</summary>
     public string RunRecords => Path.Combine(Root, SuiteDiscovery.RunsFolder);
@@ -85,7 +104,7 @@ public sealed record DiscoveredSuite
 /// than a skip. Every one of them is a silent pass waiting to happen, which is the failure this
 /// harness exists to prevent.
 /// </summary>
-public sealed class SuiteDiscovery(string suitesRoot, string shippedCatalogue)
+public sealed class SuiteDiscovery(string suitesRoot, string shippedCatalogue, string stubCatalogue)
 {
     public const string SuiteFileName = "suite.json";
     public const string SkillFileName = "SKILL.md";
@@ -95,7 +114,8 @@ public sealed class SuiteDiscovery(string suitesRoot, string shippedCatalogue)
     /// <summary>A plugin's skills live here, and so do an overlay's. It is what tells an overlay from a group.</summary>
     public const string SkillsFolder = "skills";
 
-    public static SuiteDiscovery For(HarnessPaths paths) => new(paths.Suites, paths.ShippedCatalogue);
+    public static SuiteDiscovery For(HarnessPaths paths) =>
+        new(paths.Suites, paths.ShippedCatalogue, paths.StubCatalogue);
 
     public IReadOnlyList<DiscoveredSuite> Discover()
     {
@@ -103,6 +123,12 @@ public sealed class SuiteDiscovery(string suitesRoot, string shippedCatalogue)
         // gate over zero skills. An empty root is a different thing and is allowed to be empty.
         if (!Directory.Exists(suitesRoot))
             throw new DirectoryNotFoundException($"suites root not found: {suitesRoot}");
+
+        // #30. The distractor catalogue decides what each suite has to load, and Catalogue.Load reads
+        // a missing folder as no skills. Left unchecked, a renamed shared/catalogue/ would hand every
+        // suite its own plugin, run layer 3 against a listing of one, and pass.
+        if (!Directory.Exists(stubCatalogue))
+            throw new DirectoryNotFoundException($"distractor catalogue not found: {stubCatalogue}");
 
         return [.. Directory.GetDirectories(suitesRoot).Order(StringComparer.Ordinal).Select(Read)];
     }
@@ -155,7 +181,21 @@ public sealed class SuiteDiscovery(string suitesRoot, string shippedCatalogue)
             _ => throw new NotSupportedException($"suite '{folder}': unknown source '{suite.Source}'"),
         };
 
-        return new DiscoveredSuite { Name = folder, Root = dir, Suite = suite, Plugin = plugin, Skill = skill };
+        // Asked of the DISTRACTORS, not of the source. A fixture suite whose skill nobody stubbed
+        // needs its plugin in the listing for the same reason a catalogue suite does, and keying on
+        // the source would answer that one wrongly.
+        var stubbed = Catalogue.Load(stubCatalogue)
+            .Any(s => string.Equals(s.Name, suite.SkillUnderTest, StringComparison.Ordinal));
+
+        return new DiscoveredSuite
+        {
+            Name = folder,
+            Root = dir,
+            Suite = suite,
+            Plugin = plugin,
+            Skill = skill,
+            ListingPlugins = stubbed ? [] : [plugin],
+        };
     }
 
     /// <summary>#23 item 29. A typo here costs a second. Found at layer 4 it costs a paid pass.</summary>

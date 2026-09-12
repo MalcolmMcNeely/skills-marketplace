@@ -60,8 +60,24 @@ public class SuiteDiscoveryTests
         return dir;
     }
 
-    private static SuiteDiscovery Discovery(string suitesRoot, string? shippedCatalogue = null) =>
-        new(suitesRoot, shippedCatalogue ?? Path.Combine(suitesRoot, "no-catalogue"));
+    private static SuiteDiscovery Discovery(
+        string suitesRoot, string? shippedCatalogue = null, string? stubCatalogue = null) =>
+        new(suitesRoot,
+            shippedCatalogue ?? Path.Combine(suitesRoot, "no-catalogue"),
+            // Empty, but present. Discovery refuses a distractor catalogue that is not there, so a
+            // case that says nothing about distractors still has to have the folder.
+            stubCatalogue ?? Distractors());
+
+    /// <summary>
+    /// A distractor catalogue, the shape <c>shared/catalogue/</c> holds. In a directory of its own,
+    /// never under the suites root, which discovery scans and would read it as a half-finished suite.
+    /// </summary>
+    private static string Distractors(params string[] names)
+    {
+        var dir = TempDir();
+        foreach (var name in names) Write(Path.Combine(dir, "skills", name, "SKILL.md"), SkillMd(name));
+        return dir;
+    }
 
     [Fact]
     public void A_well_formed_folder_is_discovered_with_its_name_its_cases_and_its_paths()
@@ -106,6 +122,23 @@ public class SuiteDiscoveryTests
 
         var ex = Assert.Throws<DirectoryNotFoundException>(() => Discovery(root).Discover());
         Assert.Contains(root, ex.Message, StringComparison.Ordinal);
+    }
+
+    /// <summary>
+    /// #30. The same rule for the distractors. `Catalogue.Load` reads a missing folder as no skills,
+    /// so a renamed one would hand every suite its own plugin and run layer 3 against a listing of
+    /// one. That passes, which is the silent green this class is strict to prevent.
+    /// </summary>
+    [Fact]
+    public void A_distractor_catalogue_that_does_not_exist_throws()
+    {
+        var root = TempDir();
+        Suite(root);
+        var missing = Path.Combine(TempDir(), "typo");
+
+        var ex = Assert.Throws<DirectoryNotFoundException>(
+            () => Discovery(root, stubCatalogue: missing).Discover());
+        Assert.Contains(missing, ex.Message, StringComparison.Ordinal);
     }
 
     [Fact]
@@ -211,6 +244,45 @@ public class SuiteDiscoveryTests
         Assert.Contains(catalogue, ex.Message, StringComparison.Ordinal);
     }
 
+    /// <summary>
+    /// #30. Layer 3 decides from the listing, so discovery works out what a firing run has to load
+    /// besides the distractors for the skill under test to be in it at all.
+    ///
+    /// The question is asked of the DISTRACTOR catalogue, not of the source. A fixture suite whose
+    /// skill nobody stubbed needs its plugin loaded for the same reason a catalogue suite does, and
+    /// keying on the source would answer that one wrongly.
+    /// </summary>
+    [Fact]
+    public void A_suite_the_distractors_do_not_declare_carries_its_own_plugin_into_the_listing()
+    {
+        var root = TempDir();
+        var catalogue = TempDir();
+        Write(Path.Combine(catalogue, "core", "skills", "skill-authoring", "SKILL.md"), SkillMd("skill-authoring"));
+        Write(Path.Combine(root, "skill-authoring", "suite.json"),
+            SuiteJson(suite: "skill-authoring", skillUnderTest: "skill-authoring", source: "catalogue"));
+        var distractors = Distractors("data-sql", "web-vue");
+
+        var found = Assert.Single(Discovery(root, catalogue, distractors).Discover());
+
+        Assert.Equal([Path.Combine(catalogue, "core")], found.ListingPlugins);
+    }
+
+    /// <summary>
+    /// One name, one description. Loading a plugin the distractors already speak for would put two
+    /// skills of that name in the listing, and the run would be scored on whichever the CLI picked.
+    /// </summary>
+    [Fact]
+    public void A_suite_the_distractors_already_declare_carries_nothing_extra()
+    {
+        var root = TempDir();
+        Suite(root, "csharp-new-class");
+        var distractors = Distractors("csharp-new-class", "data-sql");
+
+        var found = Assert.Single(Discovery(root, stubCatalogue: distractors).Discover());
+
+        Assert.Empty(found.ListingPlugins);
+    }
+
     /// <summary>Two plugins, one name. A suite that cannot say which one it tests must not pick one.</summary>
     [Fact]
     public void A_skill_two_plugins_both_declare_throws_naming_both_plugins()
@@ -267,6 +339,7 @@ public class SuiteDiscoveryTests
         var harness = TempDir();
         Suite(Directory.CreateDirectory(Path.Combine(harness, "skills")).FullName);
         var paths = new HarnessPaths(harness);
+        Directory.CreateDirectory(paths.StubCatalogue);
 
         Assert.Equal(Path.Combine(harness, "skills"), paths.Suites);
         Assert.Equal("csharp-new-class", Assert.Single(SuiteDiscovery.For(paths).Discover()).Name);

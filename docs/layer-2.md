@@ -163,24 +163,23 @@ exceptions than cases, the check is wrong.
 | Every harness path a document quotes is on disk | Coverage, from [#29](https://github.com/MalcolmMcNeely/skills-marketplace/issues/29) |
 
 81 tests, no network, no model calls, under half a second, measured on this machine on 2026-09-07.
-The last two rows arrived later: 261 tests in about a second, measured on this machine on
+The last two rows arrived later: 272 tests in about a second, measured on this machine on
 2026-09-12 against Claude Code 2.1.248.
 
-### The coverage row is red, and that is the assertion working
+### The coverage row was red for four days, and that is the assertion working
 
-`skill-authoring` is model-invocable and ships with no suite, so the run is **260 of 261**. Nothing
-else in the repo noticed that, because every other rule here reads the catalogue alone and every
-discovery rule reads the suites alone. This one reads both.
+`skill-authoring` is model-invocable and shipped with no suite, so from 2026-09-08 the run was
+**260 of 261**. Nothing else in the repo noticed that, because every other rule here reads the
+catalogue alone and every discovery rule reads the suites alone. This one reads both.
 
-Writing the missing suite costs model runs, which is why it is separate work on
+Writing the missing suite cost model runs, which is why it was separate work on
 [#30](https://github.com/MalcolmMcNeely/skills-marketplace/issues/30) rather than part of the
-assertion. Until then the red is the reminder: ship a model-invocable skill with nothing measuring
-it and the free gate says so on the next push, for nothing, in about a second. A second failure is a
-real one.
+assertion. The red was the reminder for as long as it took, and the rule has not changed: ship a
+model-invocable skill with nothing measuring it and the free gate says so on the next push, for
+nothing, in about a second.
 
-The folder shape carries the same message without running anything. `harness/skills/` sits beside
-`plugins/core/skills/` and holds one entry against two shipped skills, so the gap shows in a
-directory listing.
+`new-skill`, the catalogue's other skill, stays exempt. It carries `disable-model-invocation: true`,
+so a developer types it and there is no firing decision to measure.
 
 ### Why the gate reads documents at all
 

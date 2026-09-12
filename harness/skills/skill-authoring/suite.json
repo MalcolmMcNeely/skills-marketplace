@@ -1,0 +1,39 @@
+{
+  "suite": "skill-authoring",
+  "skillUnderTest": "skill-authoring",
+  "source": "catalogue",
+
+  "firing": {
+    "shouldFire": [
+      { "id": "P1",  "runs": 6, "expect": ["skill-authoring"], "prompt": "I want to add a skill to the shared catalogue for our feature-flag process. Should it be an engine or an entry point?" },
+      { "id": "P2",  "runs": 6, "expect": ["skill-authoring"], "prompt": "One of our catalogue skills hardly ever fires when people ask for the thing it is for. Look at how it is written and tell me why." },
+      { "id": "P3",  "runs": 6, "expect": ["skill-authoring"], "prompt": "I am writing a skill for the team catalogue and I do not know what to put in its description." },
+      { "id": "P4",  "runs": 6, "expect": ["skill-authoring"], "prompt": "Our catalogue has grown to fourteen skills and they all fire at once on a broad request. What should change about the way they are written?" },
+      { "id": "P5",  "runs": 6, "expect": ["skill-authoring"], "prompt": "Edit this catalogue skill so that it hands off to another skill in the catalogue when it needs a design review." },
+      { "id": "P6",  "runs": 6, "expect": ["skill-authoring"], "prompt": "Write a catalogue skill that captures our release checklist, for developers to start by name." },
+      { "id": "P7",  "runs": 6, "expect": ["skill-authoring"], "prompt": "Somebody on the team wrote a skill and it fires on almost every request. Review it and tell me what is wrong with it." },
+      { "id": "P8",  "runs": 6, "expect": ["skill-authoring"], "prompt": "Add a skill to the shared catalogue that walks somebody through our incident write-up." },
+      { "id": "P9",  "runs": 6, "expect": ["skill-authoring"], "prompt": "We want to split the catalogue skills by technology. How should the names and the descriptions change?" },
+      { "id": "P10", "runs": 6, "expect": ["skill-authoring"], "prompt": "Write the frontmatter for a new catalogue skill so it only fires when somebody is actually doing the thing it is for." }
+    ],
+
+    "shouldNotFire": [
+      { "id": "N1",  "runs": 5, "boundary": "CLAUDE.md",            "prompt": "Write a CLAUDE.md for this repository so an agent knows the build and test commands." },
+      { "id": "N2",  "runs": 5, "boundary": "AGENTS.md",            "prompt": "Update AGENTS.md so it names the new test command." },
+      { "id": "N3",  "runs": 5, "boundary": "prose a human reads",  "prompt": "Write the README for this project, aimed at a developer joining next week." },
+      { "id": "N4",  "runs": 5, "boundary": "prose a human reads",  "prompt": "Draft the release notes for version 2.0 from the commits since the last tag." },
+      { "id": "N5",  "runs": 5, "boundary": "a project's own .claude/skills/", "prompt": "Add something under .claude/skills/ in this repo so it is only available while I am working here." },
+      { "id": "N6",  "runs": 5, "boundary": "C# code",              "prompt": "Add a Discount class that applies a percentage discount to an order total." },
+      { "id": "N7",  "runs": 5, "boundary": "C# code",              "prompt": "Write unit tests covering the edge cases in CurrencyConverter, including a zero rate." },
+      { "id": "N8",  "runs": 5, "boundary": "ordinary feature work", "prompt": "Add a consumer for the order-placed topic and handle a duplicate delivery." },
+      { "id": "N9",  "runs": 5, "boundary": "prose a human reads",  "prompt": "Write the commit message for the change I have staged." },
+      { "id": "N10", "runs": 5, "boundary": "documentation, not a skill", "prompt": "Document how our deployment pipeline works and put it in docs/." }
+    ],
+
+    "watch": [
+      { "id": "W1", "runs": 5, "boundary": "a prompt, not a skill",      "prompt": "Write a prompt template the team can paste in when they want a code review." },
+      { "id": "W2", "runs": 5, "boundary": "the choice, not the writing", "prompt": "Should our deployment checklist be a skill or a slash command?" },
+      { "id": "W3", "runs": 5, "boundary": "a sub-agent, not a skill",   "prompt": "Write an agent definition for a sub-agent that reviews pull requests." }
+    ]
+  }
+}

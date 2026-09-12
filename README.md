@@ -41,6 +41,7 @@ Start with the plan, then follow a link when you want the working.
 | [The calibration pass](docs/calibration.md) | 133 runs against the good fixture: `p_good`, the gate, and why a perfect score must not set a perfect gate |
 | [The two broken versions](docs/breakage.md) | Breaking the fixture on purpose: which layer notices, and the wall the harness could not see |
 | [What layer 2 asserts](docs/layer-2.md) | The free gate: how skills reference each other, and what the budget test can and cannot prove |
+| [Testing a skill we ship](docs/catalogue-suites.md) | What a suite for a real catalogue skill needs that a fixture suite does not, and the first runs against `skill-authoring` |
 | [Does `plugin validate` need a login in CI?](docs/ci-plugin-validate.md) | Whether layer 1 can gate a runner with no credential |
 | [MCP skill delivery](docs/mcp-skill-delivery.md) | Can an MCP server install a skill, and should it |
 | [MCP and plugins](docs/mcp-and-plugins.md) | What each carries, where they collide, and how an org ships both |
@@ -124,7 +125,7 @@ Run the free half of the harness. No network, no model calls, about a second:
 dotnet test harness/tests/Harness.Free.Tests
 ```
 
-Expect 260 of 261. `skill-authoring` is model-invocable and ships with no suite, and layer 2 reddens on exactly that. The red is the assertion working, and [#30](https://github.com/MalcolmMcNeely/skills-marketplace/issues/30) tracks the suite that turns it green. A second failure is a real one.
+Expect all 272 green. Layer 2 reddens when a model-invocable skill ships with nothing measuring it, and it did exactly that until [#30](https://github.com/MalcolmMcNeely/skills-marketplace/issues/30) wrote `skill-authoring` a suite. Add an engine without one and it says so again on the next push.
 
 `.github/workflows/free-gate.yml` runs those three on every push to `main` and every pull request. It pins the CLI to the version every gate value was measured against, and the runner image to the one `plugin validate` was proved to need no login on. The paying layers stay on a laptop, and the header of that file says why.
 

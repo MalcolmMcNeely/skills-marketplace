@@ -52,7 +52,7 @@ public class DescriptionLadderTests(ITestOutputHelper output)
             {
                 var overlay = found.BreakOverlay(candidate);
                 var catalogue = builder.Build(Paths.StubCatalogue, overlay);
-                var runner = new FiringRunner(Paths, catalogue);
+                var runner = new FiringRunner(Paths, found, catalogue);
 
                 var sample = await Resampler.CollectAsync(Runs, Runs * 2,
                     async ct => Scoring.ScoreFiring(await runner.RunAsync(probe.Prompt, CaseKind.ShouldFire, ct), probe.Expect), ledger);

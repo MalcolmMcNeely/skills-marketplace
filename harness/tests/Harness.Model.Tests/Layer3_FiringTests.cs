@@ -22,7 +22,8 @@ public class Layer3_FiringTests(ITestOutputHelper output)
     [MemberData(nameof(SuitesUnderTest.Rows), MemberType = typeof(SuitesUnderTest))]
     public async Task One_positive_case_end_to_end(string suiteName)
     {
-        var suite = SuiteDiscovery.One(Paths, suiteName).Suite;
+        var found = SuiteDiscovery.One(Paths, suiteName);
+        var suite = found.Suite;
 
         // A suite may be graded on its body alone, and discovery allows one. No should-fire case is a
         // fact that suite declared, not this layer finding nothing: the free gate is what holds the
@@ -34,7 +35,7 @@ public class Layer3_FiringTests(ITestOutputHelper output)
         }
 
         var c = suite.Firing.ShouldFire[0];
-        var runner = new FiringRunner(Paths);
+        var runner = new FiringRunner(Paths, found);
 
         var runs = int.TryParse(Environment.GetEnvironmentVariable("SKILL_HARNESS_RUNS"), out var n) ? n : c.Runs;
         var ledger = new SpendLedger(Ceiling);

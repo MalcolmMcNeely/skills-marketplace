@@ -109,7 +109,7 @@ public class SuiteFolderTests
         var done = CalibrationPass.ValidRunsByCase(journal);
 
         Assert.NotEmpty(done);
-        foreach (var step in new CalibrationPass(Paths, Found.Suite).Plan())
+        foreach (var step in new CalibrationPass(Paths, Found).Plan())
             Assert.True(done.GetValueOrDefault(step.Id) >= step.Runs,
                 $"{step.Id}: {done.GetValueOrDefault(step.Id)} valid runs on disk, {step.Runs} wanted");
     }

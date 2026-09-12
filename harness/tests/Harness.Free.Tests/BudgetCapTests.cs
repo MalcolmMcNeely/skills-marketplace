@@ -16,7 +16,7 @@ public class BudgetCapTests
     [Fact]
     public void A_layer_3_firing_run_is_capped_at_the_per_run_ceiling()
     {
-        var spec = new FiringRunner(Paths).SpecFor("build me a thing", CaseKind.ShouldFire);
+        var spec = new FiringRunner(Paths, UnderTest.CsharpNewClass).SpecFor("build me a thing", CaseKind.ShouldFire);
         Assert.Equal(RunSpec.PerRunCeilingUsd, spec.MaxBudgetUsd);
     }
 
@@ -24,7 +24,7 @@ public class BudgetCapTests
     [Fact]
     public void No_case_kind_carries_a_cap_of_its_own()
     {
-        var runner = new FiringRunner(Paths);
+        var runner = new FiringRunner(Paths, UnderTest.CsharpNewClass);
         foreach (var kind in Enum.GetValues<CaseKind>())
             Assert.Equal(RunSpec.PerRunCeilingUsd, runner.SpecFor("build me a thing", kind).MaxBudgetUsd);
     }
