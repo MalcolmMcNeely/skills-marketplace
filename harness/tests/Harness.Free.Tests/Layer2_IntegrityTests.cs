@@ -118,6 +118,29 @@ public class Layer2_IntegrityTests
             + string.Join('\n', uncovered.Select(e => $"  {e.Skill} wants {e.SuiteFolder}")));
     }
 
+    /// <summary>
+    /// Issue #29. Why the repo sweeps its own prose at all is argued in `docs/layer-2.md`.
+    ///
+    /// Green the day it lands, so the red half is proven in <see cref="DocumentedPathsTests"/>
+    /// against documents built in a temp folder.
+    /// </summary>
+    [Fact]
+    public void No_document_quotes_a_harness_path_that_is_not_there()
+    {
+        var quoted = DocumentedPaths.Quoted(Paths);
+
+        // A rule matching nothing reports nothing dead and reads as a pass, which is the vacuous
+        // green The_catalogue_is_not_empty guards above.
+        Assert.NotEmpty(quoted);
+
+        var dead = DocumentedPaths.Dead(quoted);
+
+        Assert.True(dead.Count == 0,
+            $"{dead.Count} document reference(s) point at a harness path that is not on disk. "
+            + "Update the document, or restore the path:\n"
+            + string.Join('\n', dead.Select(d => $"  {d}")));
+    }
+
     [Fact]
     public void The_marketplace_manifest_does_not_reference_the_harness()
     {

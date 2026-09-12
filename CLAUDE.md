@@ -16,12 +16,12 @@ A Claude Code plugin marketplace for sharing agent skills across teams. Today th
 ```
 claude plugin validate .                        # marketplace manifest
 claude plugin validate ./plugins/core           # plugin manifest
-dotnet test harness/tests/Harness.Free.Tests    # 248 tests, no network, ~1s
+dotnet test harness/tests/Harness.Free.Tests    # 261 tests, no network, ~1s
 ```
 
 Run all three before you commit. `.github/workflows/free-gate.yml` runs them again on every push to `main` and every pull request, on a pinned runner with no credential. Layers 3 and 4 get no workflow, and the header of that file says why.
 
-**Expect 247 of 248, not 248.** `Every_engine_in_the_catalogue_has_a_suite` asks that every model-invocable skill in `plugins/` has a suite folder under `harness/skills/`, and `skill-authoring` has none. That one red is the reminder doing its job, so do not delete it or weaken it. Writing the missing suite costs model runs and is tracked on [#30](https://github.com/MalcolmMcNeely/skills-marketplace/issues/30), which turns it green and the gate with it. A second failure is a real one.
+**Expect 260 of 261, not 261.** `Every_engine_in_the_catalogue_has_a_suite` asks that every model-invocable skill in `plugins/` has a suite folder under `harness/skills/`, and `skill-authoring` has none. That one red is the reminder doing its job, so do not delete it or weaken it. Writing the missing suite costs model runs and is tracked on [#30](https://github.com/MalcolmMcNeely/skills-marketplace/issues/30), which turns it green and the gate with it. A second failure is a real one.
 
 One suite spends money on real `claude -p` calls, and it is double-locked:
 
@@ -50,7 +50,9 @@ Run any of it only when the user asks for it, and report the cost the run prints
 
 ## `harness/` is the gate
 
-Layer 3 is red below 53 of 60 pooled should-fire runs, a gate measured twice across 120 runs against the frozen good fixture. `marketplace.json` does not reference it and nothing under `harness/skills/` or `harness/shared/` is a real skill. `harness/skills/` holds one folder per skill under test, with its suite file, its fixture plugin, its break overlays and its run records. Every layer and both long passes run over every folder discovery returns, so adding one widens all of them at once. Read `harness/README.md` before changing anything in there, and for what the other layers check.
+Layer 3 is red below 53 of 60 pooled should-fire runs, a gate measured twice across 120 runs against the frozen good fixture. `marketplace.json` does not reference it and nothing under `harness/skills/` or `harness/shared/` is a real skill. `harness/skills/` holds one folder per skill under test, with its suite file, its fixture plugin, its break overlays and its run records. Every layer and both long passes run over every folder discovery returns, so adding one widens all of them at once. `harness/README.md` records the shape a suite folder takes, field by field, with `harness/skills/csharp-new-class/` as the worked example. Read it before changing anything in there, and for what the other layers check.
+
+Layer 2 holds the documents to those paths. It sweeps every Markdown file in the repo and reddens on a harness path that is not on disk, so a layout change that leaves the docs behind costs the same second as the rest of the free gate. Two folders are exempt: `.claude/`, which is vendored prose we did not write, and a suite's `runs/`, where a rendered report describes the layout of the day it was written and is right to. A document explaining the rule therefore cannot quote a dead path as an example. Describe the folder instead of typing it.
 
 ## Writing a catalogue skill
 

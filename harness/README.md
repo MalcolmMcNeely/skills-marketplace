@@ -12,7 +12,7 @@ under `skills/` or `shared/` is a real skill.
 | Layer | Question | Cost | Where it runs |
 |---|---|---|---|
 | 1. Manifests | Does `claude plugin validate --strict` accept the marketplace and the plugin? | Free | Every push and pull request |
-| 2. Integrity, budget and coverage | Does every composition reference resolve? Is the catalogue inside the engine cap, and every description under 1024 characters? Does any skill reach an engine by slash form? Does every engine have a suite? | Free | Every push and pull request |
+| 2. Integrity, budget and coverage | Does every composition reference resolve? Is the catalogue inside the engine cap, and every description under 1024 characters? Does any skill reach an engine by slash form? Does every engine have a suite, and does every harness path the documents quote exist? | Free | Every push and pull request |
 | 3. Firing accuracy | Given a natural prompt, does the right set of skills fire from the description alone? | About `$0.23` a run | On demand, locally |
 | 4. Contract | Invoked by name, does the skill's body do what it promises? | About `$0.24` a run | On demand, locally |
 
@@ -40,6 +40,10 @@ suite can be. A fixture suite of the same name tests a copy, and a copy drifts.
 runs, so [#30](https://github.com/MalcolmMcNeely/skills-marketplace/issues/30) tracks it. The red is
 the point: ship a model-invocable skill with no tests and the free gate says so on the next push, for
 nothing, in about a second.
+
+The folder shape says the same thing without running anything. `skills/` sits beside
+`plugins/core/skills/` and holds one entry against two shipped skills, so the gap is visible in a
+directory listing before any test reports it.
 
 ## The gate
 
@@ -90,34 +94,72 @@ output folder.
 ## What a suite folder holds
 
 `SuiteDiscovery` scans `skills/` and returns one suite per folder. Nothing else decides which skills
-are under test, no layer spells out a path inside one, and no layer names one.
+are under test, no layer spells out a path inside one, and no layer names one. Adding a folder is
+all there is to adding a skill. Every layer, both long passes and the screen widen to cover it, with
+nothing to wire in.
 
-| Path | What |
-|---|---|
-| `suite.json` | The cases. Data |
-| `plugin/` | The skill under test as a loadable plugin, for `--plugin-dir`. Fixture suites only |
-| `breaks/` | #6's break overlays, grouped by the break. Sparse trees laid over a base at run time |
-| `runs/` | Journals and rendered reports written by this suite's paid passes |
+`skills/csharp-new-class/` is the worked example. It is the only suite that exists and it carries
+all four parts, so read it alongside this section. Copy its `suite.json` for the case shapes, but
+not its `"source"`: it is a `fixture` suite testing a skill nobody ships, and a suite for a real
+skill needs `catalogue`. See **Choosing a source** below.
 
-A suite declares where its skill lives, so `plugin/` is not always there. A `catalogue` suite reads
-the skill from `plugins/` at run time instead. See **What a case looks like** below.
+| Path | Required | What |
+|---|---|---|
+| `suite.json` | Yes | The cases. Data |
+| `plugin/` | Fixture suites only | The skill under test as a loadable plugin, for `--plugin-dir`. A `.claude-plugin/plugin.json` and `skills/<name>/SKILL.md` |
+| `breaks/` | No | #6's break overlays, grouped by the break. Sparse trees laid over a base at run time |
+| `runs/` | No | Journals and rendered reports. Written by the paid passes, not by hand |
+
+The folder name is the suite name, and `suite.json` has to declare the same one. Discovery refuses a
+disagreement rather than guessing, because the two disagreeing is a copy-paste.
+
+### `suite.json`
+
+| Field | Required | What |
+|---|---|---|
+| `suite` | Yes | The suite's name. Must equal the folder name |
+| `skillUnderTest` | Yes | The `name:` the skill's frontmatter declares, not the folder somebody put it in |
+| `source` | Yes | `fixture` or `catalogue`. No default. `SuiteFile.Load` refuses a suite that does not say |
+| `pGood` | No | The per-run rate `Pooling.GateK` computes the gate from. Defaults to `0.67` |
+| `firing` | No | Layer 3's cases: `shouldFire`, `shouldNotFire` and `watch` |
+| `contract` | No | Layer 4's cases |
+
+`firing` and `contract` are each optional, but a suite with no cases at all is refused. An empty
+suite passes every layer by running nothing, which is the silent green this harness exists to stop.
+
+Set `pGood` from the **lower bound** of a calibration pass's interval, never from its point estimate.
+`csharp-new-class` carries `0.940` because #12 scored 60 of 60, and a gate built on that 1.000 would
+demand a flawless run every time. The default of `0.67` is the untuned value a suite starts on before
+anyone has paid for a calibration pass. [calibration.md](../docs/calibration.md) carries the working.
+
+A `shouldFire` case takes an `id`, a `prompt` and an `expect` list, and is graded on an exact set
+match. A `shouldNotFire` or `watch` case takes an `id`, a `prompt` and an optional `boundary` naming
+what it is holding the skill back from. A `contract` case takes an `id`, a `task`, an `assertions`
+name and any `assertionArgs` that name needs. Every case may set `runs` and `cap`; the defaults are 6
+and 12 for a positive case and 5 and 10 for the rest.
+
+Data in JSON, assertions in C#. `"assertions": "TestFirstFilesOnly"` names a class in
+`AssertionCatalogue`. Ordering ("test written before class") cannot be expressed in JSON without
+inventing a DSL, and a prompt list should not need a compiler to edit. A name that does not resolve
+is refused at discovery, so a typo costs a second rather than a paid pass.
+
+### Choosing a source
+
+`"source"` decides where the skill under test is read from. The two values are not interchangeable.
+
+- **`catalogue`** reads the shipped file from `plugins/` at run time and never copies it. A suite for
+  a real skill wants this, and it is the only kind that satisfies the coverage rule above.
+- **`fixture`** reads the skill from the suite's own `plugin/` folder, so a deliberately broken skill
+  can never be mistaken for catalogue content. `csharp-new-class` is one. It tests a skill nobody
+  ships, to measure the harness itself.
+
+A fixture suite named after a shipped skill does not cover it. A copy drifts the moment the original
+is edited, and then the suite tests text nobody ships.
 
 ## The exit-code trap, closed by construction
 
 Scoring functions take a `ValidRun`. The only way to get one is `RunOutcome.TryGetValid`,
 which applies the validity gate. There is no code path that scores an unchecked run.
-
-## What a case looks like
-
-Data in JSON, assertions in C#. `"assertions": "TestFirstFilesOnly"` names a class in
-`AssertionCatalogue`. Ordering ("test written before class") cannot be expressed in JSON
-without inventing a DSL, and a prompt list should not need a compiler to edit.
-
-`"source"` says where the skill under test lives, and takes one of two values. `fixture` reads it
-from the suite's own material, so a deliberately broken skill can never be mistaken for catalogue
-content. `catalogue` reads it from `plugins/` at run time and never copies it, because a copy drifts
-the moment the original is edited and then tests text nobody ships. There is no default: a suite
-that does not say is refused by `SuiteFile.Load`.
 
 ## Measured on this machine
 

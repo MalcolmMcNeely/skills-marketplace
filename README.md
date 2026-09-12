@@ -90,11 +90,15 @@ skills-marketplace/
     free-gate.yml               layers 1 and 2, on every push and pull request
   docs/                         the plan and the findings
   harness/                      the quality gate. Not shipped
+    skills/                     one folder per skill under test. One so far
+    shared/                     fixture material every suite borrows
   plugins/
     core/
       .claude-plugin/plugin.json
       skills/                   the catalogue. Two skills so far
 ```
+
+`harness/skills/` sits beside `plugins/core/skills/` on purpose. One entry against two shipped skills is the coverage gap, visible in a directory listing before any test reports it.
 
 ## Use it locally
 
@@ -119,6 +123,8 @@ Run the free half of the harness. No network, no model calls, about a second:
 ```
 dotnet test harness/tests/Harness.Free.Tests
 ```
+
+Expect 260 of 261. `skill-authoring` is model-invocable and ships with no suite, and layer 2 reddens on exactly that. The red is the assertion working, and [#30](https://github.com/MalcolmMcNeely/skills-marketplace/issues/30) tracks the suite that turns it green. A second failure is a real one.
 
 `.github/workflows/free-gate.yml` runs those three on every push to `main` and every pull request. It pins the CLI to the version every gate value was measured against, and the runner image to the one `plugin validate` was proved to need no login on. The paying layers stay on a laptop, and the header of that file says why.
 
