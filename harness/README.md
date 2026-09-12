@@ -62,8 +62,8 @@ That doc carries the formula and the working.
 ## Run it
 
 ```
-dotnet test harness/tests/Harness.Free.Tests      # layers 1 and 2. Free. ~1 second.
-SKILL_HARNESS_LIVE=1 dotnet test harness/tests/Harness.Model.Tests   # layers 3 and 4. Costs money.
+dotnet test harness/tests/free      # layers 1 and 2. Free. ~1 second.
+SKILL_HARNESS_LIVE=1 dotnet test harness/tests/model   # layers 3 and 4. Costs money.
 ```
 
 The paying half is a separate project **and** refuses to run without `SKILL_HARNESS_LIVE=1`.
@@ -93,9 +93,9 @@ output folder.
 
 | Path | What |
 |---|---|
-| `src/Harness/` | Stream parsing, verdicts, pooling, the two run shapes |
-| `tests/Harness.Free.Tests/` | Layers 1 and 2, plus offline parser tests against captured streams |
-| `tests/Harness.Model.Tests/` | Layers 3 and 4. Real `claude -p` runs |
+| `src/` | Stream parsing, verdicts, pooling, the two run shapes |
+| `tests/free/` | Layers 1 and 2, plus offline parser tests against captured streams |
+| `tests/model/` | Layers 3 and 4. Real `claude -p` runs |
 | `skills/<name>/` | One folder per skill under test. Everything that skill is tested on |
 | `shared/catalogue/` | Twelve description-only stubs for layer 3 |
 | `shared/repo/` | The bare .NET fixture repo from `docs/baseline-test-first.md` |

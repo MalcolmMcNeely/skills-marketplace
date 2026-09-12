@@ -7,5 +7,5 @@
     <AssemblyName>probe</AssemblyName>
     <RootNamespace>Probe</RootNamespace>
   </PropertyGroup>
-  <ItemGroup><ProjectReference Include="../../src/Harness/Harness.csproj" /></ItemGroup>
+  <ItemGroup><ProjectReference Include="../../src/Harness.csproj" /></ItemGroup>
 </Project>

@@ -63,4 +63,4 @@ jobs:
         run: claude plugin validate ./plugins/core
 
       - name: Layer 2, the free suite
-        run: dotnet test harness/tests/Harness.Free.Tests
+        run: dotnet test harness/tests/free

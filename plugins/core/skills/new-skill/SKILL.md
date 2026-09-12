@@ -27,7 +27,7 @@ Call the Skill tool with "the-skill-you-need".
 
 ```
 claude plugin validate ./plugins/core
-dotnet test harness/tests/Harness.Free.Tests
+dotnet test harness/tests/free
 ```
 
 Both must pass before it lands.

@@ -114,8 +114,8 @@ Record the version with every measurement. Claude Code `2.1.248` and
 ## How to run them
 
 ```
-dotnet test harness/tests/Harness.Free.Tests                        # layers 1 and 2. Free.
-SKILL_HARNESS_LIVE=1 dotnet test harness/tests/Harness.Model.Tests  # layers 3 and 4.
+dotnet test harness/tests/free                        # layers 1 and 2. Free.
+SKILL_HARNESS_LIVE=1 dotnet test harness/tests/model  # layers 3 and 4.
 ```
 
 `harness/` is on `main`.

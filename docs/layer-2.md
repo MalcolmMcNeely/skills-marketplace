@@ -208,7 +208,7 @@ tell an example from a claim. Describe the dead folder instead of typing it. The
 escape hatch, and an escape hatch in a gate is a hole.
 
 ```
-dotnet test harness/tests/Harness.Free.Tests
+dotnet test harness/tests/free
 ```
 
 ## What we could not verify

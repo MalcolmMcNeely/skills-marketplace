@@ -72,7 +72,7 @@ Call the Skill tool twice, for "grilling" and "domain-modeling".
 The catalogue's own tests check this for you, with no model calls:
 
 ```
-dotnet test harness/tests/Harness.Free.Tests
+dotnet test harness/tests/free
 ```
 
 They will fail if a name you referenced does not exist, if you wrote `/name` for an engine, if the catalogue has more than 12 engines, or if a description is over 1,024 characters.

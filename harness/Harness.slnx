@@ -1,5 +1,5 @@
 <Solution>
-  <Project Path="src/Harness/Harness.csproj" />
-  <Project Path="tests/Harness.Free.Tests/Harness.Free.Tests.csproj" />
-  <Project Path="tests/Harness.Model.Tests/Harness.Model.Tests.csproj" />
+  <Project Path="src/Harness.csproj" />
+  <Project Path="tests/free/Harness.Free.Tests.csproj" />
+  <Project Path="tests/model/Harness.Model.Tests.csproj" />
 </Solution>

@@ -127,7 +127,7 @@ claude plugin validate ./plugins/core
 Run the free half of the harness. No network, no model calls, about a second:
 
 ```
-dotnet test harness/tests/Harness.Free.Tests
+dotnet test harness/tests/free
 ```
 
 Expect all 272 green. Layer 2 reddens when a model-invocable skill ships with nothing measuring it, and it did exactly that until [#30](https://github.com/MalcolmMcNeely/skills-marketplace/issues/30) wrote `skill-authoring` a suite. Add an engine without one and it says so again on the next push.
@@ -137,7 +137,7 @@ Expect all 272 green. Layer 2 reddens when a model-invocable skill ships with no
 The paying half makes real model calls and refuses to run without an opt-in:
 
 ```
-SKILL_HARNESS_LIVE=1 dotnet test harness/tests/Harness.Model.Tests
+SKILL_HARNESS_LIVE=1 dotnet test harness/tests/model
 ```
 
 ## Where the dev skills came from

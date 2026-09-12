@@ -53,7 +53,7 @@ public class CiWorkflowTests
     [Theory]
     [InlineData("claude plugin validate .")]
     [InlineData("claude plugin validate ./plugins/core")]
-    [InlineData("dotnet test harness/tests/Harness.Free.Tests")]
+    [InlineData("dotnet test harness/tests/free")]
     public void The_gate_runs_each_of_the_three_free_commands(string command)
     {
         // Whole-command equality, not substring. "validate ." sits inside "validate ./plugins/core", so a
@@ -113,6 +113,7 @@ public class CiWorkflowTests
 
     [Theory]
     [InlineData("Harness.Model.Tests")]
+    [InlineData("tests/model")]
     [InlineData("SKILL_HARNESS_LIVE")]
     [InlineData("SKILL_HARNESS_CALIBRATE")]
     [InlineData("SKILL_HARNESS_BREAK")]

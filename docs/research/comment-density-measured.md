@@ -128,7 +128,7 @@ That is one pair out of sixty and proves nothing on its own. It is recorded beca
 ## Running it again
 
 ```
-SKILL_HARNESS_LIVE=1 SKILL_HARNESS_DENSITY=1 dotnet test harness/tests/Harness.Model.Tests
+SKILL_HARNESS_LIVE=1 SKILL_HARNESS_DENSITY=1 dotnet test harness/tests/model
 ```
 
 Double-locked like the other long passes. `SKILL_HARNESS_DENSITY_RUNS` sets runs per arm (default 15) and `SKILL_HARNESS_CEILING_USD` bounds the spend (default $36). The measured pass came in at $18.38.

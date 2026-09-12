@@ -12,6 +12,6 @@
     <PackageReference Include="xunit.runner.visualstudio" Version="2.8.2" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="../../src/Harness/Harness.csproj" />
+    <ProjectReference Include="../../src/Harness.csproj" />
   </ItemGroup>
 </Project>

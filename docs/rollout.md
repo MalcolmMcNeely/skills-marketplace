@@ -156,7 +156,7 @@ Each one works alone. Stop at any point and something is still running.
 | Piece | Where | State |
 |---|---|---|
 | Marketplace and plugin manifests | `.claude-plugin/` and `plugins/core/` | Done |
-| Free quality gate, 294 tests, about a second | `harness/tests/Harness.Free.Tests` | Done |
+| Free quality gate, 295 tests, about a second | `harness/tests/free` | Done |
 | Firing harness, gated at 53 of 60 | `harness/skills/` | Done |
 | The hook counter | `plugins/core/hooks/` | Done |
 | Managed settings example | [managed-settings.example.json](managed-settings.example.json) | Done |

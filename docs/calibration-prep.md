@@ -121,19 +121,19 @@ them.
 
 | Thing | File |
 |---|---|
-| Model pin and CLI version | `harness/src/Harness/RunEnvironment.cs` |
-| Throttle detection | `harness/src/Harness/Throttle.cs` |
-| The journal | `harness/src/Harness/RunJournal.cs` |
-| The pass and its seven outputs | `harness/src/Harness/Calibration.cs` |
-| The report | `harness/src/Harness/CalibrationMarkdown.cs` |
-| Guards for all of it | `harness/tests/Harness.Free.Tests/CalibrationPrepTests.cs` |
+| Model pin and CLI version | `harness/src/RunEnvironment.cs` |
+| Throttle detection | `harness/src/Throttle.cs` |
+| The journal | `harness/src/RunJournal.cs` |
+| The pass and its seven outputs | `harness/src/Calibration.cs` |
+| The report | `harness/src/CalibrationMarkdown.cs` |
+| Guards for all of it | `harness/tests/free/CalibrationPrepTests.cs` |
 
 The free suite is 51 tests, no network, about a second.
 
 To run the pass:
 
 ```
-SKILL_HARNESS_LIVE=1 SKILL_HARNESS_CALIBRATE=1 dotnet test harness/tests/Harness.Model.Tests
+SKILL_HARNESS_LIVE=1 SKILL_HARNESS_CALIBRATE=1 dotnet test harness/tests/model
 ```
 
 To resume one a limit cut short, add `SKILL_HARNESS_JOURNAL=<path>` from the run that stopped.

@@ -90,7 +90,7 @@ A style also swaps the opening role sentence (**local**, byte 186388953). With a
 
 `C:\Users\malco\.claude\settings.json` sets `"outputStyle": "ELI5"` (**local**). `ELI5.md` sets `keep-coding-instructions: true`, so the no-comments section survives, but the role sentence is swapped in every interactive session in this repo.
 
-The harness is already immune. `harness/src/Harness/ClaudeCli.cs` pins `{"outputStyle":"default"}` through `--settings`, with a comment saying why: "This machine has a user-level output style. Pin it or the run measures the machine, not the skill." Every paid run to date was made under Default. The existing numbers are clean.
+The harness is already immune. `harness/src/ClaudeCli.cs` pins `{"outputStyle":"default"}` through `--settings`, with a comment saying why: "This machine has a user-level output style. Pin it or the run measures the machine, not the skill." Every paid run to date was made under Default. The existing numbers are clean.
 
 ### What this closes in `docs/output-styles.md`
 

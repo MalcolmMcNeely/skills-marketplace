@@ -57,7 +57,7 @@ public sealed class HarnessPaths
     /// that holds them to every discovered suite reads their files instead. It asks here for the
     /// folder rather than walking to it, for the reason <see cref="RepoRoot"/> exists.
     /// </summary>
-    public string PaidTests => Path.Combine(Root, "tests", "Harness.Model.Tests");
+    public string PaidTests => Path.Combine(Root, "tests", "model");
 
     /// <summary>
     /// #27. Is this path inside that folder? One rule, because three copies of it disagreed on case
