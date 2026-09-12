@@ -25,7 +25,7 @@ public class EveryLayerTests
 
     /// <summary>The attributes that mark a test as one that spends money. A paid test is one of these.</summary>
     private static readonly string[] PaidAttributes =
-        ["[LiveFact]", "[LiveTheory]", "[CalibrationFact]", "[BreakageFact]", "[LadderFact]"];
+        ["[LiveFact]", "[LiveTheory]", "[CalibrationFact]", "[BreakageFact]", "[LadderFact]", "[DensityFact]"];
 
     private static IEnumerable<string> Sources =>
         Directory.GetFiles(ModelTests, "*.cs", SearchOption.AllDirectories)
@@ -81,6 +81,7 @@ public class EveryLayerTests
     [Theory]
     [InlineData("CalibrationPassTests.cs")]
     [InlineData("BreakagePassTests.cs")]
+    [InlineData("CommentDensityPassTests.cs")]
     public void Each_long_pass_plans_its_work_from_every_discovered_suite(string file)
     {
         Assert.Contains($"{nameof(SuitesUnderTest)}.{nameof(SuitesUnderTest.All)}(", Text(file), StringComparison.Ordinal);
@@ -114,6 +115,7 @@ public class EveryLayerTests
     [Theory]
     [InlineData("CalibrationPassTests.cs", "SKILL_HARNESS_CALIBRATE")]
     [InlineData("BreakagePassTests.cs", "SKILL_HARNESS_BREAK")]
+    [InlineData("CommentDensityPassTests.cs", "SKILL_HARNESS_DENSITY")]
     public void Each_long_pass_keeps_its_own_lock_on_top_of_the_projects(string file, string lockName)
     {
         var text = Text(file);
