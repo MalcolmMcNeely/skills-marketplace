@@ -8,3 +8,6 @@
 [Bb]in/
 [Oo]bj/
 
+
+# JetBrains Rider. Machine-specific.
+.idea/
