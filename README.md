@@ -70,6 +70,8 @@ A third line, also in `docs/research/`. Once the catalogue ships, which skills d
 | [Who measures it](docs/research/who-measures-skill-usage.md) | Twenty-seven companies against their own sources, and why the blanks are the finding |
 | [Buy or build](docs/research/buying-skill-telemetry.md) | Thirteen products that count skills, and the one thing none of them does |
 
+[`telemetry/`](telemetry/README.md) is where that research was tested rather than argued. Two containers on podman, a Grafana dashboard, and a script that replays the skill usage already sitting in your session transcripts. Measured on this machine: 1,065 activations across 59 skills, and 36,578 requests carrying 4.0G tokens attributed per skill. A second script joins that against the skills on disk, which is the only way to name a skill that never fired. Throwaway, not shipped.
+
 ## Two skill locations, and they are not the same thing
 
 This trips people up.
@@ -98,6 +100,7 @@ skills-marketplace/
     core/
       .claude-plugin/plugin.json
       skills/                   the catalogue. Two skills so far
+  telemetry/                    a throwaway rig for watching skills fire. Not shipped
 ```
 
 `harness/skills/` sits beside `plugins/core/skills/` on purpose. One entry against two shipped skills is the coverage gap, visible in a directory listing before any test reports it.
