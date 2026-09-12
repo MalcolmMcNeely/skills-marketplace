@@ -12,7 +12,7 @@ under `skills/` or `shared/` is a real skill.
 | Layer | Question | Cost | Where it runs |
 |---|---|---|---|
 | 1. Manifests | Does `claude plugin validate --strict` accept the marketplace and the plugin? | Free | Every push and pull request |
-| 2. Integrity and budget | Does every composition reference resolve? Is the catalogue inside the engine cap, and every description under 1024 characters? Does any skill reach an engine by slash form? | Free | Every push and pull request |
+| 2. Integrity, budget and coverage | Does every composition reference resolve? Is the catalogue inside the engine cap, and every description under 1024 characters? Does any skill reach an engine by slash form? Does every engine have a suite? | Free | Every push and pull request |
 | 3. Firing accuracy | Given a natural prompt, does the right set of skills fire from the description alone? | About `$0.23` a run | On demand, locally |
 | 4. Contract | Invoked by name, does the skill's body do what it promises? | About `$0.24` a run | On demand, locally |
 
@@ -25,6 +25,21 @@ Layers 3 and 4 are independent on purpose. Layer 3 owns the description and laye
 so a red layer names which half broke. [breakage.md](../docs/breakage.md) measured that separation:
 a broken description reddened layer 3 at 25 of 60 while layer 4 held at 5 of 5, and a broken body
 reddened layer 4 at 0 of 8 while layer 3 held at 6 of 6.
+
+## Every engine needs a suite
+
+Layer 2 reads the shipped catalogue and the suite folders together, and fails naming any engine
+nothing measures. An engine is model-invocable: it fires on its own judgement, so untested it is
+behaviour nobody has checked. An entry point carries `disable-model-invocation: true`, a developer
+types it by name, and there is no firing decision to measure, so it is exempt.
+
+A suite covers an engine when the file it resolves is the shipped file, which only a `catalogue`
+suite can be. A fixture suite of the same name tests a copy, and a copy drifts.
+
+**This assertion is red today.** `skill-authoring` ships with no suite, and writing one costs model
+runs, so [#30](https://github.com/MalcolmMcNeely/skills-marketplace/issues/30) tracks it. The red is
+the point: ship a model-invocable skill with no tests and the free gate says so on the next push, for
+nothing, in about a second.
 
 ## The gate
 

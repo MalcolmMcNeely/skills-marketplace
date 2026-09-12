@@ -16,10 +16,12 @@ A Claude Code plugin marketplace for sharing agent skills across teams. Today th
 ```
 claude plugin validate .                        # marketplace manifest
 claude plugin validate ./plugins/core           # plugin manifest
-dotnet test harness/tests/Harness.Free.Tests    # 241 tests, no network, ~1s
+dotnet test harness/tests/Harness.Free.Tests    # 248 tests, no network, ~1s
 ```
 
 Run all three before you commit. `.github/workflows/free-gate.yml` runs them again on every push to `main` and every pull request, on a pinned runner with no credential. Layers 3 and 4 get no workflow, and the header of that file says why.
+
+**Expect 247 of 248, not 248.** `Every_engine_in_the_catalogue_has_a_suite` asks that every model-invocable skill in `plugins/` has a suite folder under `harness/skills/`, and `skill-authoring` has none. That one red is the reminder doing its job, so do not delete it or weaken it. Writing the missing suite costs model runs and is tracked on [#30](https://github.com/MalcolmMcNeely/skills-marketplace/issues/30), which turns it green and the gate with it. A second failure is a real one.
 
 One suite spends money on real `claude -p` calls, and it is double-locked:
 

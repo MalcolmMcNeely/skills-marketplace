@@ -70,6 +70,20 @@ public sealed class HarnessPaths
         Path.GetFullPath(path).StartsWith(
             Path.GetFullPath(folder) + Path.DirectorySeparatorChar, StringComparison.OrdinalIgnoreCase);
 
+    /// <summary>
+    /// #28. Are these two paths the same file?
+    ///
+    /// The comparer follows the PLATFORM, because the question is the filesystem's and the two
+    /// filesystems answer it differently. The gate runs on a laptop and on ubuntu-24.04, where
+    /// `Skill-Authoring/SKILL.md` and `skill-authoring/SKILL.md` are two files that can both exist.
+    /// Ignoring case there would call them one, and a coverage check that falsely ACCEPTS reads an
+    /// untested skill as tested. That is a silent green, which is the failure this harness exists to
+    /// prevent, so the loose answer is never the safe default.
+    /// </summary>
+    public static bool SameFile(string a, string b) =>
+        string.Equals(Path.GetFullPath(a), Path.GetFullPath(b),
+            OperatingSystem.IsWindows() ? StringComparison.OrdinalIgnoreCase : StringComparison.Ordinal);
+
     /// <summary>A contract run writes files, so each one gets its own copy of the bare fixture repo.</summary>
     public string NewScratchRepo()
     {

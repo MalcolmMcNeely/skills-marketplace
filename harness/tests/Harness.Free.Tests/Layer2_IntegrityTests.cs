@@ -96,6 +96,28 @@ public class Layer2_IntegrityTests
             Assert.DoesNotContain(skill.Name, fixtures);
     }
 
+    /// <summary>
+    /// Issue #28. An engine is model-invocable, so it fires on its own and its description spends
+    /// listing context on every request. Shipping one nothing measures is shipping behaviour nobody
+    /// has checked. An entry point is exempt: it carries <c>disable-model-invocation: true</c>, a
+    /// developer types it, and there is no firing behaviour to measure.
+    ///
+    /// RED ON PURPOSE, and that is what the assertion is for. The green half of the rule is proven in
+    /// <see cref="CatalogueCoverageTests"/>, against catalogues built in a temp folder. #30 tracks the
+    /// suites that turn this one green, because writing them costs model runs and this does not.
+    /// </summary>
+    [Fact]
+    public void Every_engine_in_the_catalogue_has_a_suite()
+    {
+        var uncovered = CatalogueCoverage.EnginesWithNoSuite(Paths);
+
+        Assert.True(uncovered.Count == 0,
+            $"{uncovered.Count} engine(s) ship with nothing measuring them. "
+            + "An engine is model-invocable, so it fires unasked and nobody has checked that it fires right. "
+            + "Add a suite folder for each, holding a suite.json that declares source catalogue:\n"
+            + string.Join('\n', uncovered.Select(e => $"  {e.Skill} wants {e.SuiteFolder}")));
+    }
+
     [Fact]
     public void The_marketplace_manifest_does_not_reference_the_harness()
     {

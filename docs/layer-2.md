@@ -159,8 +159,10 @@ exceptions than cases, the check is wrong.
 | Every description under 1,024 characters | Budget |
 | No fixture skill shares a name with a shipped skill | Isolation, from [#8](https://github.com/MalcolmMcNeely/skills-marketplace/issues/8) |
 | `marketplace.json` never mentions the harness | Isolation, from #8 |
+| Every engine has a suite folder under `harness/skills/` | Coverage, from [#28](https://github.com/MalcolmMcNeely/skills-marketplace/issues/28) |
 
-81 tests, no network, no model calls, under half a second.
+81 tests, no network, no model calls, under half a second, measured on this machine on 2026-09-07.
+The coverage row arrived later: 248 tests in about a second, measured on 2026-09-12.
 
 ```
 dotnet test harness/tests/Harness.Free.Tests
