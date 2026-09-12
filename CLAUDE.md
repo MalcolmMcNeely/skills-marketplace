@@ -71,6 +71,7 @@ A finding is only real once it is a committed Markdown file in `docs/`, indexed 
 ## Conventions
 
 - British English. `catalogue`, `behaviour`, `licence`.
+- `CONTEXT.md` is the glossary. Use the word it picks, not the ones it lists under `_Avoid_`.
 - Commit messages are imperative and sentence case, with no prefix: "Correct layer 3's cost", not "fix: layer 3 cost".
 - Solo project. Commit straight to `main`.
 - Prose a human reads gets the `unslop` pass before it lands.

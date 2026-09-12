@@ -184,6 +184,10 @@ The question is asked of the distractors, not of the `"source"`. A fixture suite
 stubbed needs its plugin loaded for the same reason a catalogue suite does, and loading a plugin the
 distractors already speak for would put two skills of one name in the listing.
 
+The distractor plugin still declares itself `harness-fixture-catalogue`, which is the old vocabulary
+left in a name. It stays. That string reaches the listing every layer 3 run decides from, and #12
+calibrated the gate with it there, so changing it is a re-measurement and not a tidy-up.
+
 ## The exit-code trap, closed by construction
 
 Scoring functions take a `ValidRun`. The only way to get one is `RunOutcome.TryGetValid`,

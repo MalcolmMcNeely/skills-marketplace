@@ -24,7 +24,7 @@ breaks; `description/distractors` and `description/plugin` read as what they are
 
 Two breaks, but each has to be shown at **both** layers or the separation claim is untested. The two
 shapes of the description break are not copies of each other. Layer 3 never reads a body, so the
-catalogue shape stays a description-only stub; layer 4 reads nothing else, so the plugin shape
+distractor shape stays a description-only stub; layer 4 reads nothing else, so the plugin shape
 carries the full working body. That is what lets layer 4 be shown not to catch a targeting fault.
 
 The body break needs one shape only. Its description is byte-identical to the good one, so the same
