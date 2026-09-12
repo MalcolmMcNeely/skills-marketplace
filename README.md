@@ -55,7 +55,8 @@ A second line of research, in `docs/research/`. The catalogue documents above as
 | [Agent patterns for the implement loop](docs/research/agent-patterns-for-the-implement-loop.md) | Orchestrator or daisy chain, and which mechanisms actually run today |
 | [Hooks as guardrails](docs/research/hooks-as-guardrails.md) | Every hook event in 2.1.248, what each can block, and what hooks cannot do |
 | [Ticket state as a guardrail](docs/research/ticket-state-guardrails.md) | Whether GitHub's blocking edges are machine-readable, and three traps in the way |
-| [Steering how Claude writes code](docs/research/steering-code-style.md) | Why a style rule gets ignored, which layer can replace an instruction rather than add one, and the output style that makes comments worse |
+| [Steering how Claude writes code](docs/research/steering-code-style.md) | Why a style rule gets ignored, which layer can replace an instruction rather than add one, and what the shipped binary says about comments |
+| [Where a comment rule sits, measured](docs/research/comment-density-measured.md) | 60 runs across four arms: the rule works, moving it higher does not, and the whole effect is XML doc comments |
 
 ## Knowing whether a skill earns its slot
 

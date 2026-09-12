@@ -62,10 +62,18 @@ SKILL_HARNESS_LIVE=1 dotnet test harness/tests/Harness.Model.Tests   # layers 3 
 The paying half is a separate project **and** refuses to run without `SKILL_HARNESS_LIVE=1`.
 Two locks, because one is forgettable.
 
-The long passes carry a third lock each, so neither is tripped by running the project:
+The long passes carry a third lock each, so none is tripped by running the project:
 `SKILL_HARNESS_CALIBRATE=1` for #12 (133 runs, 02:08:14 measured), `SKILL_HARNESS_BREAK=1` for #6
-(256 runs, 03:19:34 measured) and `SKILL_HARNESS_LADDER=1` for #6's screen, which is 9 runs a suite.
-All three figures come from one skill, and each pass now runs over every suite discovery returns.
+(256 runs, 03:19:34 measured), `SKILL_HARNESS_LADDER=1` for #6's screen, which is 9 runs a suite, and
+`SKILL_HARNESS_DENSITY=1` for the comment-density pass (60 runs, 58:02 and $18.38 measured).
+All four figures come from one skill, and each pass now runs over every suite discovery returns.
+
+The density pass answers a different question from the rest: not whether a skill fires or obeys its
+rule, but how heavily commented the C# a run writes is, across four arms that move one comment rule
+between `CLAUDE.md` and an output style. It takes `SKILL_HARNESS_DENSITY_RUNS` for runs per arm
+(default 15) and writes a `comment-density-*.jsonl` beside the suite. It does not resume: at 15 runs
+an arm a stopped pass is cheap to start again, and a half-filled arm must never be averaged with a
+full one. The findings are in `docs/research/comment-density-measured.md`.
 
 The two long passes write into `skills/<name>/runs/`, beside the suite they measured, and both
 resume: point `SKILL_HARNESS_JOURNAL` or `SKILL_HARNESS_BREAK_DIR` at the run that stopped. The path

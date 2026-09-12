@@ -29,19 +29,20 @@ One suite spends money on real `claude -p` calls, and it is double-locked:
 SKILL_HARNESS_LIVE=1 dotnet test harness/tests/Harness.Model.Tests
 ```
 
-The two long passes inside it each need a second lock of their own, because neither should ever be
+The long passes inside it each need a second lock of their own, because none should ever be
 tripped by running the project:
 
 ```
 SKILL_HARNESS_CALIBRATE=1   # #12, 133 runs, 02:08:14 measured
 SKILL_HARNESS_BREAK=1       # #6, 256 runs, 03:19:34 measured
 SKILL_HARNESS_LADDER=1      # #6 screen, 9 runs, about 10 minutes
+SKILL_HARNESS_DENSITY=1     # comment density, 60 runs, 58:02 and $18.38 measured
 ```
 
 Every figure there comes from one skill, and each pass now runs over every suite discovery
-returns.
+returns. The density pass takes `SKILL_HARNESS_DENSITY_RUNS` for runs per arm, default 15.
 
-Both long passes resume. Point `SKILL_HARNESS_JOURNAL` or `SKILL_HARNESS_BREAK_DIR` at the run that
+The calibration and breakage passes resume. Point `SKILL_HARNESS_JOURNAL` or `SKILL_HARNESS_BREAK_DIR` at the run that
 stopped and every case with enough valid runs on disk is skipped rather than paid for twice. The path
 also says which suite it resumes, by the folder it sits under. Every other suite starts fresh, and a
 path under no suite is refused.

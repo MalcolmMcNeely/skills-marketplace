@@ -76,6 +76,8 @@ The shipped code confirms it is exactly the `# Doing tasks` section quoted above
 
 **Writing a custom output style to reduce comments, without `keep-coding-instructions: true`, deletes the only anti-comment instruction in the product and replaces it with a weaker one of your own.**
 
+That is the mechanism, and it holds. The conclusion drawn from it below does not: 60 runs later, the arm that drops the section was the *least* commented and the most consistent, because the deleted instruction was not doing the job its wording implies. See [where a comment rule sits, measured](comment-density-measured.md).
+
 Three further facts from the binary, none of them in the public docs:
 
 - Default is not a style object. It is literally `null` in the built-in table (**local**, byte 184592499).
@@ -245,7 +247,7 @@ There is no published, methodologically transparent, Claude-Code-specific before
 
 In order of leverage, prevention first.
 
-1. **Do not write a custom output style to suppress comments.** If a custom style is used for any reason, set `keep-coding-instructions: true` or it deletes the product's own anti-comment instruction. This is the single most actionable finding here.
+1. **Write the rule, and know that `keep-coding-instructions` is the lever the number moved on.** ~~Do not write a custom output style to suppress comments.~~ Measured after this document was written: a `CLAUDE.md` rule and the same rule in an output style both scored 10 of 15, and the style with `keep-coding-instructions: false` scored 15 of 15. The deletion helped rather than hurt. What it costs elsewhere is unmeasured. [The numbers](comment-density-measured.md).
 2. **Write rules as positive descriptions, scoped to what the change touches.** Anthropic's own phrasing is "code you didn't change", not a global ban.
 3. **Show the pattern, do not describe it.** A canonical file the agent copies (SSW), or a real call site quoted with file and line (Umbraco), beats an abstract rule. This works for naming, file placement and idiom alike.
 4. **Scaffold what you can.** A skill that creates the five files in the feature folder removes the file-placement decision entirely.
@@ -254,26 +256,17 @@ In order of leverage, prevention first.
 7. **Keep the cleanup pass.** It is the only thing that catches what prevention misses, and no tool can replace it.
 8. **Consider a `PreToolUse` comment-density gate.** It is the one prevention move nobody has tried. That makes it interesting and unproven in equal measure.
 
-## The experiment this repo could run
+## The experiment, run
 
-The harness already does everything needed except the metric. Specified here, not run.
+Specified here, then run the same day: 60 runs, four arms, $18.38, 58 minutes. The results are in [where a comment rule sits, measured](comment-density-measured.md), the pass is `CommentDensityPassTests`, and the journal sits beside the suite it measured.
 
-**Prompt.** One fixed C# task with room to over-comment and no comment instruction in it. For example: add a `RetryPolicy` class that retries a delegate with exponential backoff and jitter, capped at five attempts. Frozen as a fixture under `harness/skills/`, with a fixed minimal project so every run writes into the same shape.
+Two things came back that this document had wrong.
 
-**Arms.** Four, differing only in the `--settings` JSON `ClaudeCli` already passes, plus the fixture's `CLAUDE.md`.
+**The rule is not ignored.** A `CLAUDE.md` comment rule took the density from 25.7 to 11.4 and worked on 10 runs of 15. The reports above say a rule in `CLAUDE.md` does nothing. On this task it did most of the available work.
 
-- A. Default style, no comment rule. The control.
-- B. Default style, one `CLAUDE.md` line: "Write no comments unless the WHY is non-obvious."
-- C. Custom style with `keep-coding-instructions: true`, adding a no-comments instruction on top of the retained default.
-- D. Custom style with `keep-coding-instructions` omitted. The naive authoring mistake.
+**Arm D was the best arm, not the worst.** The prediction here was that dropping `# Doing tasks` deletes "Default to writing no comments" and must therefore make things worse. It scored 15 of 15 with the tightest spread of any arm. The mechanical claim was right and the inference from it was wrong, because the deleted instruction was not governing the behaviour its wording describes.
 
-Arm D is what makes this worth paying for. The binary predicts it is the *worst* arm, because it deletes "Default to writing no comments". That is a falsifiable claim about shipped code, not a preference.
-
-**Metric.** Comment lines per 100 non-blank, non-brace-only lines of C#, counted on the files written rather than the transcript. Report the distribution, not just the mean; the interesting failure is variance.
-
-**Runs.** 15 per arm, 60 total. At the harness's `PerRunCeilingUsd = 0.60` that is a $36 worst-case ceiling and realistically far less. Fifteen separates arms if the effect is the size the mechanism implies. It will not resolve a small one, and the write-up must say so. Pin the model and record the CLI version, because the system prompt changes between releases.
-
-**Kill condition.** If A and B are indistinguishable and D is clearly worse, the finding is that the root cause is the model rather than the configuration layer. That matches issue #65961, and it closes the question without further spend.
+A third result belongs to neither half. The whole effect, in all 60 runs, was whether the model wrote XML doc comments. Whole-line `//` narration never moved: about one line a run in every arm, rule or no rule. The over-commenting this document is about was not what the model was doing.
 
 ## What was not established
 
