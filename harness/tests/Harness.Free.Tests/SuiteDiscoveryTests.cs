@@ -333,4 +333,27 @@ public class SuiteDiscoveryTests
 
         Assert.Throws<InvalidOperationException>(() => found.BreakOverlay("../../data-sql/breaks/description/catalogue"));
     }
+
+    /// <summary>
+    /// #27. A suite is not obliged to declare candidates, and a screen with nothing to screen is a
+    /// fact rather than a fault. It is the one place in discovery where emptiness is an answer.
+    /// </summary>
+    [Fact]
+    public void A_break_group_no_suite_declares_lists_nothing()
+    {
+        var root = TempDir();
+        Suite(root);
+
+        Assert.Empty(Assert.Single(Discovery(root).Discover()).BreakOverlaysIn("candidates"));
+    }
+
+    [Fact]
+    public void A_break_group_that_climbs_out_of_the_suite_throws()
+    {
+        var root = TempDir();
+        Suite(root);
+
+        Assert.Throws<InvalidOperationException>(
+            () => Assert.Single(Discovery(root).Discover()).BreakOverlaysIn("../../elsewhere"));
+    }
 }

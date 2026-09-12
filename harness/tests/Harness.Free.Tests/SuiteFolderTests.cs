@@ -130,4 +130,20 @@ public class SuiteFolderTests
             Directory.GetDirectories(Paths.Root).Select(Path.GetFileName)
                 .Where(f => !f!.StartsWith('.')).Order());
     }
+
+    /// <summary>
+    /// #27. A group lists what it holds, so the ladder screens the candidates this suite declares
+    /// rather than a list typed into the test. A second skill then screens its own without anyone
+    /// editing shared code.
+    /// </summary>
+    [Fact]
+    public void A_break_group_lists_the_overlays_it_holds()
+    {
+        var candidates = Found.BreakOverlaysIn("candidates");
+
+        Assert.Equal(
+            ["candidates/boundary-inverted", "candidates/vague-label", "candidates/wrong-subject"],
+            candidates);
+        foreach (var id in candidates) Assert.True(Directory.Exists(Found.BreakOverlay(id)));
+    }
 }

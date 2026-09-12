@@ -16,6 +16,11 @@ under `skills/` or `shared/` is a real skill.
 | 3. Firing accuracy | Given a natural prompt, does the right set of skills fire from the description alone? | About `$0.23` a run | On demand, locally |
 | 4. Contract | Invoked by name, does the skill's body do what it promises? | About `$0.24` a run | On demand, locally |
 
+Layers 3 and 4, both long passes and both screens run over every suite discovery returns. A skill
+folder landing in `skills/` widens all of them by being there, with nothing to wire in. A free test
+holds them to it, because a layer that narrowed back to one skill would stay green while it stopped
+measuring the rest.
+
 Layers 3 and 4 are independent on purpose. Layer 3 owns the description and layer 4 owns the body,
 so a red layer names which half broke. [breakage.md](../docs/breakage.md) measured that separation:
 a broken description reddened layer 3 at 25 of 60 while layer 4 held at 5 of 5, and a broken body
@@ -44,11 +49,15 @@ Two locks, because one is forgettable.
 
 The long passes carry a third lock each, so neither is tripped by running the project:
 `SKILL_HARNESS_CALIBRATE=1` for #12 (133 runs, 02:08:14 measured), `SKILL_HARNESS_BREAK=1` for #6
-(256 runs, 03:19:34 measured) and `SKILL_HARNESS_LADDER=1` for #6's 9-run screen. The two long
-passes write into `skills/<name>/runs/`, beside the suite they measured, and both resume: point
-`SKILL_HARNESS_JOURNAL` or `SKILL_HARNESS_BREAK_DIR` at the run that stopped.
-**Give either an absolute path.** A relative one resolves against the test host's working
-directory, which is the build output folder, not the repo root.
+(256 runs, 03:19:34 measured) and `SKILL_HARNESS_LADDER=1` for #6's screen, which is 9 runs a suite.
+All three figures come from one skill, and each pass now runs over every suite discovery returns.
+
+The two long passes write into `skills/<name>/runs/`, beside the suite they measured, and both
+resume: point `SKILL_HARNESS_JOURNAL` or `SKILL_HARNESS_BREAK_DIR` at the run that stopped. The path
+also says WHICH suite it continues, by the suite folder it sits under. Every other suite in the pass
+starts fresh, and the pass refuses a path under no suite rather than guessing. A relative path
+resolves against `harness/`, not against the test host's working directory, which is the build
+output folder.
 
 ## Layout
 
@@ -66,7 +75,7 @@ directory, which is the build output folder, not the repo root.
 ## What a suite folder holds
 
 `SuiteDiscovery` scans `skills/` and returns one suite per folder. Nothing else decides which skills
-are under test, and no layer spells out a path inside one.
+are under test, no layer spells out a path inside one, and no layer names one.
 
 | Path | What |
 |---|---|

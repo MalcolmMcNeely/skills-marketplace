@@ -16,7 +16,7 @@ A Claude Code plugin marketplace for sharing agent skills across teams. Today th
 ```
 claude plugin validate .                        # marketplace manifest
 claude plugin validate ./plugins/core           # plugin manifest
-dotnet test harness/tests/Harness.Free.Tests    # 218 tests, no network, ~1s
+dotnet test harness/tests/Harness.Free.Tests    # 241 tests, no network, ~1s
 ```
 
 Run all three before you commit. `.github/workflows/free-gate.yml` runs them again on every push to `main` and every pull request, on a pinned runner with no credential. Layers 3 and 4 get no workflow, and the header of that file says why.
@@ -36,14 +36,19 @@ SKILL_HARNESS_BREAK=1       # #6, 256 runs, 03:19:34 measured
 SKILL_HARNESS_LADDER=1      # #6 screen, 9 runs, about 10 minutes
 ```
 
+Every figure there comes from one skill, and each pass now runs over every suite discovery
+returns.
+
 Both long passes resume. Point `SKILL_HARNESS_JOURNAL` or `SKILL_HARNESS_BREAK_DIR` at the run that
-stopped and every case with enough valid runs on disk is skipped rather than paid for twice.
+stopped and every case with enough valid runs on disk is skipped rather than paid for twice. The path
+also says which suite it resumes, by the folder it sits under. Every other suite starts fresh, and a
+path under no suite is refused.
 
 Run any of it only when the user asks for it, and report the cost the run prints.
 
 ## `harness/` is the gate
 
-Layer 3 is red below 53 of 60 pooled should-fire runs, a gate measured twice across 120 runs against the frozen good fixture. `marketplace.json` does not reference it and nothing under `harness/skills/` or `harness/shared/` is a real skill. `harness/skills/` holds one folder per skill under test, with its suite file, its fixture plugin, its break overlays and its run records. Read `harness/README.md` before changing anything in there, and for what the other layers check.
+Layer 3 is red below 53 of 60 pooled should-fire runs, a gate measured twice across 120 runs against the frozen good fixture. `marketplace.json` does not reference it and nothing under `harness/skills/` or `harness/shared/` is a real skill. `harness/skills/` holds one folder per skill under test, with its suite file, its fixture plugin, its break overlays and its run records. Every layer and both long passes run over every folder discovery returns, so adding one widens all of them at once. Read `harness/README.md` before changing anything in there, and for what the other layers check.
 
 ## Writing a catalogue skill
 

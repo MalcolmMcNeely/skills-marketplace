@@ -51,6 +51,25 @@ public sealed class HarnessPaths
     /// <summary>#20's free gate. Not harness material, and the gate tests read it as a file.</summary>
     public string Workflows => Path.Combine(RepoRoot, ".github", "workflows");
 
+    /// <summary>
+    /// #27. The paid test project, read as SOURCE by the free one. Nothing the free gate can run sees
+    /// how the paid layers choose their suites, because it never loads that assembly, so the one test
+    /// that holds them to every discovered suite reads their files instead. It asks here for the
+    /// folder rather than walking to it, for the reason <see cref="RepoRoot"/> exists.
+    /// </summary>
+    public string PaidTests => Path.Combine(Root, "tests", "Harness.Model.Tests");
+
+    /// <summary>
+    /// #27. Is this path inside that folder? One rule, because three copies of it disagreed on case
+    /// while guarding the same thing. A containment check that falsely ACCEPTS resolves real material
+    /// under the wrong name and runs it, so the comparer is the filesystem's, not the language's.
+    ///
+    /// Both arguments are made absolute here. A caller that has already done so loses nothing.
+    /// </summary>
+    public static bool Inside(string folder, string path) =>
+        Path.GetFullPath(path).StartsWith(
+            Path.GetFullPath(folder) + Path.DirectorySeparatorChar, StringComparison.OrdinalIgnoreCase);
+
     /// <summary>A contract run writes files, so each one gets its own copy of the bare fixture repo.</summary>
     public string NewScratchRepo()
     {

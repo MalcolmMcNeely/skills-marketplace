@@ -37,9 +37,8 @@ public sealed record DiscoveredSuite
     public string BreakOverlay(string id)
     {
         var resolved = Path.GetFullPath(Path.Combine(Breaks, id));
-        var inside = Path.GetFullPath(Breaks) + Path.DirectorySeparatorChar;
 
-        if (!resolved.StartsWith(inside, StringComparison.Ordinal) || !Directory.Exists(resolved))
+        if (!HarnessPaths.Inside(Breaks, resolved) || !Directory.Exists(resolved))
             throw new InvalidOperationException(
                 $"suite '{Name}' has no break overlay '{id}'. Overlays are resolved inside {Breaks}.");
 
@@ -48,10 +47,31 @@ public sealed record DiscoveredSuite
         if (!Directory.Exists(Path.Combine(resolved, SuiteDiscovery.SkillsFolder)))
             throw new InvalidOperationException(
                 $"suite '{Name}': break overlay '{id}' has no {SuiteDiscovery.SkillsFolder}/ in it, so it groups "
-                + $"overlays rather than being one. Name one of: "
-                + $"{string.Join(", ", Directory.GetDirectories(resolved).Select(d => $"{id}/{Path.GetFileName(d)}"))}");
+                + $"overlays rather than being one. Name one of: {string.Join(", ", BreakOverlaysIn(id))}");
 
         return resolved;
+    }
+
+    /// <summary>
+    /// Issue #27. Every overlay inside one break group, by the identifier <see cref="BreakOverlay"/>
+    /// takes. A screen then runs over the candidates a suite DECLARES rather than a list typed into a
+    /// test, so a second skill screens its own without anyone editing shared code.
+    ///
+    /// A group no suite declares lists nothing. It is the one place here where emptiness is an answer:
+    /// a suite is not obliged to declare candidates, and a screen with nothing to screen is a fact.
+    /// </summary>
+    public IReadOnlyList<string> BreakOverlaysIn(string group)
+    {
+        var resolved = Path.GetFullPath(Path.Combine(Breaks, group));
+
+        if (!HarnessPaths.Inside(Breaks, resolved))
+            throw new InvalidOperationException(
+                $"suite '{Name}': break group '{group}' resolves outside {Breaks}.");
+
+        if (!Directory.Exists(resolved)) return [];
+
+        return [.. Directory.GetDirectories(resolved).Order(StringComparer.Ordinal)
+            .Select(d => $"{group}/{Path.GetFileName(d)}")];
     }
 }
 
@@ -180,4 +200,31 @@ public sealed class SuiteDiscovery(string suitesRoot, string shippedCatalogue)
                 + $"({string.Join(", ", found.Select(f => Path.GetFileName(f.Plugin)))}), so the suite cannot say which it tests."),
         };
     }
+}
+
+/// <summary>
+/// Issue #27. The list every layer and every long pass runs over.
+///
+/// A layer that loaded ONE suite widened nothing when a folder landed beside it, and nothing went red
+/// to say so. No layer names a suite now: each enumerates this, so adding a folder widens every layer
+/// at once with no further wiring.
+///
+/// It sits in the source project rather than in a test project because the FREE layer has to be able
+/// to check it. The paid layers live in an assembly the free gate never loads, so a data source
+/// declared over there is one nothing on CI can read.
+/// </summary>
+public static class SuitesUnderTest
+{
+    public static IReadOnlyList<DiscoveredSuite> All(HarnessPaths? paths = null) =>
+        SuiteDiscovery.For(paths ?? new HarnessPaths()).Discover();
+
+    /// <summary>
+    /// Theory rows, one per suite. A row carries the suite's NAME rather than the suite, because a row
+    /// is written into the test's name and read back to re-run that one case, and a name survives the
+    /// trip where a whole object does not.
+    ///
+    /// An empty suites root yields no rows, and a theory that finds no data fails. That is the point:
+    /// a layer with nothing to run must not read as a layer that passed.
+    /// </summary>
+    public static IEnumerable<object[]> Rows() => [.. All().Select(s => new object[] { s.Name })];
 }
