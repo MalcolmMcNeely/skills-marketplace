@@ -55,7 +55,7 @@ const BUILT_IN = new Set([
 
 function record(a) {
   const attrs = [
-    ["event.name", "skill_activated"],
+    ["event.name", a.event ?? "skill_activated"],
     ["skill.name", a.skill],
     ["origin", "backfill"],
     ["invocation_trigger", a.trigger],
@@ -63,6 +63,11 @@ function record(a) {
     ["repo", a.repo],
     ["git.branch", a.branch],
     ["app.version", a.version],
+    ["model", a.model],
+    ["input_tokens", a.input],
+    ["output_tokens", a.output],
+    ["cache_read_tokens", a.cacheRead],
+    ["cache_creation_tokens", a.cacheCreate],
   ].filter(([, v]) => v != null && v !== "");
 
   return {
@@ -85,12 +90,23 @@ async function push(batch) {
       },
     ],
   };
-  const res = await fetch(ENDPOINT, {
-    method: "POST",
-    headers: { "content-type": "application/json" },
-    body: JSON.stringify(payload),
-  });
-  if (!res.ok) throw new Error(`Loki ${res.status}: ${(await res.text()).slice(0, 300)}`);
+  const body = JSON.stringify(payload);
+
+  // A month of transcripts is tens of thousands of records, which outruns
+  // Loki's default ingestion rate. 429 is expected, not exceptional.
+  for (let attempt = 0; attempt < 8; attempt += 1) {
+    const res = await fetch(ENDPOINT, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body,
+    });
+    if (res.ok) return;
+    const text = (await res.text()).slice(0, 300);
+    const throttled = res.status === 429 || text.includes("rate limit") || text.includes("Ingestion rate");
+    if (!throttled) throw new Error(`Loki ${res.status}: ${text}`);
+    await new Promise((r) => setTimeout(r, 500 * 2 ** attempt));
+  }
+  throw new Error("Loki kept throttling after 8 attempts");
 }
 
 async function* transcripts(dir) {
@@ -114,6 +130,8 @@ let files = 0;
 let found = 0;
 let skipped = 0;
 let ignoredBuiltIn = 0;
+let requests = 0;
+let tokens = 0;
 let batch = [];
 
 const note = (skill, route) => {
@@ -134,7 +152,8 @@ for await (const path of transcripts(ROOT)) {
     // Cheap pre-filter. These files run to hundreds of megabytes.
     const maybeTool = line.includes('"Skill"');
     const maybeTyped = line.includes("<command-name>");
-    if (!maybeTool && !maybeTyped) continue;
+    const maybeSpend = line.includes('"attributionSkill"');
+    if (!maybeTool && !maybeTyped && !maybeSpend) continue;
 
     let rec;
     try { rec = JSON.parse(line); } catch { continue; }
@@ -162,6 +181,33 @@ for await (const path of transcripts(ROOT)) {
       }
     }
 
+    // Spend. attributionSkill names the skill that was active for this request,
+    // and the usage block is the real token count for it. Note what that does
+    // and does not mean: it attributes every token of a request to whichever
+    // skill was live, which is how Claude Code's own cost metric works too. It
+    // is not a claim that the skill caused those tokens.
+    //
+    // No cost figure is emitted. The transcript carries tokens, which are
+    // measured, and no price. Inventing a rate would put a made-up number
+    // beside measured ones.
+    if (maybeSpend && rec.attributionSkill && rec?.message?.usage) {
+      const u = rec.message.usage;
+      requests += 1;
+      tokens += (u.input_tokens ?? 0) + (u.output_tokens ?? 0) +
+        (u.cache_read_input_tokens ?? 0) + (u.cache_creation_input_tokens ?? 0);
+      batch.push({
+        event: "api_request",
+        skill: rec.attributionSkill,
+        model: rec.message.model,
+        input: u.input_tokens ?? 0,
+        output: u.output_tokens ?? 0,
+        cacheRead: u.cache_read_input_tokens ?? 0,
+        cacheCreate: u.cache_creation_input_tokens ?? 0,
+        ...common,
+      });
+      if (batch.length >= BATCH) { await push(batch); batch = []; }
+    }
+
     // Route two: a developer typed it. The trigger is known here.
     if (maybeTyped) {
       for (const m of textOf(rec?.message?.content).matchAll(/<command-name>\/?([^<]+)<\/command-name>/g)) {
@@ -185,6 +231,7 @@ console.log(`${found} activations across ${counts.size} skills`);
 console.log(`  ${byRoute.tool} Skill tool calls, trigger unknown`);
 console.log(`  ${byRoute.typed} typed slash commands, trigger user-slash`);
 console.log(`  ${ignoredBuiltIn} built-in commands ignored, /clear and friends are not skills`);
+console.log(`${requests} attributed requests carrying ${tokens.toLocaleString()} tokens`);
 console.log(dryRun ? "\n--dry-run, nothing pushed\n" : `\npushed to ${ENDPOINT}\n`);
 console.log(`  ${"TOOL".padStart(6)} ${"TYPED".padStart(6)}  SKILL`);
 for (const [name, c] of ranked.slice(0, 20)) {

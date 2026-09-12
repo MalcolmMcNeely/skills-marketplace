@@ -190,7 +190,7 @@
       "type": "bargauge",
       "title": "Activations by repository",
       "description": "Transcripts carry cwd and git branch, which the OpenTelemetry events do not. Backfilled rows only.",
-      "gridPos": { "h": 9, "w": 24, "x": 0, "y": 21 },
+      "gridPos": { "h": 9, "w": 12, "x": 0, "y": 21 },
       "datasource": { "type": "loki", "uid": "claude-loki" },
       "fieldConfig": {
         "defaults": {
@@ -212,6 +212,37 @@
           "refId": "A",
           "datasource": { "type": "loki", "uid": "claude-loki" },
           "expr": "topk(10, sum by (repo) (count_over_time({service_name=\"claude-code\"} | event_name=\"skill_activated\" | repo!=\"\" | skill_name=~\"$skill\" [$__range])))",
+          "queryType": "instant"
+        }
+      ]
+    },
+    {
+      "id": 10,
+      "type": "bargauge",
+      "title": "Output tokens by skill",
+      "description": "Output tokens generated while each skill was the attributed one. A whole request is attributed to whichever skill was active, which is how Claude Code's own cost metric works, so read this as association rather than cause. Cache reads are excluded here because they dominate any total and bill at a fraction.",
+      "gridPos": { "h": 9, "w": 12, "x": 12, "y": 21 },
+      "datasource": { "type": "loki", "uid": "claude-loki" },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "displayName": "${__field.labels.skill_name}",
+          "color": { "mode": "continuous-GrYlRd" }
+        },
+        "overrides": []
+      },
+      "options": {
+        "orientation": "horizontal",
+        "displayMode": "gradient",
+        "valueMode": "text",
+        "showUnfilled": true,
+        "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false }
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": { "type": "loki", "uid": "claude-loki" },
+          "expr": "topk(10, sum by (skill_name) (sum_over_time({service_name=\"claude-code\"} | event_name=\"api_request\" | skill_name=~\"$skill\" | unwrap output_tokens [$__range])))",
           "queryType": "instant"
         }
       ]

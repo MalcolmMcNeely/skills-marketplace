@@ -39,6 +39,10 @@ Live telemetry only counts from the moment you switch it on. Your transcripts al
 
 What backfill gives that live events do not: `repo` and `git.branch`, read from the transcript's `cwd` and `gitBranch`.
 
+It also emits an `api_request` event per attributed request, carrying `input_tokens`, `output_tokens`, `cache_read_tokens` and `cache_creation_tokens` from the transcript's `usage` block, keyed by `attributionSkill`. Measured here: **36,578 requests, 4.0G tokens**. That is per-skill token attribution for a plugin catalogue, which the OpenTelemetry path redacts.
+
+Two things it does not do. It attributes a whole request to whichever skill was active, which is how Claude Code's own cost metric works and is association, not cause. And it emits no money figure, because transcripts carry token counts and no prices.
+
 A skill reaches the transcript by two routes, and reading one of them alone is badly wrong. Reading only `Skill` tool calls reported `/implement` as never used when a developer had typed it **100 times**.
 
 | Route | Shape in the transcript | Trigger |
@@ -71,6 +75,8 @@ One row per skill, with the columns that drive a decision:
 | `TYPED` | a developer typed the slash command |
 | `SESS` | distinct sessions, so one power user does not look like broad adoption |
 | `REPO` | how many repositories, so you can see if a technology-specific skill stayed in its lane |
+| `OUT` | output tokens generated while the skill was attributed. The expensive kind |
+| `TOTAL` | every token of those requests. Cache reads dominate it and bill at a fraction, so read it as volume |
 | `CTX` | approximate tokens the listing costs **every turn**, used or not |
 | `NOTE` | only where something looks off |
 

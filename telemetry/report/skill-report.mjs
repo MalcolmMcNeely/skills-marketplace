@@ -136,9 +136,37 @@ async function activations() {
   return rows;
 }
 
+// Spend is 36,000 records where activations are 1,000, so it is aggregated in
+// Loki rather than pulled down. One query per token kind.
+async function spend() {
+  const kinds = ["output_tokens", "input_tokens", "cache_read_tokens", "cache_creation_tokens"];
+  const totals = new Map();
+
+  for (const kind of kinds) {
+    const u = new URL(`${LOKI}/loki/api/v1/query`);
+    u.searchParams.set(
+      "query",
+      `sum by (skill_name) (sum_over_time({service_name="claude-code"} | event_name="api_request" | unwrap ${kind} [${days}d]))`,
+    );
+    const res = await fetch(u);
+    if (!res.ok) continue;
+    const body = await res.json();
+    for (const row of body.data?.result ?? []) {
+      const name = row.metric.skill_name;
+      if (!name) continue;
+      const n = Number(row.value[1]) || 0;
+      const t = totals.get(name) ?? { output: 0, total: 0 };
+      if (kind === "output_tokens") t.output += n;
+      t.total += n;
+      totals.set(name, t);
+    }
+  }
+  return totals;
+}
+
 // -------------------------------------------------------------------- the report
 
-const [disk, rows] = await Promise.all([catalogue(), activations()]);
+const [disk, rows, tokens] = await Promise.all([catalogue(), activations(), spend()]);
 
 const seen = new Map();
 for (const r of rows) {
@@ -191,7 +219,10 @@ function verdict(skill, s) {
 
 const report = disk.map((skill) => {
   const s = seen.get(skill.key);
+  const t = tokens.get(skill.key);
   return {
+    outputTokens: t?.output ?? 0,
+    totalTokens: t?.total ?? 0,
     skill: skill.key,
     origin: skill.origin,
     kind: skill.modelInvocable ? "engine" : "entry point",
@@ -235,11 +266,19 @@ const pad = (v, w, right = false) =>
   right ? String(v).padStart(w) : String(v).padEnd(w);
 const nameWidth = Math.max(24, ...report.map((r) => r.skill.length));
 
+const short = (n) => {
+  if (!n) return "-";
+  if (n >= 1e9) return `${(n / 1e9).toFixed(1)}G`;
+  if (n >= 1e6) return `${(n / 1e6).toFixed(1)}M`;
+  if (n >= 1e3) return `${Math.round(n / 1e3)}k`;
+  return String(n);
+};
+
 console.log(`\nSkills on disk, against ${rows.length} activations in the last ${days} days\n`);
 console.log(
-  [pad("SKILL", nameWidth), pad("KIND", 11), pad("USES", 5, true), pad("TOOL", 5, true), pad("TYPED", 5, true), pad("SESS", 5, true), pad("REPO", 5, true), pad("LAST", 10), pad("CTX", 4, true), "NOTE"].join("  "),
+  [pad("SKILL", nameWidth), pad("KIND", 11), pad("USES", 5, true), pad("TOOL", 5, true), pad("TYPED", 5, true), pad("SESS", 5, true), pad("OUT", 6, true), pad("TOTAL", 6, true), pad("LAST", 9), pad("CTX", 4, true), "NOTE"].join("  "),
 );
-console.log("-".repeat(nameWidth + 68));
+console.log("-".repeat(nameWidth + 78));
 
 for (const r of report) {
   console.log(
@@ -250,8 +289,9 @@ for (const r of report) {
       pad(r.tool, 5, true),
       pad(r.typed, 5, true),
       pad(r.sessions, 5, true),
-      pad(r.repos, 5, true),
-      pad(ago(r.lastUsed), 10),
+      pad(short(r.outputTokens), 6, true),
+      pad(short(r.totalTokens), 6, true),
+      pad(ago(r.lastUsed), 9),
       pad(r.listingTokens, 4, true),
       r.verdict,
     ].join("  "),
@@ -263,10 +303,20 @@ const deadCost = dead.reduce((n, r) => n + r.listingTokens, 0);
 const totalCost = report.reduce((n, r) => n + r.listingTokens, 0);
 const engines = report.filter((r) => r.kind === "engine");
 
+const grandOutput = report.reduce((n, r) => n + r.outputTokens, 0);
+const grandTotal = report.reduce((n, r) => n + r.totalTokens, 0);
+
 console.log(`
 TOOL   the model called it, or another skill did. A transcript cannot say which.
 TYPED  a developer typed the slash command. The only trigger a transcript proves.
+OUT    output tokens generated while this skill was attributed. The expensive kind.
+TOTAL  every token of those requests, cache reads included. Cache reads dominate
+       the figure and bill at a fraction, so read TOTAL as volume, not as spend.
 CTX    approximate tokens this skill's listing costs every turn, used or not.
+
+OUT and TOTAL attribute a whole request to whichever skill was active, which is
+how Claude Code's own cost metric works. It is not a claim the skill caused them.
+No money figure is shown: the transcripts carry token counts and no prices.
 
 A zero row is a prompt to look, not a delete order. A merge conflict skill with
 no activations may only mean a quiet month.`);
@@ -274,7 +324,8 @@ no activations may only mean a quiet month.`);
 console.log(`
 ${report.length} skills on disk, ${report.length - dead.length} fired, ${dead.length} did not.
 ${engines.length} are engines and spend listing context; the rest are typed entry points.
-Listing cost about ${totalCost} tokens per turn, of which ${deadCost} went to skills that never fired.`);
+Listing cost about ${totalCost} tokens per turn, of which ${deadCost} went to skills that never fired.
+These skills account for ${short(grandOutput)} output tokens and ${short(grandTotal)} in total.`);
 
 if (offDisk.length) {
   console.log(`\n${offDisk.length} skills fired that are not in this repo (other projects, other plugins):`);
