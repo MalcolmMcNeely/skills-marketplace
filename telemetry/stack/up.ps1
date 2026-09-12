@@ -58,10 +58,18 @@ if ($Reset) {
 
 # Loki's packaged config already has auth off, filesystem storage and schema v13,
 # which is what enables structured metadata. Nothing to mount.
+#
+# The two flags exist for the backfill. Loki refuses samples older than a week,
+# and separately refuses entries far behind the newest one already in a stream.
+# Both rejections are correct for a production log pipeline and wrong for
+# replaying a month of transcripts, so both are lifted here.
 podman run -d --name claude-loki --network $network `
     -p 3100:3100 `
     -v claude-loki-data:/loki `
-    $lokiImage | Out-Null
+    $lokiImage `
+    -config.file=/etc/loki/local-config.yaml `
+    -validation.reject-old-samples=false `
+    -ingester.max-chunk-age=2160h | Out-Null
 Write-Host '  loki      http://localhost:3100' -ForegroundColor Green
 
 podman run -d --name claude-grafana --network $network `

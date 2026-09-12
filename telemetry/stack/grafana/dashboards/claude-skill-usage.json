@@ -6,7 +6,7 @@
   "schemaVersion": 39,
   "version": 1,
   "refresh": "10s",
-  "time": { "from": "now-24h", "to": "now" },
+  "time": { "from": "now-30d", "to": "now" },
   "templating": {
     "list": [
       {
@@ -75,7 +75,7 @@
       "id": 3,
       "type": "piechart",
       "title": "Who chose the skill",
-      "description": "claude-proactive means the description worked. user-slash means a developer had to type it. This is the engine versus entry point split.",
+      "description": "claude-proactive means the description worked. user-slash means a developer had to type it. This is the engine versus entry point split. Live events only: a transcript records which skill ran, never why, so backfilled rows carry no trigger and are excluded here rather than guessed at.",
       "gridPos": { "h": 10, "w": 14, "x": 10, "y": 0 },
       "datasource": { "type": "loki", "uid": "claude-loki" },
       "fieldConfig": {
@@ -94,9 +94,8 @@
         {
           "refId": "A",
           "datasource": { "type": "loki", "uid": "claude-loki" },
-          "expr": "sum by (invocation_trigger) (count_over_time({service_name=\"claude-code\"} | event_name=\"skill_activated\" [$__range]))",
-          "queryType": "instant",
-          "legendFormat": "{{invocation_trigger}}"
+          "expr": "sum by (invocation_trigger) (count_over_time({service_name=\"claude-code\"} | event_name=\"skill_activated\" | invocation_trigger!=\"\" [$__range]))",
+          "queryType": "instant"
         }
       ]
     },
@@ -187,10 +186,41 @@
       ]
     },
     {
+      "id": 9,
+      "type": "bargauge",
+      "title": "Activations by repository",
+      "description": "Transcripts carry cwd and git branch, which the OpenTelemetry events do not. Backfilled rows only.",
+      "gridPos": { "h": 9, "w": 24, "x": 0, "y": 21 },
+      "datasource": { "type": "loki", "uid": "claude-loki" },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "displayName": "${__field.labels.repo}",
+          "color": { "mode": "continuous-BlYlRd" }
+        },
+        "overrides": []
+      },
+      "options": {
+        "orientation": "horizontal",
+        "displayMode": "gradient",
+        "valueMode": "text",
+        "showUnfilled": true,
+        "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false }
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": { "type": "loki", "uid": "claude-loki" },
+          "expr": "topk(10, sum by (repo) (count_over_time({service_name=\"claude-code\"} | event_name=\"skill_activated\" | repo!=\"\" | skill_name=~\"$skill\" [$__range])))",
+          "queryType": "instant"
+        }
+      ]
+    },
+    {
       "id": 7,
       "type": "timeseries",
       "title": "Activations over time",
-      "gridPos": { "h": 9, "w": 24, "x": 0, "y": 21 },
+      "gridPos": { "h": 9, "w": 24, "x": 0, "y": 30 },
       "datasource": { "type": "loki", "uid": "claude-loki" },
       "fieldConfig": {
         "defaults": {
@@ -214,8 +244,8 @@
       "id": 8,
       "type": "logs",
       "title": "Raw activations",
-      "description": "Expand a line to see every attribute, including user.email. That field is on by default.",
-      "gridPos": { "h": 11, "w": 24, "x": 0, "y": 30 },
+      "description": "Expand a line to see every attribute. Live rows carry user.email, which is on by default.",
+      "gridPos": { "h": 11, "w": 24, "x": 0, "y": 39 },
       "datasource": { "type": "loki", "uid": "claude-loki" },
       "options": {
         "showTime": true,

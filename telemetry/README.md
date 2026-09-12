@@ -27,6 +27,22 @@ Nothing here ships. See [docs/research/what-to-measure.md](../docs/research/what
 - Open <http://localhost:3000/d/claude-skill-usage>
 - Stop with `.\telemetry\stack\down.ps1`, or `-Purge` to delete the stored data too
 
+## Step 3: fill it with your real history
+
+Live telemetry only counts from the moment you switch it on. Your transcripts already hold about 30 days of real usage.
+
+- `node telemetry/backfill/backfill-transcripts.mjs --dry-run` to see the counts first
+- `node telemetry/backfill/backfill-transcripts.mjs` to push them into Loki
+- `--days 7` narrows the window
+- Measured on this machine: 1,313 transcripts, **797 activations across 42 skills**
+- Run it once. Running it twice double-counts. Use `up.ps1 -Reset` to start clean
+
+What backfill gives that live events do not: `repo` and `git.branch`, read from the transcript's `cwd` and `gitBranch`.
+
+What it cannot give: **`invocation_trigger`**. A transcript records which skill ran, never why. There is no way to tell a model-chosen activation from a typed slash command after the fact, so the script emits no trigger rather than guessing, and the donut panel excludes those rows. Backfill answers "what gets used". Only live events answer "did the description work".
+
+Every backfilled row carries `origin="backfill"`.
+
 ## What the stack is
 
 - Two containers. Loki on 3100, Grafana on 3000
@@ -60,7 +76,8 @@ Nothing here ships. See [docs/research/what-to-measure.md](../docs/research/what
 - **`OTEL_LOG_TOOL_DETAILS=1` is the line that matters.** Without it every skill reports as `custom_skill`
 - **Loki's first start took about four minutes** on a fresh volume, answering `/ready` with 503 throughout. `up.ps1` now waits up to six
 - **Attribute names lose their dots in Loki.** Query `skill_name`, not `skill.name`
-- **Git Bash mangles podman mount paths.** Run the scripts in PowerShell
+- **Git Bash mangles podman paths, arguments as well as mounts.** `-config.file=/etc/loki/...` became `C:/Program Files/Git/etc/loki/...` and Loki exited. Run the scripts in PowerShell, or prefix with `MSYS_NO_PATHCONV=1`
+- **Loki refuses old data twice, for two different reasons.** `reject_old_samples` blocks anything over a week. Separately the ingester blocks entries far behind the newest one already in the stream. Backfill needs both lifted, which `up.ps1` now does
 - **Grafana drops `legendFormat` on Loki instant queries.** Every label-driven panel showed `Value #A` instead of the skill name. Name the series with `fieldConfig.defaults.displayName` set to `${__field.labels.<label>}` instead
 - **`count()` is not the `count` reducer.** Counting distinct skills needs `count(sum by (skill_name) (...))` in the query. A stat panel reducing with `count` counts datapoints per series, which is always 1
 - **Only `service_name` is an index label.** Everything else, `skill_name` included, is structured metadata. It filters and groups fine, but `label_values()` cannot list it, so a dropdown of skill names is not possible. The skill filter is a regex textbox. A `label_values` query with a pipeline in it fails with "only label matchers are supported"
