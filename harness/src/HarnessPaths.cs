@@ -18,16 +18,16 @@ public sealed class HarnessPaths
 
     /// <summary>
     /// Issue #25. Material every suite borrows, kept apart from the material one skill owns. Three
-    /// things qualify and nothing else does: the distractor catalogue layer 3 fires against, the bare
+    /// things qualify and nothing else does: the distractor set layer 3 fires against, the bare
     /// repo a contract run writes into, and the streams the offline parser tests read.
     /// </summary>
     public string Shared => Path.Combine(Root, "shared");
 
     /// <summary>The twelve-skill distractor set. Descriptions only, so a run is decided on the listing.</summary>
-    public string StubCatalogue => Path.Combine(Shared, "catalogue");
+    public string Distractors => Path.Combine(Shared, "distractors");
 
     /// <summary>The bare C# repo a contract run writes into, copied per run by <see cref="NewScratchRepo"/>.</summary>
-    public string FixtureRepo => Path.Combine(Shared, "repo");
+    public string BareRepo => Path.Combine(Shared, "repo");
 
     public string Streams => Path.Combine(Shared, "streams");
     public string Stream(string name) => Path.Combine(Streams, name);
@@ -84,11 +84,11 @@ public sealed class HarnessPaths
         string.Equals(Path.GetFullPath(a), Path.GetFullPath(b),
             OperatingSystem.IsWindows() ? StringComparison.OrdinalIgnoreCase : StringComparison.Ordinal);
 
-    /// <summary>A contract run writes files, so each one gets its own copy of the bare fixture repo.</summary>
+    /// <summary>A contract run writes files, so each one gets its own copy of the bare repo.</summary>
     public string NewScratchRepo()
     {
         var dest = Path.Combine(Scratch, Guid.NewGuid().ToString("N")[..8]);
-        CopyDirectory(FixtureRepo, dest);
+        CopyDirectory(BareRepo, dest);
         return dest;
     }
 

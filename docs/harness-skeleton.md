@@ -67,7 +67,7 @@ The prompt `/csharp-new-class ...` produced this in the stream, verbatim:
 
 ### `run_eval.py`'s cheap trick does not transfer
 
-[scoring.md](scoring.md) planned to kill a firing run at the first tool call, following `run_eval.py`, and noted the saving as unmeasured. Two runs on a natural-language prompt in the bare fixture repo:
+[scoring.md](scoring.md) planned to kill a firing run at the first tool call, following `run_eval.py`, and noted the saving as unmeasured. Two runs on a natural-language prompt in the bare repo:
 
 | Run | Tool calls, in order |
 |---|---|

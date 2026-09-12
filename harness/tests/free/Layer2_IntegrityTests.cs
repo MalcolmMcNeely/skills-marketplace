@@ -236,7 +236,7 @@ public class SlashFormTests
     {
         // Without this, any path containing an engine's name reads as a slash reference to it.
         Assert.Empty(SlashForms.InProse("Write it to plugins/core/skills/skill-authoring/SKILL.md"));
-        Assert.Empty(SlashForms.InProse("See harness/shared/catalogue and docs/evals.md"));
+        Assert.Empty(SlashForms.InProse("See harness/shared/distractors and docs/evals.md"));
     }
 
     [Fact]

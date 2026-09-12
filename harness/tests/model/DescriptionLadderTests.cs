@@ -51,7 +51,7 @@ public class DescriptionLadderTests(ITestOutputHelper output)
             foreach (var candidate in candidates)
             {
                 var overlay = found.BreakOverlay(candidate);
-                var catalogue = builder.Build(Paths.StubCatalogue, overlay);
+                var catalogue = builder.Build(Paths.Distractors, overlay);
                 var runner = new FiringRunner(Paths, found, catalogue);
 
                 var sample = await Resampler.CollectAsync(Runs, Runs * 2,

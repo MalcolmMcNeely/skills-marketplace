@@ -17,7 +17,7 @@ than names and a copy cannot answer for the real thing.
 
 The suite folder ends up holding one file. No `plugin/`, because the plugin is the shipped one. No
 `breaks/`, because a break overlay may only replace a file that already exists in the base it covers,
-and the base for layer 3 is the distractor catalogue, which has never heard of `skill-authoring`.
+and the base for layer 3 is the distractor set, which has never heard of `skill-authoring`.
 
 ## The listing gap
 
@@ -25,7 +25,7 @@ Layer 3 decides from the listing. Twelve description-only distractors, a natural
 question of which descriptions the model reaches for. The skill under test has to be in that listing
 or the run cannot go right.
 
-For the fixture suite that was true by accident. The distractor catalogue carries a stub of
+For the fixture suite that was true by accident. The distractor set carries a stub of
 `csharp-new-class`, so the distractors and the skill under test arrived in the same folder and nobody
 had to think about it. A catalogue skill is never copied, so nothing puts it among the distractors.
 The first run of the new suite would have shown the model twelve skills unrelated to the prompt,
@@ -34,7 +34,7 @@ missed every time, and reported it as a description that will not fire.
 This is the failure a fixture is good at hiding. The fixture had been right for a reason nobody wrote
 down, and the first real skill walked straight into it.
 
-Discovery works it out per suite now. The distractor catalogue always loads, and the suite's own
+Discovery works it out per suite now. The distractor set always loads, and the suite's own
 plugin loads beside it whenever the distractors do not already declare that name. The question is
 asked of the distractors rather than of the `"source"`, because a fixture suite whose skill nobody
 stubbed has the same gap, and loading a plugin the distractors already speak for would put two skills

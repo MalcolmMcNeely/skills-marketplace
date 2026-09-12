@@ -57,7 +57,7 @@ public static class CommentDensity
     /// <summary>
     /// Everything under <paramref name="directory"/> that was not there before the run.
     ///
-    /// The snapshot is taken rather than assumed. The bare fixture repo holds no .cs today, so a sweep
+    /// The snapshot is taken rather than assumed. The bare repo holds no .cs today, so a sweep
     /// would give the same answer, but a fixture that later ships a file would silently fold it into
     /// every arm's count and move all four numbers together, which is the kind of error a comparison
     /// between arms cannot see.

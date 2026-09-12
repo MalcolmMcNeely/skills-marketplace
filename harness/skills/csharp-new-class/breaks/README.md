@@ -8,14 +8,14 @@ applies nothing would measure the good fixture while claiming to measure a break
 
 Grouped by the **break**, not by the base. One folder per break, holding one folder per layer shape
 it is measured at. Two folders called `description-catalogue` and `description-plugin` read as two
-breaks; `description/catalogue` and `description/plugin` read as what they are.
+breaks; `description/distractors` and `description/plugin` read as what they are.
 
 | Overlay | Base | Description | Body | Should redden |
 |---|---|---|---|---|
-| `description/catalogue/` | `shared/catalogue` | broken | stub, unchanged | layer 3 |
+| `description/distractors/` | `shared/distractors` | broken | stub, unchanged | layer 3 |
 | `description/plugin/` | the suite's `plugin/` | broken | byte-identical to good | nothing |
 | `body/plugin/` | the suite's `plugin/` | byte-identical to good | rule inverted | layer 4 |
-| `control/catalogue/` | `shared/catalogue` | byte-identical to good | stub prose reworded | nothing |
+| `control/distractors/` | `shared/distractors` | byte-identical to good | stub prose reworded | nothing |
 | `control/plugin/` | the suite's `plugin/` | byte-identical to good | prose reworded, rule intact | nothing |
 
 `candidates/` holds the three descriptions #6's nine-run screen chose between. They are not arms.

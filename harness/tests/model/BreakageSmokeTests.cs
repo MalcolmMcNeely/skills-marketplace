@@ -41,7 +41,7 @@ public class BreakageSmokeTests(ITestOutputHelper output)
         {
             // Layer 3, one run against the broken description. Expected to MISS, but the smoke test is
             // agnostic: what it proves is that a run completes and scores against the overlaid catalogue.
-            var catalogue = builder.Build(Paths.StubCatalogue, found.BreakOverlay("description/catalogue"));
+            var catalogue = builder.Build(Paths.Distractors, found.BreakOverlay("description/distractors"));
             var positive = suite.Firing.ShouldFire[0];
             var firing = Scoring.ScoreFiring(
                 await new FiringRunner(Paths, found, catalogue).RunAsync(positive.Prompt, CaseKind.ShouldFire), positive.Expect);

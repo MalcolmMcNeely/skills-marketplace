@@ -56,20 +56,20 @@ public class SuiteDiscoveryTests
         var dir = Path.Combine(root, name);
         Write(Path.Combine(dir, "suite.json"), json ?? SuiteJson(suite: name, skillUnderTest: name));
         Write(Path.Combine(dir, "plugin", "skills", name, "SKILL.md"), SkillMd(name));
-        Write(Path.Combine(dir, "breaks", "description", "catalogue", "skills", name, "SKILL.md"), SkillMd(name));
+        Write(Path.Combine(dir, "breaks", "description", "distractors", "skills", name, "SKILL.md"), SkillMd(name));
         return dir;
     }
 
     private static SuiteDiscovery Discovery(
-        string suitesRoot, string? shippedCatalogue = null, string? stubCatalogue = null) =>
+        string suitesRoot, string? shippedCatalogue = null, string? distractors = null) =>
         new(suitesRoot,
             shippedCatalogue ?? Path.Combine(suitesRoot, "no-catalogue"),
-            // Empty, but present. Discovery refuses a distractor catalogue that is not there, so a
+            // Empty, but present. Discovery refuses a distractor set that is not there, so a
             // case that says nothing about distractors still has to have the folder.
-            stubCatalogue ?? Distractors());
+            distractors ?? Distractors());
 
     /// <summary>
-    /// A distractor catalogue, the shape <c>shared/catalogue/</c> holds. In a directory of its own,
+    /// A distractor set, the shape <c>shared/distractors/</c> holds. In a directory of its own,
     /// never under the suites root, which discovery scans and would read it as a half-finished suite.
     /// </summary>
     private static string Distractors(params string[] names)
@@ -130,14 +130,14 @@ public class SuiteDiscoveryTests
     /// one. That passes, which is the silent green this class is strict to prevent.
     /// </summary>
     [Fact]
-    public void A_distractor_catalogue_that_does_not_exist_throws()
+    public void A_distractor_set_that_does_not_exist_throws()
     {
         var root = TempDir();
         Suite(root);
         var missing = Path.Combine(TempDir(), "typo");
 
         var ex = Assert.Throws<DirectoryNotFoundException>(
-            () => Discovery(root, stubCatalogue: missing).Discover());
+            () => Discovery(root, distractors: missing).Discover());
         Assert.Contains(missing, ex.Message, StringComparison.Ordinal);
     }
 
@@ -278,7 +278,7 @@ public class SuiteDiscoveryTests
         Suite(root, "csharp-new-class");
         var distractors = Distractors("csharp-new-class", "data-sql");
 
-        var found = Assert.Single(Discovery(root, stubCatalogue: distractors).Discover());
+        var found = Assert.Single(Discovery(root, distractors: distractors).Discover());
 
         Assert.Empty(found.ListingPlugins);
     }
@@ -339,7 +339,7 @@ public class SuiteDiscoveryTests
         var harness = TempDir();
         Suite(Directory.CreateDirectory(Path.Combine(harness, "skills")).FullName);
         var paths = new HarnessPaths(harness);
-        Directory.CreateDirectory(paths.StubCatalogue);
+        Directory.CreateDirectory(paths.Distractors);
 
         Assert.Equal(Path.Combine(harness, "skills"), paths.Suites);
         Assert.Equal("csharp-new-class", Assert.Single(SuiteDiscovery.For(paths).Discover()).Name);
@@ -375,7 +375,7 @@ public class SuiteDiscoveryTests
 
         var found = Assert.Single(Discovery(root).Discover());
 
-        Assert.Equal(Path.Combine(dir, "breaks", "description", "catalogue"), found.BreakOverlay("description/catalogue"));
+        Assert.Equal(Path.Combine(dir, "breaks", "description", "distractors"), found.BreakOverlay("description/distractors"));
     }
 
     [Fact]
@@ -404,7 +404,7 @@ public class SuiteDiscoveryTests
 
         var found = Discovery(root).Discover().Single(s => s.Name == "csharp-new-class");
 
-        Assert.Throws<InvalidOperationException>(() => found.BreakOverlay("../../data-sql/breaks/description/catalogue"));
+        Assert.Throws<InvalidOperationException>(() => found.BreakOverlay("../../data-sql/breaks/description/distractors"));
     }
 
     /// <summary>

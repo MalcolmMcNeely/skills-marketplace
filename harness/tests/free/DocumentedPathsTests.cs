@@ -94,14 +94,14 @@ public class DocumentedPathsTests : IDisposable
 
     /// <summary>
     /// A document inside `harness/` names paths relative to the harness root, because that is the
-    /// root it describes. `shared/catalogue/` in the harness README means `harness/shared/catalogue/`
+    /// root it describes. `shared/distractors/` in the harness README means `harness/shared/distractors/`
     /// and nothing else, so the rule resolves it there.
     /// </summary>
     [Fact]
     public void A_harness_document_resolves_its_own_relative_paths_against_the_harness_root()
     {
-        Directory.CreateDirectory(Path.Combine(_paths.Shared, "catalogue"));
-        Doc("harness/README.md", "The distractors are `shared/catalogue/` and the streams are `shared/streams/`.");
+        Directory.CreateDirectory(Path.Combine(_paths.Shared, "distractors"));
+        Doc("harness/README.md", "The distractors are `shared/distractors/` and the streams are `shared/streams/`.");
 
         var dead = Assert.Single(DocumentedPaths.Dead(_paths));
 

@@ -6,14 +6,14 @@ namespace Harness;
 /// </summary>
 public sealed class FiringRunner(HarnessPaths paths, DiscoveredSuite suite, string? catalogueDir = null)
 {
-    // #6 lays a break overlay over the stub catalogue in scratch. Null is the unbroken catalogue.
+    // #6 lays a break overlay over the distractor set in scratch. Null is the unbroken distractor set.
     // Held as one instance so two specs from this runner differ only where they are meant to.
     //
     // #30: the suite's own listing plugins come after the distractors, because a skill the
     // distractors do not stub is otherwise absent from the listing the run is decided on.
-    private readonly string[] _pluginDirs = [catalogueDir ?? paths.StubCatalogue, .. suite.ListingPlugins];
+    private readonly string[] _pluginDirs = [catalogueDir ?? paths.Distractors, .. suite.ListingPlugins];
 
-    /// <summary>Natural-language prompt against the description-only stub catalogue.</summary>
+    /// <summary>Natural-language prompt against the description-only distractor set.</summary>
     public Task<RunOutcome> RunAsync(string prompt, CaseKind kind, CancellationToken ct = default) =>
         ClaudeCli.RunAsync(SpecFor(prompt, kind), ct);
 
@@ -24,7 +24,7 @@ public sealed class FiringRunner(HarnessPaths paths, DiscoveredSuite suite, stri
     public RunSpec SpecFor(string prompt, CaseKind kind) => new()
     {
         Prompt = prompt,
-        WorkingDirectory = paths.FixtureRepo,
+        WorkingDirectory = paths.BareRepo,
         PluginDirs = _pluginDirs,
         // Firing is decided before any work happens, so forbid the expensive tools.
         // NOT restricted here: --allowedTools only auto-approves, and disallowing Write made the
@@ -69,7 +69,7 @@ public sealed class FiringRunner(HarnessPaths paths, DiscoveredSuite suite, stri
 
 public sealed class ContractRunner(HarnessPaths paths)
 {
-    /// <summary>By-name invocation against the real body, in a throwaway copy of the fixture repo.</summary>
+    /// <summary>By-name invocation against the real body, in a throwaway copy of the bare repo.</summary>
     public async Task<RunOutcome> RunAsync(string skill, string task, string pluginDir, CancellationToken ct = default)
     {
         var workDir = paths.NewScratchRepo();

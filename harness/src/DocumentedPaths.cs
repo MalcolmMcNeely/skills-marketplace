@@ -75,7 +75,7 @@ public static partial class DocumentedPaths
     private static IEnumerable<QuotedPath> PathsIn(HarnessPaths paths, HashSet<string> owned, string doc)
     {
         // A README inside harness/ names paths relative to the harness root, because that is the root
-        // it describes: `shared/catalogue/` in the harness README means one folder and no other.
+        // it describes: `shared/distractors/` in the harness README means one folder and no other.
         //
         // A README only, not every document under harness/. A fixture SKILL.md sits there too and is
         // MATERIAL rather than prose about the harness: its `src/Foo.cs` addresses the bare repo a

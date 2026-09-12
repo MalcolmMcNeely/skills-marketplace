@@ -97,8 +97,8 @@ output folder.
 | `tests/free/` | Layers 1 and 2, plus offline parser tests against captured streams |
 | `tests/model/` | Layers 3 and 4. Real `claude -p` runs |
 | `skills/<name>/` | One folder per skill under test. Everything that skill is tested on |
-| `shared/catalogue/` | Twelve description-only stubs for layer 3 |
-| `shared/repo/` | The bare .NET fixture repo from `docs/baseline-test-first.md` |
+| `shared/distractors/` | Twelve description-only stubs for layer 3 |
+| `shared/repo/` | The bare .NET repo from `docs/baseline-test-first.md` |
 | `shared/streams/` | Real stream-json, so the parser tests need no model call |
 | `tools/probe/` | One-shot debugging runner |
 
@@ -171,10 +171,10 @@ is edited, and then the suite tests text nobody ships.
 ### What a firing run puts in front of the model
 
 Layer 3 decides from the **listing**, so the skill under test has to be in it. Discovery works that
-out per suite. The distractor catalogue always loads, and the suite's own plugin loads beside it
+out per suite. The distractor set always loads, and the suite's own plugin loads beside it
 whenever the distractors do not already declare that name.
 
-That was free while the only suite was a fixture one. The distractor catalogue carries a
+That was free while the only suite was a fixture one. The distractor set carries a
 description-only stub of `csharp-new-class`, so the distractors and the skill under test arrived in
 the same folder and nobody had to think about it. A catalogue skill is never copied, so nothing puts
 it among the distractors. A run loading the distractors alone would show the model twelve skills

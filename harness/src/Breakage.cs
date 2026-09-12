@@ -17,8 +17,8 @@ public sealed record BreakageArm
 
     /// <summary>
     /// An overlay identifier, named relative to the suite that owns it and resolved through
-    /// <see cref="DiscoveredSuite.BreakOverlay"/>. Laid over shared/catalogue for layer 3; null runs
-    /// the unbroken catalogue. #26 made these relative so a second skill can declare its own breaks
+    /// <see cref="DiscoveredSuite.BreakOverlay"/>. Laid over shared/distractors for layer 3; null runs
+    /// the unbroken distractor set. #26 made these relative so a second skill can declare its own breaks
     /// without editing this plan.
     /// </summary>
     public string? FiringOverlay { get; init; }
@@ -43,7 +43,7 @@ public sealed record BreakageArm
         {
             Id = "description",
             What = "description broken, body correct",
-            FiringOverlay = "description/catalogue",
+            FiringOverlay = "description/distractors",
             FiringShape = FiringPlanShape.PositivesOnly,
             ContractOverlay = "description/plugin",
             ExpectFiring = LayerOutcome.Red,
@@ -68,7 +68,7 @@ public sealed record BreakageArm
         {
             Id = "control",
             What = "prose reworded, both rules intact",
-            FiringOverlay = "control/catalogue",
+            FiringOverlay = "control/distractors",
             FiringShape = FiringPlanShape.PositivesOnly,
             ContractOverlay = "control/plugin",
             ExpectFiring = LayerOutcome.Green,
@@ -90,7 +90,7 @@ public sealed record BreakageArm
 }
 
 /// <summary>
-/// Runs one arm: the firing half against an overlaid catalogue, then the contract half.
+/// Runs one arm: the firing half against an overlaid distractor set, then the contract half.
 ///
 /// #26. It takes the DISCOVERED suite, not the parsed file, because an arm names its overlays and its
 /// base plugin relative to the suite that owns them. Handed a bare file, the pass would have to know
@@ -113,8 +113,8 @@ public sealed class BreakagePass(HarnessPaths paths, DiscoveredSuite suite)
 
         if (arm.RunFiring)
         {
-            var catalogue = builder.Build(paths.StubCatalogue, Overlay(arm.FiringOverlay));
-            var pass = new CalibrationPass(paths, suite, new FiringRunner(paths, suite, catalogue), arm.FiringShape);
+            var distractors = builder.Build(paths.Distractors, Overlay(arm.FiringOverlay));
+            var pass = new CalibrationPass(paths, suite, new FiringRunner(paths, suite, distractors), arm.FiringShape);
             var firing = await pass.RunAsync(journal, ledger, log, ct);
             if (firing.Stopped) return firing with { Started = started };
         }

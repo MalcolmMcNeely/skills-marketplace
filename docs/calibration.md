@@ -113,7 +113,7 @@ measurement under it. **Zero is the measurement**, and the right gate for a fixt
 
 Worth naming what this does and does not show. Every negative case here names a technology or a file
 kind the description explicitly excludes. It tests the negative boundary the description was written to
-carry. It does not test a request that sits genuinely between two skills, because the stub catalogue has
+carry. It does not test a request that sits genuinely between two skills, because the distractor set has
 no near neighbour for `csharp-new-class` to be confused with.
 
 ## 5. The watch list
@@ -206,7 +206,7 @@ a valid run does, so every figure above still stands and no gate moved.
 - **Throttle detection.** The harness flagged no run as throttled, so the path built in
   [calibration-prep.md](calibration-prep.md) has still never run. Nothing here can provoke a usage limit
   on demand.
-- **Whether `p_good` holds against a near neighbour.** The stub catalogue has no skill that competes
+- **Whether `p_good` holds against a near neighbour.** The distractor set has no skill that competes
   with `csharp-new-class`. A perfect negative score against distant technologies is a weaker result than
   the same score against a skill one step away.
 - **Whether 1.000 is the fixture or the skill.** The fixture is frozen and was written alongside the

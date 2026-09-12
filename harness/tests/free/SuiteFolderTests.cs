@@ -38,7 +38,7 @@ public class SuiteFolderTests
     }
 
     /// <summary>
-    /// Grouped by the BREAK, not by the base it overlays. Two folders called `description-catalogue`
+    /// Grouped by the BREAK, not by the base it overlays. Two folders called `description-distractors`
     /// and `description-plugin` read as two breaks; one `description` folder holding two shapes reads
     /// as what it is, which is one break measured at two layers.
     /// </summary>
@@ -49,7 +49,7 @@ public class SuiteFolderTests
         Assert.Equal(["body", "candidates", "control", "description"], breaks.Select(Path.GetFileName).Order());
 
         var description = breaks.Single(d => Path.GetFileName(d) == "description");
-        Assert.Equal(["catalogue", "plugin"], Directory.GetDirectories(description).Select(Path.GetFileName).Order());
+        Assert.Equal(["distractors", "plugin"], Directory.GetDirectories(description).Select(Path.GetFileName).Order());
     }
 
     /// <summary>
@@ -63,25 +63,25 @@ public class SuiteFolderTests
         var ex = Assert.Throws<InvalidOperationException>(() => Found.BreakOverlay("description"));
 
         Assert.Contains("groups", ex.Message, StringComparison.Ordinal);
-        Assert.Contains("description/catalogue", ex.Message, StringComparison.Ordinal);
+        Assert.Contains("description/distractors", ex.Message, StringComparison.Ordinal);
         Assert.Contains("description/plugin", ex.Message, StringComparison.Ordinal);
     }
 
     /// <summary>
     /// The two description shapes are not copies of each other. Layer 3 never reads a body, so the
-    /// catalogue shape stays a description-only stub; layer 4 reads nothing else, so the plugin shape
+    /// distractor shape stays a description-only stub; layer 4 reads nothing else, so the plugin shape
     /// carries the full body. One file serving both would test a stub body at layer 4.
     /// </summary>
     [Fact]
-    public void The_catalogue_shape_is_a_stub_and_the_plugin_shape_carries_the_full_body()
+    public void The_distractor_shape_is_a_stub_and_the_plugin_shape_carries_the_full_body()
     {
         var skill = Path.Combine("skills", Found.Suite.SkillUnderTest, "SKILL.md");
-        var catalogue = FixtureBuilder.BodyOf(Path.Combine(Found.BreakOverlay("description/catalogue"), skill));
+        var distractors = FixtureBuilder.BodyOf(Path.Combine(Found.BreakOverlay("description/distractors"), skill));
         var plugin = FixtureBuilder.BodyOf(Path.Combine(Found.BreakOverlay("description/plugin"), skill));
 
-        Assert.Equal(FixtureBuilder.BodyOf(Path.Combine(Paths.StubCatalogue, skill)), catalogue);
+        Assert.Equal(FixtureBuilder.BodyOf(Path.Combine(Paths.Distractors, skill)), distractors);
         Assert.Equal(FixtureBuilder.BodyOf(Found.SkillFile), plugin);
-        Assert.True(plugin.Length > catalogue.Length * 2, "the plugin shape should carry a real body, not a stub");
+        Assert.True(plugin.Length > distractors.Length * 2, "the plugin shape should carry a real body, not a stub");
     }
 
     /// <summary>

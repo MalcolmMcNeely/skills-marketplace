@@ -7,7 +7,7 @@ namespace Harness.Free.Tests;
 /// Issue #30. What a layer 3 run puts in front of the model.
 ///
 /// Layer 3 decides from the LISTING, so the skill under test has to be in it. That was true for free
-/// while the only suite was a fixture one: <c>shared/catalogue/</c> carries a description-only stub
+/// while the only suite was a fixture one: <c>shared/distractors/</c> carries a description-only stub
 /// of csharp-new-class, so the distractors and the skill under test arrived in the same folder.
 ///
 /// A catalogue suite is read from <c>plugins/</c> and never copied, so nothing puts it among the
@@ -41,16 +41,16 @@ public class FiringListingTests
     /// </summary>
     [Theory]
     [MemberData(nameof(SuitesUnderTest.Rows), MemberType = typeof(SuitesUnderTest))]
-    public void Every_firing_run_still_loads_the_distractor_catalogue(string suiteName)
+    public void Every_firing_run_still_loads_the_distractor_set(string suiteName)
     {
         var found = SuiteDiscovery.One(Paths, suiteName);
         var spec = new FiringRunner(Paths, found).SpecFor("build me a thing", CaseKind.ShouldFire);
 
-        Assert.Equal(Paths.StubCatalogue, spec.PluginDirs[0]);
+        Assert.Equal(Paths.Distractors, spec.PluginDirs[0]);
     }
 
     /// <summary>
-    /// One name, one description. The distractor catalogue already declares the fixture skill, so
+    /// One name, one description. The distractor set already declares the fixture skill, so
     /// loading the suite's own plugin as well would put two skills of that name in the listing and
     /// the run would be scored on whichever the CLI picked.
     /// </summary>

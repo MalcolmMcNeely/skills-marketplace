@@ -13,7 +13,7 @@ public class SharedFixtureTests
     private static readonly HarnessPaths Paths = new();
 
     [Theory]
-    [InlineData("catalogue")]
+    [InlineData("distractors")]
     [InlineData("repo")]
     [InlineData("streams")]
     public void Every_borrowed_fixture_sits_directly_under_shared(string folder)
@@ -25,15 +25,15 @@ public class SharedFixtureTests
     [Fact]
     public void The_path_vocabulary_points_at_the_shared_copies()
     {
-        Assert.Equal(Path.Combine(Paths.Shared, "catalogue"), Paths.StubCatalogue);
-        Assert.Equal(Path.Combine(Paths.Shared, "repo"), Paths.FixtureRepo);
+        Assert.Equal(Path.Combine(Paths.Shared, "distractors"), Paths.Distractors);
+        Assert.Equal(Path.Combine(Paths.Shared, "repo"), Paths.BareRepo);
         Assert.Equal(Path.Combine(Paths.Shared, "streams"), Paths.Streams);
     }
 
     [Fact]
-    public void The_distractor_catalogue_still_holds_the_twelve_skills_layer_3_measures()
+    public void The_distractor_set_still_holds_the_twelve_skills_layer_3_measures()
     {
-        Assert.Equal(12, Catalogue.Load(Paths.StubCatalogue).Count);
+        Assert.Equal(12, Catalogue.Load(Paths.Distractors).Count);
     }
 
     [Fact]
@@ -67,7 +67,7 @@ public class SharedFixtureTests
     public void Nothing_but_the_three_borrowed_fixtures_sits_under_shared()
     {
         Assert.Equal(
-            ["catalogue", "repo", "streams"],
+            ["distractors", "repo", "streams"],
             Directory.GetDirectories(Paths.Shared).Select(Path.GetFileName).Order());
     }
 }

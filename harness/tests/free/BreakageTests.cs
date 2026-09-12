@@ -15,7 +15,7 @@ public class BreakOverlayTests
     private static string Skill => Found.Suite.SkillUnderTest;
 
     private static string Good => Found.SkillFile;
-    private static string Stub => Path.Combine(Paths.StubCatalogue, "skills", Skill, "SKILL.md");
+    private static string Stub => Path.Combine(Paths.Distractors, "skills", Skill, "SKILL.md");
     private static string Overlay(string id) =>
         Path.Combine(Found.BreakOverlay(id), "skills", Skill, "SKILL.md");
 
@@ -26,12 +26,12 @@ public class BreakOverlayTests
     [Fact]
     public void The_description_break_moves_only_the_description()
     {
-        Assert.NotEqual(FixtureBuilder.DescriptionOf(Stub), FixtureBuilder.DescriptionOf(Overlay("description/catalogue")));
-        Assert.Equal(FixtureBuilder.BodyOf(Stub), FixtureBuilder.BodyOf(Overlay("description/catalogue")));
+        Assert.NotEqual(FixtureBuilder.DescriptionOf(Stub), FixtureBuilder.DescriptionOf(Overlay("description/distractors")));
+        Assert.Equal(FixtureBuilder.BodyOf(Stub), FixtureBuilder.BodyOf(Overlay("description/distractors")));
 
         // The layer 4 half of the same break: the broken description, over a body that still works.
         Assert.Equal(
-            FixtureBuilder.DescriptionOf(Overlay("description/catalogue")),
+            FixtureBuilder.DescriptionOf(Overlay("description/distractors")),
             FixtureBuilder.DescriptionOf(Overlay("description/plugin")));
         Assert.Equal(FixtureBuilder.BodyOf(Good), FixtureBuilder.BodyOf(Overlay("description/plugin")));
     }
@@ -66,11 +66,11 @@ public class BreakOverlayTests
 
     /// <summary>A control changes prose and nothing else. A control that moved a rule is a third break.</summary>
     [Theory]
-    [InlineData("control/catalogue")]
+    [InlineData("control/distractors")]
     [InlineData("control/plugin")]
     public void A_control_keeps_the_description_byte_identical(string overlay)
     {
-        var baseline = overlay == "control/catalogue" ? Stub : Good;
+        var baseline = overlay == "control/distractors" ? Stub : Good;
         Assert.Equal(FixtureBuilder.DescriptionOf(baseline), FixtureBuilder.DescriptionOf(Overlay(overlay)));
         Assert.NotEqual(FixtureBuilder.BodyOf(baseline), FixtureBuilder.BodyOf(Overlay(overlay)));
     }
@@ -100,7 +100,7 @@ public class BreakOverlayTests
         foreach (var arm in BreakageArm.Plan)
         {
             if (arm.FiringOverlay is { } firing)
-                builder.Build(Paths.StubCatalogue, Found.BreakOverlay(firing));
+                builder.Build(Paths.Distractors, Found.BreakOverlay(firing));
             if (arm.ContractOverlay is { } contract)
                 builder.Build(Found.Plugin, Found.BreakOverlay(contract));
         }
@@ -203,15 +203,15 @@ public class FixtureBuilderTests
 
     /// <summary>Every real overlay must apply cleanly over its declared base. Checked before any run.</summary>
     [Theory]
-    [InlineData("description/catalogue", false)]
-    [InlineData("control/catalogue", false)]
+    [InlineData("description/distractors", false)]
+    [InlineData("control/distractors", false)]
     [InlineData("description/plugin", true)]
     [InlineData("body/plugin", true)]
     [InlineData("control/plugin", true)]
     public void Every_real_overlay_applies_over_its_base(string overlay, bool overSuitePlugin)
     {
         var builder = new FixtureBuilder(Paths);
-        var baseDir = overSuitePlugin ? Found.Plugin : Paths.StubCatalogue;
+        var baseDir = overSuitePlugin ? Found.Plugin : Paths.Distractors;
         var skill = Path.Combine("skills", Found.Suite.SkillUnderTest, "SKILL.md");
 
         var built = builder.Build(baseDir, Found.BreakOverlay(overlay));
@@ -224,9 +224,9 @@ public class FixtureBuilderTests
 
     /// <summary>The body break doubles as a layer 3 overlay, so it has to apply over the catalogue too.</summary>
     [Fact]
-    public void The_body_break_applies_over_the_stub_catalogue_as_well()
+    public void The_body_break_applies_over_the_distractors_as_well()
     {
-        var built = new FixtureBuilder(Paths).Build(Paths.StubCatalogue, Found.BreakOverlay("body/plugin"));
+        var built = new FixtureBuilder(Paths).Build(Paths.Distractors, Found.BreakOverlay("body/plugin"));
 
         Assert.Equal(12, Directory.GetDirectories(Path.Combine(built, "skills")).Length);
         Assert.Equal(

@@ -29,9 +29,9 @@ public class CatalogueCoverageTests : IDisposable
         // catalogue. A repo shipping skills and testing none of them has the folder, empty.
         Directory.CreateDirectory(_paths.Suites);
 
-        // It refuses a missing distractor catalogue for the same reason. Coverage says nothing about
+        // It refuses a missing distractor set for the same reason. Coverage says nothing about
         // distractors, but it comes through the same discovery, so the folder has to be there.
-        Directory.CreateDirectory(_paths.StubCatalogue);
+        Directory.CreateDirectory(_paths.Distractors);
     }
 
     private static void Write(string path, string content)
