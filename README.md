@@ -6,7 +6,7 @@ A Claude Code plugin marketplace for sharing agent skills across an engineering 
 
 `plugins/core/skills/` holds `skill-authoring` and `new-skill`, which is enough to write the next one and enough for the quality gate to have something real to check. It is a start, not a catalogue.
 
-What the repo mostly holds is the reasoning, and the reasoning is the useful part. Thirteen documents work out how a shared skill catalogue should be built, what it costs to run, and how to tell whether a skill change made anything better. Most of the numbers were measured on a real machine against Claude Code 2.1.248 rather than reasoned about. The test harness in `harness/` is the quality gate. Breaking it on purpose proved it catches a failure.
+What the repo mostly holds is the reasoning, and the reasoning is the useful part. Twenty-eight documents work out how a shared skill catalogue should be built, what it costs to run, and how to tell whether a skill change made anything better. Most of the numbers were measured on a real machine against Claude Code 2.1.248 rather than reasoned about. The test harness in `harness/` is the quality gate. Breaking it on purpose proved it catches a failure.
 
 So: if you want a full catalogue, it is not here yet. If you want to work out how to build one for your own company, start reading.
 
@@ -131,7 +131,7 @@ Run the free half of the harness. No network, no model calls, about a second:
 dotnet test harness/tests/free
 ```
 
-Expect all 272 green. Layer 2 reddens when a model-invocable skill ships with nothing measuring it, and it did exactly that until [#30](https://github.com/MalcolmMcNeely/skills-marketplace/issues/30) wrote `skill-authoring` a suite. Add an engine without one and it says so again on the next push.
+Expect all 295 green. Layer 2 reddens when a model-invocable skill ships with nothing measuring it, and it did exactly that until [#30](https://github.com/MalcolmMcNeely/skills-marketplace/issues/30) wrote `skill-authoring` a suite. Add an engine without one and it says so again on the next push.
 
 `.github/workflows/free-gate.yml` runs those three on every push to `main` and every pull request. It pins the CLI to the version every gate value was measured against, and the runner image to the one `plugin validate` was proved to need no login on. The paying layers stay on a laptop, and the header of that file says why.
 
